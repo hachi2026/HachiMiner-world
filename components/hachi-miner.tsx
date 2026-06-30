@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { IDKitRequestWidget, orbLegacy, type RpContext } from '@worldcoin/idkit'
 import { MiniKit } from '@worldcoin/minikit-js'
-import { getIsUserVerified } from '@worldcoin/minikit-js/address-book'
 import { createPublicClient, encodeFunctionData, http, parseAbi } from 'viem'
 import { useUserOperationReceipt } from '@worldcoin/minikit-react'
 import { ethers } from 'ethers'
@@ -240,6 +240,8 @@ export default function HachiMiner() {
   const [campPlatform, setCampPlatform] = useState(0)
   const [campHPV, setCampHPV] = useState('—')
   const [showVerify, setShowVerify] = useState(false)
+  const [rpContext, setRpContext] = useState<RpContext | null>(null)
+  const [rpLoading, setRpLoading] = useState(false)
 
   const viemClient = useMemo(() => createPublicClient({
     chain: worldChain as any,
@@ -397,10 +399,32 @@ export default function HachiMiner() {
     } catch(e) {}
   }
 
-  const checkVerif = async (a: string, _p: ethers.JsonRpcProvider) => {
+  const handleGetRpSignature = async (): Promise<RpContext | null> => {
     try {
-      const v = await getIsUserVerified(a)
-      setVerified(!!v)
+      const res = await fetch('/api/rp-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify-human' }),
+      })
+      if (!res.ok) return null
+      const { sig, nonce, created_at, expires_at } = await res.json()
+      return { rp_id: 'rp_ef869d909ad99c43', signature: sig, nonce, created_at, expires_at }
+    } catch { return null }
+  }
+
+  const handleOpenVerify = async () => {
+    setRpLoading(true)
+    const ctx = await handleGetRpSignature()
+    setRpLoading(false)
+    if (!ctx) { toast_('Error al generar la firma. Reintentá.', '#f85149'); return }
+    setRpContext(ctx)
+    setShowVerify(true)
+  }
+
+  const checkVerif = async (a: string, p: ethers.JsonRpcProvider) => {
+    try {
+      const v = await new ethers.Contract(C.core, CORE, p).humanVerified(a)
+      setVerified(Boolean(v))
     } catch(e) {}
   }
 
@@ -865,16 +889,30 @@ export default function HachiMiner() {
     <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#2a1f63 0%,#1d1a52 55%,#2b2c78 100%)',color:'#e6edf3',fontFamily:'Georgia,serif'}}>
       {toast&&<div style={{position:'fixed',top:16,right:16,zIndex:999,padding:'10px 16px',borderRadius:8,background:'#161b22',border:`1px solid ${toast.color}`,color:toast.color,fontSize:13,maxWidth:320}}>{toast.msg}</div>}
 
-      {/* POPUP VERIFICACION WORLD ID */}
-      {showVerify&&(
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:500,display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <div style={{background:'#1e0840',border:'1px solid #5b21b6',borderRadius:16,padding:32,maxWidth:360,width:'90%',textAlign:'center'}}>
-            <div style={{fontSize:32,marginBottom:12}}>🌍</div>
-            <div style={{fontWeight:700,fontSize:18,marginBottom:8}}>Verificar World ID</div>
-            <div style={{fontSize:13,color:'#9b96c4',marginBottom:24}}>Tu verificación World ID se detecta automáticamente si tu wallet fue verificada con Orb en World App. No necesitás hacer nada aquí.</div>
-            <button onClick={()=>setShowVerify(false)} style={btnGh}>Cerrar</button>
-          </div>
-        </div>
+      {/* VERIFICACION WORLD ID 4.0 — IDKit gestiona su propio modal */}
+      {rpContext&&(
+        <IDKitRequestWidget
+          app_id="app_ba8d66235ecf4bc9e341fff3768d9058"
+          action="verify-human"
+          rp_context={rpContext}
+          allow_legacy_proofs={true}
+          preset={orbLegacy({ signal: addr })}
+          open={showVerify}
+          onOpenChange={(open) => setShowVerify(open)}
+          handleVerify={async (result) => {
+            const res = await fetch('/api/verify-proof', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ rp_id: 'rp_ef869d909ad99c43', idkitResponse: result }),
+            })
+            if (!res.ok) {
+              const { error } = await res.json().catch(() => ({ error: 'Error' }))
+              throw new Error(error)
+            }
+          }}
+          onSuccess={() => { setVerified(true); setShowVerify(false); toast_('✓ Verificado con World ID', '#3fb950') }}
+          onError={(code) => toast_('Error: ' + code, '#f85149')}
+        />
       )}
 
       {/* HEADER */}
@@ -890,7 +928,7 @@ export default function HachiMiner() {
         </div>
         {connected&&<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
           <div style={{display:'flex',gap:16}}>{[['HACHI',hachiB],['WLD',wldB],['SUSHI',sushiB]].map(([l,v])=><div key={l} style={{display:'flex',flexDirection:'column'}}><div style={{fontSize:9,color:'#9b96c4',textTransform:'uppercase',letterSpacing:.5}}>{l}</div><div style={{fontFamily:'monospace',fontSize:13,fontWeight:600}}>{v}</div></div>)}</div>
-          <div onClick={()=>!verified&&setShowVerify(true)} style={{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'#9b96c4',cursor:'pointer',whiteSpace:'nowrap'}}><div style={{width:7,height:7,borderRadius:'50%',background:verified?'#3fb950':'#6b6494'}}></div><span>{verified?t('verified'):t('not_verified')}</span></div>
+          <div onClick={()=>!verified&&!rpLoading&&handleOpenVerify()} style={{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'#9b96c4',cursor:verified?'default':'pointer',whiteSpace:'nowrap'}}><div style={{width:7,height:7,borderRadius:'50%',background:verified?'#3fb950':rpLoading?'#d29922':'#6b6494'}}></div><span>{verified?t('verified'):rpLoading?'Verificando...':t('not_verified')}</span></div>
         </div>}
       </div>
 

@@ -193,6 +193,8 @@ export default function HachiMiner() {
   const [lang, setLang] = useState<Lang>('es')
   const [toast, setToast] = useState<{msg:string;color:string}|null>(null)
   const [addr, setAddr] = useState('')
+  const [username, setUsername] = useState('')
+  const [usernameCache, setUsernameCache] = useState<Record<string,string>>({})
   const [connected, setConnected] = useState(false)
   const [verified, setVerified] = useState(false)
   const [inWA, setInWA] = useState(false)
@@ -304,6 +306,30 @@ export default function HachiMiner() {
   }, [selSUSHI, hachiSushi])
 
 
+  const nameFor = (a: string): string => {
+    if (!a) return '—'
+    if (addr && a.toLowerCase() === addr.toLowerCase() && username) return username
+    const cached = usernameCache[a.toLowerCase()]
+    return cached || fmtA(a)
+  }
+
+  const resolveUsernames = useCallback(async (addresses: string[]) => {
+    if (!MiniKit.isInstalled()) return
+    const pending = Array.from(new Set(
+      addresses.filter(a => a && !usernameCache[a.toLowerCase()]).map(a => a.toLowerCase())
+    ))
+    if (pending.length === 0) return
+    const results = await Promise.allSettled(pending.map(a => MiniKit.getUserByAddress(a)))
+    setUsernameCache(prev => {
+      const next = {...prev}
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled' && r.value?.username) next[pending[i]] = r.value.username
+      })
+      return next
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usernameCache])
+
   // Devuelve la dirección conectada o '' si falla
   const connectMiniKit = async (): Promise<string> => {
     try {
@@ -324,6 +350,7 @@ export default function HachiMiner() {
       if (walletAddr) {
         log('addr: ' + walletAddr.slice(0,10))
         setAddr(walletAddr)
+        setUsername(MiniKit.user?.username || '')
         setConnected(true)
         setInWA(true)
         // NO marcamos verified aquí. El estado real de verificación World ID
@@ -706,6 +733,7 @@ export default function HachiMiner() {
       const idx = list.findIndex((e:any) => e.a.toLowerCase()===addr.toLowerCase())
       pos = idx>=0 ? '#'+(idx+1) : '—'
       setRankList(list)
+      resolveUsernames(list.map((e:any) => e.a))
     } catch(e: any) { log('ranking getCurrentRanking err: '+(e?.message||'').slice(0,60)) }
     try {
       const [nextT, lastExec] = await Promise.all([r.timeUntilNextExecution(), r.lastExecutedAt()])
@@ -732,6 +760,7 @@ export default function HachiMiner() {
           .sort((a,b) => a.rank - b.rank)
         log(`lastWinners after filter: ${winners.length}`)
         setLastWinners(winners)
+        resolveUsernames(winners.map(w => w.addr))
       } else {
         log('lastWinners: lastExecTs=0, skipping')
       }
@@ -923,7 +952,7 @@ export default function HachiMiner() {
             <div style={{display:'flex',gap:4}}>
               {(['es','en','pt'] as Lang[]).map(l=><button key={l} onClick={()=>setLang(l)} style={{background:'none',border:`1px solid ${lang===l?'#a78bfa':'#3a3470'}`,borderRadius:4,padding:'2px 6px',fontSize:11,cursor:'pointer',color:lang===l?'#e6edf3':'#9b96c4'}}>{l.toUpperCase()}</button>)}
             </div>
-            <button onClick={connectWallet} style={{background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,padding:'7px 14px',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 0 14px rgba(124,58,237,.5)',whiteSpace:'nowrap'}}>{connected?fmtA(addr):t('connect')}</button>
+            <button onClick={connectWallet} style={{background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,padding:'7px 14px',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 0 14px rgba(124,58,237,.5)',whiteSpace:'nowrap'}}>{connected?nameFor(addr):t('connect')}</button>
           </div>
         </div>
         {connected&&<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
@@ -1099,7 +1128,7 @@ export default function HachiMiner() {
             const isMe=e.a.toLowerCase()===addr.toLowerCase(),medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`
             return <div key={e.a} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',borderRadius:8,marginBottom:4,background:'#1e0840',border:`1px solid ${isMe?'#34d399':'#5b21b6'}`}}>
               <div style={{fontFamily:'monospace',fontSize:13,fontWeight:700,width:28}}>{medal}</div>
-              <div style={{fontFamily:'monospace',fontSize:12,flex:1}}>{fmtA(e.a)}{isMe&&<span style={{color:'#34d399'}}> (tú)</span>}</div>
+              <div style={{fontFamily:'monospace',fontSize:12,flex:1}}>{nameFor(e.a)}{isMe&&<span style={{color:'#34d399'}}> (tú)</span>}</div>
               <div style={{fontFamily:'monospace',fontSize:12,fontWeight:700,color:'#fbbf24'}}>{fmt(e.pts)}</div>
             </div>
           })}
@@ -1113,7 +1142,7 @@ export default function HachiMiner() {
             {lastWinners.map(({addr,amount,rank})=>(
               <div key={rank} style={{display:'flex',alignItems:'center',gap:10,padding:'7px 0',borderBottom:'1px solid #3b0764'}}>
                 <span style={{fontFamily:'monospace',fontWeight:700,width:28,color:'#fbbf24'}}>{rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`#${rank}`}</span>
-                <span style={{fontFamily:'monospace',fontSize:12,flex:1,color:'#c9d1d9'}}>{fmtA(addr)}</span>
+                <span style={{fontFamily:'monospace',fontSize:12,flex:1,color:'#c9d1d9'}}>{nameFor(addr)}</span>
                 <span style={{fontFamily:'monospace',fontSize:12,fontWeight:600,color:'#34d399'}}>{fmt(amount)} HACHI</span>
               </div>
             ))}
@@ -1182,7 +1211,7 @@ export default function HachiMiner() {
             <>
               <div style={sLabel}>Registrar referido</div>
               <div style={card}>
-                <div style={{fontSize:12,color:'#8b949e',marginBottom:8}}>Te invitó: <span style={{fontFamily:'monospace',color:'#a78bfa',fontWeight:600}}>{fmtA(refFromLink)}</span></div>
+                <div style={{fontSize:12,color:'#8b949e',marginBottom:8}}>Te invitó: <span style={{fontFamily:'monospace',color:'#a78bfa',fontWeight:600}}>{nameFor(refFromLink)}</span></div>
                 <div style={pBox}><div style={row}><span style={{color:'#8b949e',fontSize:12}}>Recibís</span><span style={{color:'#3fb950',fontFamily:'monospace'}}>{refInfo.newBonus} HACHI</span></div><div style={row}><span style={{color:'#8b949e',fontSize:12}}>Tu referidor recibe</span><span style={{color:'#a78bfa',fontFamily:'monospace'}}>{refInfo.refBonus} HACHI</span></div></div>
                 <button onClick={registerReferral} disabled={!connected} style={{...btnP,opacity:connected?1:0.4}}>Registrarme con este referido</button>
               </div>

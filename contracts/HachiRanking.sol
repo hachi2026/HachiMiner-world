@@ -155,6 +155,7 @@ contract HachiRanking is ReentrancyGuard {
 
     // --- AGREGAR PUNTOS --------------------------------------
     function addPoints(address user, uint256 basePoints) external onlyAuth {
+        if (!humanVerified[user]) return;
         if (user == address(0) || basePoints == 0) return;
 
         uint8 tier = 0;
@@ -170,6 +171,7 @@ contract HachiRanking is ReentrancyGuard {
     }
 
     function addPointsDirect(address user, uint256 points) external onlyAuth {
+        if (!humanVerified[user]) return;
         if (user == address(0) || points == 0) return;
         _addToParticipants(user);
         periodPoints[user] += points;

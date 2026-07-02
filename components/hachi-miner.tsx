@@ -1,3 +1,4 @@
+// trigger redeploy: HACHI_RANKING_ADDRESS agregada en Netlify
 // trigger redeploy: env vars actualizadas en Netlify
 'use client'
 

@@ -21,6 +21,7 @@ const C = {
   poolWLD:  '0x9F8ccE86271319f36AA25d8390cfC18741719f19',
   lock:     '0xF743772A09f92850deAFcBDfe6610cFfCe326003',
   ranking:  '0x763e6885efCE911488f497b2a0513e3DB727C141',
+  dailyRewards: '0x93D8E4b2F6c4728F5D2B875b76469974c3152999',
   core:     '0xE1892183A27389c6a4CACc091F62F9412B7EA6b9',
   referral: '0x854e2bE2bBD0b9B1761ac5cAcc5c08D9069A5982',
   hachi:    '0xbE0313f279580FDD1aA1b1b6888407E6504fF19E',
@@ -75,6 +76,10 @@ const CORE = [
   'function dailyRate() view returns (uint256)',
   'function dailySushiPurchases(address,uint256,uint8) view returns (uint256)',
   'function lastSpecialSushi(address) view returns (uint256)',
+]
+const DAILY_REWARDS = [
+  'function claim()',
+  'function previewClaim(address) view returns (uint256,uint256,bool,uint256)',
 ]
 const LOCK = [
   'function getPosition(address) view returns (uint256,uint256,uint256,uint8,uint256,uint256,uint256,uint256,bool)',
@@ -201,7 +206,7 @@ export default function HachiMiner() {
   const [poolFree, setPoolFree] = useState('—')
   const [licsAvail, setLicsAvail] = useState('—')
   const [priceAlert, setPriceAlert] = useState(false)
-  const [piggy, setPiggy] = useState({accrued:0,accrual:100,canWithdraw:false})
+  const [piggy, setPiggy] = useState({accrued:0,bonus:0,canWithdraw:false,secondsUntilNext:0})
   const [selWLD, setSelWLD] = useState(0)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
   const [wldLics, setWldLics] = useState<any[]>([])
@@ -469,15 +474,14 @@ export default function HachiMiner() {
 
   const checkDaily = async (a: string, p: ethers.JsonRpcProvider) => {
     try {
-      const core = new ethers.Contract(C.core, CORE, p)
-      const [pending, rate, settle] = await Promise.all([
-        core.pendingDaily(a), core.currentDailyRate(), core.lastDailySettle(a)
-      ])
-      const pendingN = Number(fe(pending)), rateN = Number(fe(rate)), settleN = Number(settle)
-      setLastSettle(settleN)
-      setAccrualStarted(settleN > 0)
-      const cooldownOk = settleN === 0 || Math.floor(Date.now()/1000) >= settleN + 86400
-      setPiggy({accrued:pendingN, accrual:rateN, canWithdraw:pendingN>0 && cooldownOk})
+      const dr = new ethers.Contract(C.dailyRewards, DAILY_REWARDS, p)
+      const [hachiAmount, bonusAmount, canClaimNow, secondsUntilNext] = await dr.previewClaim(a)
+      setPiggy({
+        accrued: Number(fe(hachiAmount)),
+        bonus: Number(fe(bonusAmount)),
+        canWithdraw: Boolean(canClaimNow),
+        secondsUntilNext: Number(secondsUntilNext),
+      })
     } catch(e) {}
     let tierNum = 255, canMineOk = false
     try {
@@ -647,11 +651,11 @@ export default function HachiMiner() {
   }
 
   const withdrawDaily = async () => {
-    if (piggy.accrued <= 0) { toast_('No hay HACHI acumulado para retirar','#f85149'); return }
+    if (!piggy.canWithdraw) { toast_('Todavía no podés reclamar','#f85149'); return }
     try {
-      toast_('Retirando acumulador...', '#d29922')
-      await sendTx(C.core, CORE, 'withdrawDailyHachi', [])
-      toast_('✓ HACHI retirado a tu wallet', '#3fb950')
+      toast_('Reclamando recompensa diaria...', '#d29922')
+      await sendTx(C.dailyRewards, DAILY_REWARDS, 'claim', [])
+      toast_('✓ Recompensa reclamada', '#3fb950')
       await loadAll(addr)
     } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
   }
@@ -1028,7 +1032,7 @@ export default function HachiMiner() {
             </div>
             <button onClick={withdrawDaily} disabled={!piggy.canWithdraw||!connected} style={{...btnG,width:'100%',padding:'10px 12px',opacity:(!piggy.canWithdraw||!connected)?0.4:1}}>Retirar al wallet</button>
             {!accrualStarted&&connected&&<button onClick={startAccrualFn} style={{...btnP,width:'100%',padding:'10px 12px',marginTop:8}}>Activar acumulador</button>}
-            <div style={{fontSize:10,color:'#8b949e',marginTop:8,lineHeight:1.5}}>Hachi ahorra {piggy.accrual} HACHI por día de forma automática (sin gas) más lo que ganás en tareas. Retirá cuando quieras; pagás gas solo al retirar.</div>
+            <div style={{fontSize:10,color:'#8b949e',marginTop:8,lineHeight:1.5}}>{piggy.canWithdraw ? `Podés reclamar ${fmt(piggy.accrued)} HACHI${piggy.bonus>0?` + ${fmt(piggy.bonus)} bonus`:''} ahora.` : `Próximo reclamo disponible en ${Math.ceil(piggy.secondsUntilNext/3600)}h.`} Se puede reclamar una vez cada 24hs.</div>
           </div>
           <button onClick={()=>window.open(HACHI_BUY_URL,'_blank')} style={{...btnG,width:'100%',marginBottom:12}}>🪙 Comprar HACHI</button>
           {!connected&&<div style={{textAlign:'center',padding:'32px 16px',color:'#8b949e'}}>

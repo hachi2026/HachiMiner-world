@@ -1,3 +1,4 @@
+// trigger redeploy: env vars actualizadas en Netlify
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { IDKitRequestWidget, orbLegacy, type RpContext } from '@worldcoin/idkit'
 import { MiniKit } from '@worldcoin/minikit-js'
 import { createPublicClient, encodeFunctionData, http, parseAbi } from 'viem'
@@ -244,6 +244,7 @@ export default function HachiMiner() {
   const [showVerify, setShowVerify] = useState(false)
   const [rpContext, setRpContext] = useState<RpContext | null>(null)
   const [rpLoading, setRpLoading] = useState(false)
+  const justVerifiedRef = useRef(false)
 
   const viemClient = useMemo(() => createPublicClient({
     chain: worldChain as any,
@@ -450,8 +451,9 @@ export default function HachiMiner() {
 
   const checkVerif = async (a: string, p: ethers.JsonRpcProvider) => {
     try {
-      const v = await new ethers.Contract(C.core, CORE, p).humanVerified(a)
-      setVerified(Boolean(v))
+      const res = await fetch('/api/verify-status?address=' + a)
+      const data = await res.json()
+      setVerified(Boolean(data.verified))
     } catch(e) {}
   }
 
@@ -932,15 +934,15 @@ export default function HachiMiner() {
             const res = await fetch('/api/verify-proof', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ rp_id: 'rp_ef869d909ad99c43', idkitResponse: result }),
+              body: JSON.stringify({ rp_id: 'rp_ef869d909ad99c43', idkitResponse: result, address: addr }),
             })
             if (!res.ok) {
               const { error } = await res.json().catch(() => ({ error: 'Error' }))
               throw new Error(error)
             }
           }}
-          onSuccess={() => { setVerified(true); setShowVerify(false); toast_('✓ Verificado con World ID', '#3fb950') }}
-          onError={(code) => toast_('Error: ' + code, '#f85149')}
+          onSuccess={() => { justVerifiedRef.current = true; setVerified(true); setShowVerify(false); toast_('✓ Verificado con World ID', '#3fb950') }}
+          onError={(code) => { if (!justVerifiedRef.current) toast_('Error: ' + code, '#f85149'); justVerifiedRef.current = false }}
         />
       )}
 

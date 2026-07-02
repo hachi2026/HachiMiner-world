@@ -375,6 +375,7 @@ export default function HachiMiner() {
         log('addr: ' + walletAddr.slice(0,10))
         setAddr(walletAddr)
         setUsername(MiniKit.user?.username || '')
+        resolveUsernames([walletAddr])
         setConnected(true)
         setInWA(true)
         // NO marcamos verified aquí. El estado real de verificación World ID
@@ -1270,7 +1271,7 @@ export default function HachiMiner() {
         {tab==='refs'&&<div>
           <div style={card}><div style={cTitle}>Mi código de referido</div>
             <div style={{color:'#8b949e',fontSize:12,marginBottom:8}}>{addr?'✓ Tu código está listo para compartir':'Conecta tu wallet para ver tu código'}</div>
-            {(()=>{const refPart = username ? ('u:'+encodeURIComponent(username)) : ('a:'+addr); const link=`https://world.org/mini-app?app_id=${APP_ID}&path=${encodeURIComponent('/?ref='+refPart)}`;return(<button onClick={async()=>{
+            {(()=>{const isRealUsername = (n?: string) => !!n && !n.startsWith('UserVerif '); const cachedName = usernameCache[addr.toLowerCase()]; const refPart = isRealUsername(username) ? ('u:'+encodeURIComponent(username)) : isRealUsername(cachedName) ? ('u:'+encodeURIComponent(cachedName)) : ('a:'+addr); const link=`https://world.org/mini-app?app_id=${APP_ID}&path=${encodeURIComponent('/?ref='+refPart)}`;return(<button onClick={async()=>{
     if (MiniKit.isInstalled()) {
       try {
         await MiniKit.share({ title: 'HachiMiner', text: 'Sumate a HachiMiner conmigo', url: link })

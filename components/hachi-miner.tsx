@@ -247,6 +247,7 @@ export default function HachiMiner() {
   const [rpContext, setRpContext] = useState<RpContext | null>(null)
   const [rpLoading, setRpLoading] = useState(false)
   const justVerifiedRef = useRef(false)
+  const userVerifCounter = useRef(1)
 
   const viemClient = useMemo(() => createPublicClient({
     chain: worldChain as any,
@@ -267,7 +268,6 @@ export default function HachiMiner() {
     let timer: ReturnType<typeof setInterval> | undefined
     const init = async () => {
       const refParam = new URLSearchParams(window.location.search).get('ref')
-      if (refParam && /^0x[0-9a-fA-F]{40}$/i.test(refParam)) setRefFromLink(refParam)
       try {
         MiniKit.install(APP_ID)
       } catch (e: any) {
@@ -283,6 +283,22 @@ export default function HachiMiner() {
       }
       log('isInstalled: ' + installed)
       setInWA(installed)
+
+      // Resolver el link de invitación DESPUÉS de confirmar MiniKit,
+      // porque si viene como username hace falta resolverlo a address.
+      if (refParam) {
+        if (refParam.startsWith('u:')) {
+          if (installed) {
+            try {
+              const u = await MiniKit.getUserByUsername(refParam.slice(2))
+              if (u?.walletAddress) setRefFromLink(u.walletAddress)
+            } catch (e) {}
+          }
+        } else {
+          const raw = refParam.startsWith('a:') ? refParam.slice(2) : refParam
+          if (/^0x[0-9a-fA-F]{40}$/i.test(raw)) setRefFromLink(raw)
+        }
+      }
     }
     init()
     return () => { if (timer) clearInterval(timer) }
@@ -313,7 +329,7 @@ export default function HachiMiner() {
     if (!a) return '—'
     if (addr && a.toLowerCase() === addr.toLowerCase() && username) return username
     const cached = usernameCache[a.toLowerCase()]
-    return cached || fmtA(a)
+    return cached || '···'
   }
 
   const resolveUsernames = useCallback(async (addresses: string[]) => {
@@ -326,7 +342,12 @@ export default function HachiMiner() {
     setUsernameCache(prev => {
       const next = {...prev}
       results.forEach((r, i) => {
-        if (r.status === 'fulfilled' && r.value?.username) next[pending[i]] = r.value.username
+        const found = r.status === 'fulfilled' ? r.value?.username : null
+        if (found) {
+          next[pending[i]] = found
+        } else if (!next[pending[i]]) {
+          next[pending[i]] = 'UserVerif ' + userVerifCounter.current++
+        }
       })
       return next
     })
@@ -1249,7 +1270,15 @@ export default function HachiMiner() {
         {tab==='refs'&&<div>
           <div style={card}><div style={cTitle}>Mi código de referido</div>
             <div style={{color:'#8b949e',fontSize:12,marginBottom:8}}>{addr?'✓ Tu código está listo para compartir':'Conecta tu wallet para ver tu código'}</div>
-            {(()=>{const link=`https://world.org/mini-app?app_id=${APP_ID}&path=${encodeURIComponent('/?ref='+addr)}`;return(<button onClick={async()=>{if(navigator.share){try{await navigator.share({title:'HachiMiner',url:link})}catch{await navigator.clipboard.writeText(link);toast_('Link copiado','#3fb950')}}else{await navigator.clipboard.writeText(link);toast_('Link copiado','#3fb950')}}} style={{...btnGh,marginTop:8}}>Compartir mi link de invitación</button>)})()}
+            {(()=>{const refPart = username ? ('u:'+encodeURIComponent(username)) : ('a:'+addr); const link=`https://world.org/mini-app?app_id=${APP_ID}&path=${encodeURIComponent('/?ref='+refPart)}`;return(<button onClick={async()=>{
+    if (MiniKit.isInstalled()) {
+      try {
+        await MiniKit.share({ title: 'HachiMiner', text: 'Sumate a HachiMiner conmigo', url: link })
+        return
+      } catch (e) {}
+    }
+    if(navigator.share){try{await navigator.share({title:'HachiMiner',url:link})}catch{await navigator.clipboard.writeText(link);toast_('Link copiado','#3fb950')}}else{await navigator.clipboard.writeText(link);toast_('Link copiado','#3fb950')}
+  }} style={{...btnGh,marginTop:8}}>Compartir mi link de invitación</button>)})()}
             <div style={pBox}>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Mis referidos</span><span style={{fontFamily:'monospace',fontWeight:600}}>{refInfo.totalRefs}</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI ganado</span><span style={{color:'#3fb950',fontFamily:'monospace'}}>{refInfo.earned}</span></div>

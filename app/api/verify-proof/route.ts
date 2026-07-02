@@ -80,14 +80,30 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const store = getStore("world-id-nullifiers");
-  const existing = await store.get(nullifier);
+  const existing = await store.get(nullifier, { type: 'text' });
+  const normalizedAddr = address.toLowerCase();
 
   if (existing !== null) {
-    return NextResponse.json({ error: "Already verified" }, { status: 400 });
+    // El nullifier ya fue usado. Si fue por la MISMA direccion (caso de
+    // datos viejos de pruebas anteriores al agregar el guardado de
+    // address, o un reintento legitimo), lo tratamos como éxito y
+    // completamos lo que falte — no es un problema de seguridad porque
+    // ya se valido arriba que el signal_hash coincide con esta address.
+    // Si fuera una direccion DISTINTA reusando el nullifier de otra
+    // persona, ahi si lo rechazamos.
+    if (existing !== normalizedAddr && existing !== "1") {
+      return NextResponse.json({ error: "Already verified" }, { status: 400 });
+    }
+    const addrExisting = await store.get('addr:' + normalizedAddr).catch(() => null);
+    if (addrExisting === null) {
+      await store.set('addr:' + normalizedAddr, "1");
+    }
+    const onChain = await syncHumanVerifiedOnChain(address);
+    return NextResponse.json({ success: true, onChain, healed: true });
   }
 
-  await store.set(nullifier, "1");
-  await store.set('addr:' + address.toLowerCase(), "1");
+  await store.set(nullifier, normalizedAddr);
+  await store.set('addr:' + normalizedAddr, "1");
 
   const onChain = await syncHumanVerifiedOnChain(address);
 

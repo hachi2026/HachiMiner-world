@@ -35,12 +35,13 @@ contract ReferralManager is ReentrancyGuard {
     address public owner;
     address public minerCore;       // para verificar humanVerified
     address public rankingContract;
+    address public worldVerifier;
 
     // --- CONSTANTES ------------------------------------------
     // Bono base 500 HACHI a cada parte. Halving UNICO a 1M de registros.
     uint256 public constant BASE_REF_BONUS   = 500 * 1e18;  // 500 al referidor
     uint256 public constant BASE_NEW_BONUS   = 500 * 1e18;  // 500 al nuevo usuario
-    uint256 public constant HALVING_THRESHOLD = 1_000_000;  // un solo halving a 1M registros
+    uint256 public constant HALVING_THRESHOLD = 1_000_000 * 1e18;  // un solo halving a 1M HACHI pagados
 
     // --- ESTADO ----------------------------------------------
     // user -> su referidor (address(0) si no tiene)
@@ -70,7 +71,7 @@ contract ReferralManager is ReentrancyGuard {
     event UserVerified(address indexed user);
 
     modifier onlyOwner() { require(msg.sender == owner, "not owner"); _; }
-    modifier onlyCore()  { require(msg.sender == minerCore || msg.sender == owner, "not authorized"); _; }
+    modifier onlyCore()  { require(msg.sender == minerCore || msg.sender == owner || msg.sender == worldVerifier, "not authorized"); _; }
     modifier onlyHuman() { require(humanVerified[msg.sender], "World ID required"); _; }
 
     constructor(address _hachi) {
@@ -81,7 +82,7 @@ contract ReferralManager is ReentrancyGuard {
     // --- HALVING UNICO ---------------------------------------
     // Antes de 1M registros: bono completo. Despues: mitad permanente.
     function _halved(uint256 v) internal view returns (uint256) {
-        return totalReferrals >= HALVING_THRESHOLD ? v / 2 : v;
+        return totalHachiPaid >= HALVING_THRESHOLD ? v / 2 : v;
     }
     function currentRefBonus() public view returns (uint256) { return _halved(BASE_REF_BONUS); }
     function currentNewBonus() public view returns (uint256) { return _halved(BASE_NEW_BONUS); }
@@ -89,6 +90,7 @@ contract ReferralManager is ReentrancyGuard {
     // --- CONFIG ----------------------------------------------
     function setMinerCore(address _c) external onlyOwner { minerCore = _c; }
     function setRanking(address _r) external onlyOwner { rankingContract = _r; }
+    function setWorldVerifier(address _v) external onlyOwner { worldVerifier = _v; }
     function transferOwnership(address n) external onlyOwner { owner = n; }
 
     /// @notice Sincronizar verificacion World ID desde HachiMinerCore
@@ -111,7 +113,7 @@ contract ReferralManager is ReentrancyGuard {
     // --- REGISTRAR CON REFERIDO -------------------------------
     /// @notice El nuevo usuario se registra indicando la wallet de quien lo refirio
     /// @param referrer Direccion de la wallet del referidor
-    function registerWithReferral(address referrer) external nonReentrant {
+    function registerWithReferral(address referrer) external nonReentrant onlyHuman {
         address newUser = msg.sender;
 
         require(referrer != address(0),  "Invalid referrer");

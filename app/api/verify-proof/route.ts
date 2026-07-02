@@ -11,16 +11,17 @@ async function syncHumanVerifiedOnChain(userAddress: string) {
   const pk = process.env.VERIFIER_PRIVATE_KEY;
   const referralManagerAddr = process.env.REFERRAL_MANAGER_ADDRESS;
   const hachiRankingAddr = process.env.HACHI_RANKING_ADDRESS;
+  const dailyRewardsAddr = process.env.HACHI_DAILY_REWARDS_ADDRESS;
 
   if (!pk) {
     console.error("VERIFIER_PRIVATE_KEY no configurada; no se pudo sincronizar on-chain");
-    return { referralManager: false, hachiRanking: false };
+    return { referralManager: false, hachiRanking: false, dailyRewards: false };
   }
 
   const provider = new ethers.JsonRpcProvider(RPC);
   const wallet = new ethers.Wallet(pk, provider);
 
-  const results = { referralManager: false, hachiRanking: false };
+  const results = { referralManager: false, hachiRanking: false, dailyRewards: false };
 
   if (referralManagerAddr) {
     try {
@@ -41,6 +42,17 @@ async function syncHumanVerifiedOnChain(userAddress: string) {
       results.hachiRanking = true;
     } catch (e) {
       console.error("Error sincronizando HachiRanking:", e);
+    }
+  }
+
+  if (dailyRewardsAddr) {
+    try {
+      const c = new ethers.Contract(dailyRewardsAddr, SET_HUMAN_VERIFIED_ABI, wallet);
+      const tx = await c.setHumanVerified(userAddress);
+      await tx.wait();
+      results.dailyRewards = true;
+    } catch (e) {
+      console.error("Error sincronizando HachiDailyRewards:", e);
     }
   }
 

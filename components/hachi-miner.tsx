@@ -1018,20 +1018,9 @@ export default function HachiMiner() {
                   <div style={{fontSize:26,fontWeight:700,fontFamily:'monospace',color:'#fbbf24'}}>{fmt(piggy.accrued)}</div>
                   <div style={{fontSize:13,color:'#8b949e'}}>HACHI ahorrados</div>
                 </div>
-                {(()=>{
-                  const now = Math.floor(Date.now()/1000)
-                  const cooldownEnds = lastSettle + 86400
-                  const inCooldown = lastSettle > 0 && now < cooldownEnds
-                  if (inCooldown) {
-                    const s = cooldownEnds - now, h = Math.floor(s/3600), m = Math.floor((s%3600)/60)
-                    return <div style={{fontSize:11,color:'#d29922',marginTop:4}}>{`Próximo retiro disponible en ${h}h ${m}m`}</div>
-                  }
-                  return <div style={{fontSize:11,color:piggy.canWithdraw?'#3fb950':'#8b949e',marginTop:4}}>{piggy.canWithdraw?'✓ Retirá cuando quieras':'Aún no hay HACHI acumulado'}</div>
-                })()}
               </div>
             </div>
             <button onClick={withdrawDaily} disabled={!piggy.canWithdraw||!connected} style={{...btnG,width:'100%',padding:'10px 12px',opacity:(!piggy.canWithdraw||!connected)?0.4:1}}>Retirar al wallet</button>
-            {!accrualStarted&&connected&&<button onClick={startAccrualFn} style={{...btnP,width:'100%',padding:'10px 12px',marginTop:8}}>Activar acumulador</button>}
             <div style={{fontSize:10,color:'#8b949e',marginTop:8,lineHeight:1.5}}>{piggy.canWithdraw ? `Podés reclamar ${fmt(piggy.accrued)} HACHI${piggy.bonus>0?` + ${fmt(piggy.bonus)} bonus`:''} ahora.` : `Próximo reclamo disponible en ${Math.ceil(piggy.secondsUntilNext/3600)}h.`} Se puede reclamar una vez cada 24hs.</div>
           </div>
           <button onClick={()=>window.open(HACHI_BUY_URL,'_blank')} style={{...btnG,width:'100%',marginBottom:12}}>🪙 Comprar HACHI</button>

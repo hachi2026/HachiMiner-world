@@ -33,7 +33,7 @@ const RPC = 'https://worldchain-mainnet.g.alchemy.com/public'
 const HACHI_BUY_URL = 'https://world.org/mini-app?app_id=app_e5ba7c3061400e361f98ce44d8b1b9c4&path=/token/0xbe0313f279580fdd1aa1b1b6888407e6504ff19e'
 const WORLDCHAIN_ID = 480
 const MAX_HACHI = 20000
-const APP_ID = 'app_faaadf7d4dc1285275a436a8cac18e69'
+const APP_ID = 'app_ba8d66235ecf4bc9e341fff3768d9058'
 // Incognito Action de World ID configurada en el Developer Portal.
 // DEBE coincidir con el externalNullifierHash con el que se desplegó el contrato.
 const ACTION = 'verify-human'

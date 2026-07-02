@@ -939,7 +939,9 @@ export default function HachiMiner() {
               keepalive: true,
             })
             if (!res.ok) {
-              const { error } = await res.json().catch(() => ({ error: 'Error' }))
+              const { error } = await res.json().catch(() => ({ error: 'Error desconocido' }))
+              log('verify-proof falló: ' + String(error).slice(0,80))
+              toast_('Verify falló: ' + String(error).slice(0,60), '#f85149')
               throw new Error(error)
             }
           }}

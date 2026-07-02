@@ -207,6 +207,7 @@ export default function HachiMiner() {
   const [licsAvail, setLicsAvail] = useState('—')
   const [priceAlert, setPriceAlert] = useState(false)
   const [piggy, setPiggy] = useState({accrued:0,bonus:0,canWithdraw:false,secondsUntilNext:0})
+  const [activeLicCount, setActiveLicCount] = useState(0)
   const [selWLD, setSelWLD] = useState(0)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
   const [wldLics, setWldLics] = useState<any[]>([])
@@ -415,7 +416,7 @@ export default function HachiMiner() {
 
   const loadAll = async (address: string) => {
     const p = rpc()
-    await Promise.allSettled([loadBal(address,p), loadOracle(address,p), checkVerif(address,p), checkDaily(address,p), loadPools(p), loadLock(p)])
+    await Promise.allSettled([loadBal(address,p), loadOracle(address,p), checkVerif(address,p), checkDaily(address,p), loadPools(p), loadLock(p), loadActiveLicCount(address,p)])
   }
 
   const loadBal = async (a: string, p: ethers.JsonRpcProvider) => {
@@ -505,6 +506,17 @@ export default function HachiMiner() {
       canMineOk = Boolean(ok)
     } catch(e: any) { log('canMine err: '+(e?.message||'').slice(0,80)) }
     setSushiAccess(tierNum !== 255 || canMineOk)
+  }
+
+  const loadActiveLicCount = async (a: string, p: ethers.JsonRpcProvider) => {
+    try {
+      const core = new ethers.Contract(C.core, CORE, p)
+      const ids: bigint[] = await core.getUserWLDLics(a)
+      const now = Math.floor(Date.now()/1000)
+      const results = await Promise.all(ids.map((id:bigint) => core.wldLics(id)))
+      const count = results.filter((l:any) => l[10] && Number(l[7]) > now).length
+      setActiveLicCount(count)
+    } catch(e) {}
   }
 
   // Interpreta el finalPayload de MiniKit.commandsAsync.* (v1.11) y lanza un error legible.
@@ -1022,6 +1034,7 @@ export default function HachiMiner() {
             </div>
             <button onClick={withdrawDaily} disabled={!piggy.canWithdraw||!connected} style={{...btnG,width:'100%',padding:'10px 12px',opacity:(!piggy.canWithdraw||!connected)?0.4:1}}>Retirar al wallet</button>
             <div style={{fontSize:10,color:'#8b949e',marginTop:8,lineHeight:1.5}}>{piggy.canWithdraw ? `Podés reclamar ${fmt(piggy.accrued)} HACHI${piggy.bonus>0?` + ${fmt(piggy.bonus)} bonus`:''} ahora.` : `Próximo reclamo disponible en ${Math.ceil(piggy.secondsUntilNext/3600)}h.`} Se puede reclamar una vez cada 24hs.</div>
+            <div style={{fontSize:10,color:'#8b949e',marginTop:4}}>Licencias WLD activas: <span style={{color:'#e6edf3',fontWeight:600}}>{activeLicCount}</span></div>
           </div>
           <button onClick={()=>window.open(HACHI_BUY_URL,'_blank')} style={{...btnG,width:'100%',marginBottom:12}}>🪙 Comprar HACHI</button>
           {!connected&&<div style={{textAlign:'center',padding:'32px 16px',color:'#8b949e'}}>

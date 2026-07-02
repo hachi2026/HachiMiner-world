@@ -936,6 +936,7 @@ export default function HachiMiner() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ rp_id: 'rp_ef869d909ad99c43', idkitResponse: result, address: addr }),
+              keepalive: true,
             })
             if (!res.ok) {
               const { error } = await res.json().catch(() => ({ error: 'Error' }))

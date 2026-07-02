@@ -917,6 +917,52 @@ export default function HachiMiner() {
     )
   }
 
+  // PANTALLA DE VERIFICACIÓN OBLIGATORIA — conectado pero no verificado
+  if (connected && !verified) {
+    return (
+      <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#2a1f63 0%,#1d1a52 55%,#2b2c78 100%)',color:'#e6edf3',fontFamily:'Georgia,serif',display:'flex',flexDirection:'column'}}>
+        {toast&&<div style={{position:'fixed',top:16,right:16,zIndex:999,padding:'10px 16px',borderRadius:8,background:'#161b22',border:`1px solid ${toast.color}`,color:toast.color,fontSize:13,maxWidth:320}}>{toast.msg}</div>}
+
+        {rpContext&&(
+          <IDKitRequestWidget
+            app_id="app_ba8d66235ecf4bc9e341fff3768d9058"
+            action="verify-human"
+            rp_context={rpContext}
+            allow_legacy_proofs={true}
+            preset={orbLegacy({ signal: addr })}
+            open={showVerify}
+            onOpenChange={(open) => setShowVerify(open)}
+            handleVerify={async (result) => {
+              const res = await fetch('/api/verify-proof', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rp_id: 'rp_ef869d909ad99c43', idkitResponse: result, address: addr }),
+                keepalive: true,
+              })
+              if (!res.ok) {
+                const { error } = await res.json().catch(() => ({ error: 'Error desconocido' }))
+                log('verify-proof falló: ' + String(error).slice(0,80))
+                toast_('Verify falló: ' + String(error).slice(0,60), '#f85149')
+                throw new Error(error)
+              }
+            }}
+            onSuccess={() => { justVerifiedRef.current = true; setVerified(true); setShowVerify(false); toast_('✓ Verificado con World ID', '#3fb950') }}
+            onError={(code) => { if (!justVerifiedRef.current) toast_('Error: ' + code, '#f85149'); justVerifiedRef.current = false }}
+          />
+        )}
+
+        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'8px 20px 40px',maxWidth:480,margin:'0 auto',width:'100%'}}>
+          <div style={{fontSize:56,marginBottom:8,filter:'drop-shadow(0 0 20px rgba(232,121,249,.6))'}}>🪪</div>
+          <h1 style={{fontSize:28,fontWeight:700,color:'#e879f9',textShadow:'0 0 18px rgba(232,121,249,.5)',margin:'0 0 8px',textAlign:'center'}}>Verificá que sos humano</h1>
+          <p style={{fontSize:14,color:'#c4b5fd',fontStyle:'italic',textAlign:'center',margin:'0 0 28px',lineHeight:1.5,maxWidth:360}}>HachiMiner es solo para humanos verificados con World ID. Verificate para ver tus datos y empezar a participar.</p>
+          <button onClick={handleOpenVerify} disabled={rpLoading} style={{...btnP,marginTop:8,fontSize:15,padding:'14px 16px',opacity:rpLoading?0.6:1}}>
+            {rpLoading?'Preparando verificación...':'Verificar con World ID'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#2a1f63 0%,#1d1a52 55%,#2b2c78 100%)',color:'#e6edf3',fontFamily:'Georgia,serif'}}>
       {toast&&<div style={{position:'fixed',top:16,right:16,zIndex:999,padding:'10px 16px',borderRadius:8,background:'#161b22',border:`1px solid ${toast.color}`,color:toast.color,fontSize:13,maxWidth:320}}>{toast.msg}</div>}

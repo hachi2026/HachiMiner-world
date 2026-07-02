@@ -48,6 +48,8 @@ contract HachiRanking is ReentrancyGuard {
     address public poolsContract;
     address public minerCore;
     address public referralsContract;
+    address public worldVerifier;
+    mapping(address => bool) public humanVerified;
 
     uint256 public constant EPOCH = 1749340800; // domingo 8 jun 2026 00:00 UTC
     uint256 public constant PERIOD = 15 days;    // distribucion cada 15 dias
@@ -80,8 +82,10 @@ contract HachiRanking is ReentrancyGuard {
     }
     mapping(uint256 => PeriodResult) public periodHistory;
 
-    // Top 10: porcentajes del 50% del pool (base 1000)
-    uint256[10] public topShares;
+    // Top 50: porcentajes del pool total (base 100000). Curva decreciente,
+    // nadie mas alla del puesto 50 cobra premio de ranking.
+    uint256 public constant TOP_N = 50;
+    uint256[50] public topShares;
 
     event PointsAdded(address indexed user, uint256 base, uint256 multiplied);
     event PeriodExecuted(uint256 periodNum, uint256 pool, uint256 participants_);
@@ -90,6 +94,7 @@ contract HachiRanking is ReentrancyGuard {
     event PoolFunded(uint256 fixed_, uint256 accrued, uint256 total);
 
     modifier onlyOwner() { require(msg.sender == owner, "not owner"); _; }
+    modifier onlyHuman() { require(humanVerified[msg.sender], "World ID required"); _; }
     modifier onlyAuth() {
         require(
             msg.sender == owner || msg.sender == minerCore ||
@@ -110,17 +115,15 @@ contract HachiRanking is ReentrancyGuard {
         tierMult[4] = 40; // rubi:     x4
         tierMult[5] = 50; // diamante: x5
 
-        // Top 10 = 50% del pool (base 1000 sobre ese 50%)
-        topShares[0] = 150; // #1  -> 15% total
-        topShares[1] = 100; // #2  -> 10%
-        topShares[2] =  70; // #3  ->  7%
-        topShares[3] =  50; // #4  ->  5%
-        topShares[4] =  50; // #5  ->  5%
-        topShares[5] =  30; // #6  ->  3%
-        topShares[6] =  30; // #7  ->  3%
-        topShares[7] =  10; // #8  ->  1%
-        topShares[8] =   5; // #9  ->  0.5%
-        topShares[9] =   5; // #10 ->  0.5%
+        // Top 50 = 100% del pool (base 100000), curva geometrica decreciente
+        uint256[50] memory s = [
+            uint256(14999), 12000, 10000, 5000, 4500, 4160, 3846, 3556, 3287, 3039,
+            2810, 2598, 2402, 2220, 2053, 1898, 1754, 1622, 1500, 1386,
+            1282, 1185, 1096, 1013, 936, 866, 800, 740, 684, 632,
+            585, 541, 500, 462, 427, 395, 365, 338, 312, 288,
+            267, 247, 228, 211, 195, 180, 167, 154, 142, 132
+        ];
+        for (uint256 i = 0; i < 50; i++) topShares[i] = s[i];
     }
 
     // --- CONFIG ----------------------------------------------
@@ -134,13 +137,21 @@ contract HachiRanking is ReentrancyGuard {
         referralsContract = _refs;
     }
     function setTierMult(uint8 tier, uint256 m) external onlyOwner { tierMult[tier] = m; }
-    function setTopShares(uint256[10] calldata s) external onlyOwner {
+    function setTopShares(uint256[50] calldata s) external onlyOwner {
         uint256 sum = 0;
-        for (uint256 i = 0; i < 10; i++) sum += s[i];
-        require(sum == 500, "Must sum 500");
-        for (uint256 i = 0; i < 10; i++) topShares[i] = s[i];
+        for (uint256 i = 0; i < 50; i++) sum += s[i];
+        require(sum == 100000, "Must sum 100000");
+        for (uint256 i = 0; i < 50; i++) topShares[i] = s[i];
     }
     function transferOwnership(address n) external onlyOwner { owner = n; }
+    function setWorldVerifier(address _v) external onlyOwner { worldVerifier = _v; }
+
+    /// @notice Sincronizar verificacion World ID (v4, verificado off-chain
+    /// por el backend, via worldVerifier).
+    function setHumanVerified(address user) external {
+        require(msg.sender == owner || msg.sender == worldVerifier, "not authorized");
+        humanVerified[user] = true;
+    }
 
     // --- AGREGAR PUNTOS --------------------------------------
     function addPoints(address user, uint256 basePoints) external onlyAuth {
@@ -232,35 +243,16 @@ contract HachiRanking is ReentrancyGuard {
             pts[uint256(j+1)]    = kp;
         }
 
-        // Top 10 -> 50% del pool
-        uint256 topCount = n < 10 ? n : 10;
-        uint256 topPool  = pool / 2;
-        uint256 topPaid  = 0;
+        // Top 50 -> 100% del pool con curva. Nadie mas alla del puesto 50
+        // cobra premio de este periodo (sus puntos igual se resetean).
+        uint256 topCount = n < TOP_N ? n : TOP_N;
 
         for (uint256 rank = 0; rank < topCount; rank++) {
-            uint256 prize = (topPool * topShares[rank]) / 500;
+            uint256 prize = (pool * topShares[rank]) / 100000;
             if (prize == 0) continue;
             pendingHachi[sorted[rank]]  += prize;
             totalHachiWon[sorted[rank]] += prize;
-            topPaid += prize;
             emit PrizePaid(sorted[rank], prize, rank + 1);
-        }
-
-        // Resto -> proporcional a puntos
-        uint256 restPool = pool - topPaid;
-        uint256 restN    = n > topCount ? n - topCount : 0;
-        if (restN > 0 && restPool > 0) {
-            uint256 restPts = 0;
-            for (uint256 i = topCount; i < n; i++) restPts += pts[i];
-            if (restPts > 0) {
-                for (uint256 i = topCount; i < n; i++) {
-                    uint256 share = (restPool * pts[i]) / restPts;
-                    if (share == 0) continue;
-                    pendingHachi[sorted[i]]  += share;
-                    totalHachiWon[sorted[i]] += share;
-                    emit PrizePaid(sorted[i], share, i + 1);
-                }
-            }
         }
 
         periodHistory[periodNum] = PeriodResult({
@@ -277,7 +269,7 @@ contract HachiRanking is ReentrancyGuard {
     }
 
     // --- CLAIM -----------------------------------------------
-    function claimPrize() external nonReentrant {
+    function claimPrize() external nonReentrant onlyHuman {
         uint256 amount = pendingHachi[msg.sender];
         require(amount > 0, "Nothing to claim");
         pendingHachi[msg.sender] = 0;
@@ -332,12 +324,8 @@ contract HachiRanking is ReentrancyGuard {
         }
         // Estimar premios
         if (periodPool > 0) {
-            uint256 top = n < 10 ? n : 10;
-            uint256 tp  = periodPool / 2;
-            for (uint256 r = 0; r < top; r++) estimated[r] = (tp * topShares[r]) / 500;
-            uint256 rp = periodPool - tp; uint256 rPts = 0;
-            for (uint256 i = top; i < n; i++) rPts += points[i];
-            if (rPts > 0) for (uint256 i = top; i < n; i++) estimated[i] = (rp * points[i]) / rPts;
+            uint256 top = n < TOP_N ? n : TOP_N;
+            for (uint256 r = 0; r < top; r++) estimated[r] = (periodPool * topShares[r]) / 100000;
         }
     }
 

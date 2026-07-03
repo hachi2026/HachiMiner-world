@@ -1081,10 +1081,10 @@ export default function HachiMiner() {
               {(()=>{
                 const specialIdx = wldTierActive===255?null:wldTierActive===0?0:wldTierActive
                 const secsLeft = Math.max(0, lastSpecialTs + 5*86400 - Math.floor(Date.now()/1000))
-                const sd=Math.floor(secsLeft/86400), sh=Math.floor((secsLeft%86400)/3600)
+                const sd=Math.floor(secsLeft/86400), sh=Math.floor((secsLeft%86400)/3600), sm=Math.floor((secsLeft%3600)/60)
                 const cards:{idx:number,special:boolean,label:string|null,disabled:boolean}[] = [
                   {idx:0, special:false, label:null, disabled:false},
-                  ...(specialIdx!==null?[{idx:specialIdx, special:true, label:specialAvail?'✨ Especial disponible':`⏳ Disponible en ${sd}d ${sh}h`, disabled:!specialAvail}]:[])
+                  ...(specialIdx!==null?[{idx:specialIdx, special:true, label:specialAvail?'✨ Especial disponible':(sd===0&&sh===0?`⏳ Disponible en ${sm}m`:`⏳ Disponible en ${sd}d ${sh}h`), disabled:!specialAvail}]:[])
                 ]
                 return(
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
@@ -1111,8 +1111,8 @@ export default function HachiMiner() {
                     {specialType&&(()=>{
                       if (specialAvail) return <div style={row}><span style={{color:'#8b949e'}}>Especial (c/5 días)</span><span style={{color:'#3fb950',fontWeight:600}}>{`✓ Disponible · ${specialType}`}</span></div>
                       const secsLeft = Math.max(0, lastSpecialTs + 5*86400 - Math.floor(Date.now()/1000))
-                      const sd=Math.floor(secsLeft/86400), sh=Math.floor((secsLeft%86400)/3600)
-                      return <div style={row}><span style={{color:'#8b949e'}}>Especial (c/5 días)</span><span style={{color:'#d29922',fontWeight:600}}>{`Disponible en ${sd}d ${sh}h`}</span></div>
+                      const sd=Math.floor(secsLeft/86400), sh=Math.floor((secsLeft%86400)/3600), sm=Math.floor((secsLeft%3600)/60)
+                      return <div style={row}><span style={{color:'#8b949e'}}>Especial (c/5 días)</span><span style={{color:'#d29922',fontWeight:600}}>{sd===0&&sh===0?`Disponible en ${sm}m`:`Disponible en ${sd}d ${sh}h`}</span></div>
                     })()}
                   </div>
                 )

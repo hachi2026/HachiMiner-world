@@ -205,7 +205,7 @@ export default function HachiMiner() {
   const [oracleSt, setOracleSt] = useState('—')
   const [poolFree, setPoolFree] = useState('—')
   const [licsAvail, setLicsAvail] = useState('—')
-  const [licsAvailNum, setLicsAvailNum] = useState(1)
+  const [licsAvailNum, setLicsAvailNum] = useState(0)
   const [priceAlert, setPriceAlert] = useState(false)
   const [piggy, setPiggy] = useState({accrued:0,bonus:0,canWithdraw:false,secondsUntilNext:0})
   const [activeLicCount, setActiveLicCount] = useState(0)

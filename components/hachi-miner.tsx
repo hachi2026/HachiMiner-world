@@ -830,13 +830,15 @@ export default function HachiMiner() {
     try {
       const rf = new ethers.Contract(C.referral,REFERRAL,p)
       const [info,refB,newB] = await Promise.all([rf.getReferralInfo(addr), rf.currentRefBonus(), rf.currentNewBonus()])
+      const referrerAddr = info[0]!=='0x0000000000000000000000000000000000000000'?info[0]:''
       setRefInfo({
-        referrer: info[0]!=='0x0000000000000000000000000000000000000000'?info[0]:'',
+        referrer: referrerAddr,
         totalRefs: Number(info[1]),
         earned: fmt(fe(info[2]))+' HACHI',
         refBonus: fmt(fe(refB)),
         newBonus: fmt(fe(newB)),
       })
+      if (referrerAddr) resolveUsernames([referrerAddr])
     } catch(e) {}
   }
   const registerReferral = async () => {
@@ -1240,7 +1242,7 @@ export default function HachiMiner() {
           </div>
           {refInfo.referrer?
             <div style={card}><div style={cTitle}>Ya tenés referidor</div>
-              <div style={{fontFamily:'monospace',fontSize:12,wordBreak:'break-all',color:'#a78bfa'}}>{refInfo.referrer}</div>
+              <div style={{fontFamily:'monospace',fontSize:12,wordBreak:'break-all',color:'#a78bfa'}}>{nameFor(refInfo.referrer)}</div>
             </div>
           : refFromLink ?
             <>

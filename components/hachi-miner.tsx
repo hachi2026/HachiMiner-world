@@ -124,7 +124,7 @@ const LOGIN = {
       { icon:'📜', title:'Licencias', desc:'Compra tu licencia WLD y obtén beneficios adicionales en Bocados según tu nivel — a mayor nivel, mayor acceso.' },
       { icon:'🔒', title:'Lock & APY', desc:'Bloquea HACHI y gana rendimiento sobre tu posición.' },
       { icon:'🏆', title:'Ranking', desc:'Compite por premios según tu actividad.' },
-      { icon:'🐱', title:'Reúne y cobra tus HACHI', desc:'Hachi acumula HACHI por vos automáticamente. Retirá cuando quieras; hay un cooldown de 24h entre retiros.' },
+      { icon:'🐱', title:'Reúne y cobra tus HACHI', desc:'Hachi te prepara una recompensa lista para reclamar cada 24hs, según tu actividad (lock y licencias). Un solo toque, sin esperas largas.' },
     ],
     stepsTitle: 'Cómo empezar',
     steps: [
@@ -144,7 +144,7 @@ const LOGIN = {
       { icon:'📜', title:'Licenses', desc:'Buy your WLD license and get extra Bocado benefits based on your tier — higher tier, greater access.' },
       { icon:'🔒', title:'Lock & APY', desc:'Lock HACHI and earn yield on your position.' },
       { icon:'🏆', title:'Ranking', desc:'Compete for prizes based on your activity.' },
-      { icon:'🐱', title:'Collect your HACHI', desc:'Hachi accumulates HACHI for you automatically. Withdraw whenever you want; there\'s a 24h cooldown between withdrawals.' },
+      { icon:'🐱', title:'Collect your HACHI', desc:'Hachi gets a reward ready for you to claim every 24h, based on your activity (lock and licenses). One tap, no long waits.' },
     ],
     stepsTitle: 'How to start',
     steps: [
@@ -164,7 +164,7 @@ const LOGIN = {
       { icon:'📜', title:'Licenças', desc:'Compre sua licença WLD e obtenha benefícios extras em Bocados conforme seu nível — quanto maior o nível, maior o acesso.' },
       { icon:'🔒', title:'Lock & APY', desc:'Bloqueie HACHI e ganhe rendimento na sua posição.' },
       { icon:'🏆', title:'Ranking', desc:'Concorra a prêmios conforme sua atividade.' },
-      { icon:'🐱', title:'Reúna e resgate seus HACHI', desc:'O Hachi acumula HACHI por você automaticamente. Saque quando quiser; há um cooldown de 24h entre saques.' },
+      { icon:'🐱', title:'Reúna e resgate seus HACHI', desc:'Hachi prepara uma recompensa pronta para você resgatar a cada 24h, de acordo com sua atividade (lock e licenças). Um toque só, sem esperas longas.' },
     ],
     stepsTitle: 'Como começar',
     steps: [
@@ -205,6 +205,7 @@ export default function HachiMiner() {
   const [oracleSt, setOracleSt] = useState('—')
   const [poolFree, setPoolFree] = useState('—')
   const [licsAvail, setLicsAvail] = useState('—')
+  const [licsAvailNum, setLicsAvailNum] = useState(1)
   const [priceAlert, setPriceAlert] = useState(false)
   const [piggy, setPiggy] = useState({accrued:0,bonus:0,canWithdraw:false,secondsUntilNext:0})
   const [activeLicCount, setActiveLicCount] = useState(0)
@@ -439,7 +440,7 @@ export default function HachiMiner() {
       setWldHachi(wh); setHachiSushi(hs); setOracleSt(r[3]?'Manual':'DEX en vivo ✓'); setPriceAlert(wh>MAX_HACHI)
       const ws = await new ethers.Contract(C.poolWLD,POOLWLD,p).getPoolStatus()
       const hf=fe(ws[1]), costPerLic=wh*1.30, lb=costPerLic>0?Math.floor(hf/costPerLic):0
-      setPoolFree(fmt(hf)+' HACHI'); setLicsAvail(lb>0?lb+' lics. básicas':'0 (sin fondos)')
+      setPoolFree(fmt(hf)+' HACHI'); setLicsAvail(lb>0?lb+' lics. básicas':'0'); setLicsAvailNum(lb)
     } catch(e) {}
   }
 
@@ -819,7 +820,7 @@ export default function HachiMiner() {
     const r = await new ethers.Contract(C.oracle,ORACLE,p).getRates()
     const hf=fe(ws[1]), wh=fe(r[0]), costPerLic=wh*1.30
     const n = costPerLic>0 ? Math.floor(hf/costPerLic) : 0
-    localLicsAvail = n > 0 ? n + ' lics. básicas' : '0 (sin fondos)'
+    localLicsAvail = n > 0 ? n + ' lics. básicas' : '0'
   } catch(e) {}
   setPoolsData({wldTotal:fmt(fe(ws[0]))+' HACHI', wldComm:fmt(fe(ws[2]))+' HACHI', wldFree:fmt(fe(ws[1]))+' HACHI', wldPaid:fmt(fe(ws[3]))+' HACHI', poolA, poolAC, poolAF, sushiAvail, wldSales:fmt(fe(st[0]))+' WLD', wldLics:st[2].toString(), sushiLics:st[3].toString(), burned:fmt(fe(st[4]))+' HACHI', licsAvail:localLicsAvail})
   } catch(e:any) { log('loadPools err: '+(e.message||'error').slice(0,50)) }
@@ -879,6 +880,11 @@ export default function HachiMiner() {
             <p style={{fontSize:13,color:'#c9d1d9',lineHeight:1.6,margin:0}}>{loginCopy.whatDesc}</p>
           </div>
 
+          {/* CTA */}
+          <button onClick={connectWallet} style={{...btnP,marginTop:8,marginBottom:12,fontSize:15,padding:'14px 16px',width:'100%'}}>
+            {inWA ? loginCopy.ctaWA : loginCopy.cta}
+          </button>
+
           {/* FEATURES */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,width:'100%',marginBottom:12}}>
             {loginCopy.features.map((f,i)=>(
@@ -901,10 +907,6 @@ export default function HachiMiner() {
             ))}
           </div>
 
-          {/* CTA */}
-          <button onClick={connectWallet} style={{...btnP,marginTop:8,fontSize:15,padding:'14px 16px'}}>
-            {inWA ? loginCopy.ctaWA : loginCopy.cta}
-          </button>
           <p style={{fontSize:11,color:'#8b949e',textAlign:'center',marginTop:12,lineHeight:1.5}}>{loginCopy.disclaimer}</p>
         </div>
       </div>
@@ -1020,7 +1022,7 @@ export default function HachiMiner() {
         {tab==='home'&&<div>
           {priceAlert&&<div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:13,color:'#f87171',textAlign:'center'}}>⚠ Ventas WLD pausadas — HACHI devaluado ({fmt(wldHachi)} &gt; {MAX_HACHI.toLocaleString()})</div>}
           <div style={card}><div style={cTitle}>Estado del sistema</div>
-            {[['Oracle',oracleSt],['1 WLD =',fmt(wldHachi)+' HACHI'],['1 HACHI =',hachiSushi.toFixed(4)+' SUSHI'],['Pool WLD disponible',poolFree],['Licencias WLD disponibles',licsAvail],['Máximo HACHI/WLD',MAX_HACHI.toLocaleString()]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
+            {[['Oracle',oracleSt],['1 WLD =',fmt(wldHachi)+' HACHI'],['1 HACHI =',hachiSushi.toFixed(4)+' SUSHI'],['Pool WLD disponible',poolFree],['Licencias WLD disponibles',licsAvail]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
           </div>
           <div style={card}><div style={cTitle}>HACHI</div>
             <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:12}}>
@@ -1061,7 +1063,7 @@ export default function HachiMiner() {
               </div>)}
             </div>
             <div style={pBox}>{[['Tipo',wldNames[selWLD]],['Precio',wldPrices[selWLD]],['HACHI base',wldPrev.base],[selWLD===3?'Total ×1.35 (Elite +5%)':'Total ×1.3',wldPrev.total],['HACHI/día',wldPrev.daily],['Mensual',wldPrev.monthly]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace',fontSize:13}}>{v}</span></div>)}</div>
-            <button onClick={buyWLD} disabled={!connected||wldHachi>MAX_HACHI} style={{...btnP,opacity:(!connected||wldHachi>MAX_HACHI)?0.4:1}}>{wldHachi>MAX_HACHI?'⚠ Ventas pausadas':`Comprar · ${wldPrices[selWLD]}`}</button>
+            <button onClick={buyWLD} disabled={!connected||wldHachi>MAX_HACHI||licsAvailNum<=0} style={{...btnP,opacity:(!connected||wldHachi>MAX_HACHI||licsAvailNum<=0)?0.4:1}}>{wldHachi>MAX_HACHI?'⚠ Ventas pausadas':licsAvailNum<=0?'Sin stock disponible':`Comprar · ${wldPrices[selWLD]}`}</button>
             <div style={sLabel}>Licencias WLD activas</div>
             {wldLics.length===0?<div style={empty}><div style={{fontSize:28}}>💠</div><div>{t('no_lics')}</div></div>:wldLics.map(({id,l,pend})=><div key={id.toString()} style={card}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><strong>{['Básica','Estándar','Premium','Elite'][l[1]]}</strong><div style={{color:l[10]?'#3fb950':'#8b949e'}}>●</div></div>
@@ -1130,7 +1132,14 @@ export default function HachiMiner() {
               <div style={{fontSize:24,fontWeight:700,fontFamily:'monospace',color:'#34d399'}}>{lockData.pending}</div>
               <div style={{fontSize:12,color:'#8b949e'}}>HACHI APY pendiente</div>
             </div>
-            {[['Total lockeado',lockData.total],['Tier',lockData.tier],['APY anual',lockData.apy],['Próximo cobro en',lockData.nextClaimIn]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
+            {[['Total lockeado',lockData.total],['Tier',lockData.tier],['APY anual',lockData.apy]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
+            <div style={{...row,marginTop:2}}>
+              <span style={{color:'#8b949e'}}>Próximo cobro en</span>
+              {lockData.nextClaimIn==='—'
+                ? <span style={{fontFamily:'monospace',fontWeight:700,color:'#3fb950',display:'flex',alignItems:'center',gap:4}}>✓ Listo</span>
+                : <span style={{fontFamily:'monospace',fontWeight:700,color:'#fbbf24',textShadow:'0 0 8px rgba(251,191,36,.5)'}}>{lockData.nextClaimIn}</span>
+              }
+            </div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
             <button onClick={claimAPY} style={btnG}>Cobrar APY</button>
@@ -1187,7 +1196,7 @@ export default function HachiMiner() {
             <div style={cTitle}>¿Cómo se suman puntos?</div>
             <div style={{marginBottom:10}}>
               <div style={{fontSize:11,fontWeight:700,color:'#34d399',marginBottom:4,letterSpacing:.5}}>✓ SUMAN PUNTOS</div>
-              {[['💰','Cobrar HACHI de licencia WLD'],['bocado','Comprar Bocado'],['🐱','Retirar de la alcancía'],['📢','Participar en anuncios'],['📈','Cobrar APY del Lock'],['👥','Registrar un referido (vos y tu referido)']].map(([icon,text])=><div key={text} style={{display:'flex',alignItems:'flex-start',gap:6,padding:'4px 0',borderBottom:'1px solid #3b0764'}}><span style={{flexShrink:0,fontSize:13,display:'flex',alignItems:'center'}}>{icon==='bocado'?<img src="/hachi-cat-savings.png" width={16} height={16} style={{borderRadius:3,objectFit:'cover'}} />:icon}</span><span style={{fontSize:12,color:'#c9d1d9',lineHeight:1.4}}>{text}</span></div>)}
+              {[['💰','Cobrar HACHI de licencia WLD'],['bocado','Comprar Bocado'],['🐱','Reclamar recompensa diaria'],['📈','Cobrar APY del Lock'],['👥','Registrar un referido (vos y tu referido)']].map(([icon,text])=><div key={text} style={{display:'flex',alignItems:'flex-start',gap:6,padding:'4px 0',borderBottom:'1px solid #3b0764'}}><span style={{flexShrink:0,fontSize:13,display:'flex',alignItems:'center'}}>{icon==='bocado'?<img src="/hachi-cat-savings.png" width={16} height={16} style={{borderRadius:3,objectFit:'cover'}} />:icon}</span><span style={{fontSize:12,color:'#c9d1d9',lineHeight:1.4}}>{text}</span></div>)}
             </div>
             <div style={{marginBottom:10}}>
               <div style={{fontSize:11,fontWeight:700,color:'#f87171',marginBottom:4,letterSpacing:.5}}>✗ NO SUMAN PUNTOS</div>

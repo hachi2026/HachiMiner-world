@@ -1022,9 +1022,6 @@ export default function HachiMiner() {
       <div style={{maxWidth:480,margin:'0 auto',padding:16}}>
 
         {tab==='home'&&<div>
-          <div style={{background:'rgba(124,58,237,.1)',border:'1px solid #7c3aed',borderRadius:8,padding:12,marginBottom:12,fontSize:12,color:'#e6edf3',lineHeight:1.5}}>
-            🛡️ <strong>Nueva versión anti-bot disponible.</strong> Ya podés entrar a la versión verificada con World ID: <a href="https://worldcoin.org/mini-app?app_id=app_ba8d66235ecf4bc9e341fff3768d9058&app_mode=mini-app" target="_blank" rel="noopener noreferrer" style={{color:'#a78bfa',textDecoration:'underline'}}>abrir versión nueva</a>. Esta app sigue funcionando con normalidad hasta el <strong>9 de julio</strong>, cuando se ejecuta el reparto final del ranking (con 5 días extra para reclamar tu premio). Tus licencias y tu HACHI lockeado se mantienen exactamente igual en la nueva versión — no perdés nada.
-          </div>
           {priceAlert&&<div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:13,color:'#f87171',textAlign:'center'}}>⚠ Ventas WLD pausadas — HACHI devaluado ({fmt(wldHachi)} &gt; {MAX_HACHI.toLocaleString()})</div>}
           <div style={card}><div style={cTitle}>Estado del sistema</div>
             {[['Oracle',oracleSt],['1 WLD =',fmt(wldHachi)+' HACHI'],['1 HACHI =',hachiSushi.toFixed(4)+' SUSHI'],['Pool WLD disponible',poolFree],['Licencias WLD disponibles',licsAvail]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}

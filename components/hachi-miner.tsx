@@ -1003,7 +1003,7 @@ export default function HachiMiner() {
       `}</style>
       <div style={{background:'#211a55',borderBottom:'1px solid #4c3a8f',padding:'8px 14px',position:'sticky',top:0,zIndex:100}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:connected?8:0}}>
-          <div style={{fontSize:19,fontWeight:800,color:'#dc2626',textShadow:'0 0 6px #fde047, 0 0 14px #f97316, 0 0 24px #f97316, 0 2px 3px rgba(0,0,0,.5)',whiteSpace:'nowrap',display:'inline-block',animation:'hachiFireFloat 2.4s ease-in-out infinite'}}>⛏ HachiMiner</div>
+          <div style={{fontSize:25,fontWeight:800,color:'#dc2626',WebkitTextStroke:'1px #000',textShadow:'0 0 6px #fde047, 0 0 14px #f97316, 0 0 24px #f97316, 0 2px 3px rgba(0,0,0,.5)',whiteSpace:'nowrap',display:'inline-block',animation:'hachiFireFloat 2.4s ease-in-out infinite'}}>⛏ HachiMiner</div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <div style={{display:'flex',gap:4}}>
               {(['es','en','pt'] as Lang[]).map(l=><button key={l} onClick={()=>setLang(l)} style={{background:'none',border:`1px solid ${lang===l?'#a78bfa':'#3a3470'}`,borderRadius:4,padding:'2px 6px',fontSize:11,cursor:'pointer',color:lang===l?'#e6edf3':'#9b96c4'}}>{l.toUpperCase()}</button>)}
@@ -1042,7 +1042,7 @@ export default function HachiMiner() {
                   <div style={{fontSize:13,color:'#8b949e'}}>HACHI ahorrados</div>
                 </div>
                 {piggy.bonus>0&&<div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:8}}>
-                  <div style={{fontSize:18,fontWeight:700,fontFamily:'monospace',color:'#60a5fa'}}>{fmt(piggy.bonus)}</div>
+                  <div style={{fontSize:18,fontWeight:700,fontFamily:'monospace',color:'#60a5fa'}}>{piggy.bonus.toFixed(1)}</div>
                   <div style={{fontSize:12,color:'#8b949e'}}>Drachma</div>
                 </div>}
               </div>

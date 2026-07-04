@@ -995,9 +995,15 @@ export default function HachiMiner() {
       )}
 
       {/* HEADER */}
+      <style>{`
+        @keyframes hachiFireFloat {
+          0%,100% { transform: translateY(0px); }
+          50% { transform: translateY(-4px); }
+        }
+      `}</style>
       <div style={{background:'#211a55',borderBottom:'1px solid #4c3a8f',padding:'8px 14px',position:'sticky',top:0,zIndex:100}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:connected?8:0}}>
-          <div style={{fontSize:18,fontWeight:700,color:'#e879f9',textShadow:'0 0 12px rgba(232,121,249,.5)',whiteSpace:'nowrap'}}>⛏ HachiMiner</div>
+          <div style={{fontSize:19,fontWeight:800,color:'#fde047',textShadow:'0 0 4px #fff, 0 0 10px #fde047, 0 0 16px #f97316, 0 0 26px #ef4444, 0 2px 3px rgba(0,0,0,.45)',whiteSpace:'nowrap',display:'inline-block',animation:'hachiFireFloat 2.4s ease-in-out infinite'}}>⛏ HachiMiner</div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <div style={{display:'flex',gap:4}}>
               {(['es','en','pt'] as Lang[]).map(l=><button key={l} onClick={()=>setLang(l)} style={{background:'none',border:`1px solid ${lang===l?'#a78bfa':'#3a3470'}`,borderRadius:4,padding:'2px 6px',fontSize:11,cursor:'pointer',color:lang===l?'#e6edf3':'#9b96c4'}}>{l.toUpperCase()}</button>)}
@@ -1027,6 +1033,7 @@ export default function HachiMiner() {
             {[['Oracle',oracleSt],['1 WLD =',fmt(wldHachi)+' HACHI'],['1 HACHI =',hachiSushi.toFixed(4)+' SUSHI'],['Pool WLD disponible',poolFree],['Licencias WLD disponibles',licsAvail]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
           </div>
           <div style={card}><div style={cTitle}>HACHI</div>
+            {connected&&<div style={{fontSize:12,color:'#c4b5fd',marginBottom:8}}>👋 Bienvenido, <span style={{fontWeight:700,color:'#e6edf3'}}>{nameFor(addr)}</span></div>}
             <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:12}}>
               <img src="/hachi-cat-savings.png" alt="Hachi el gato ahorrando monedas HACHI" width={88} height={88} style={{borderRadius:14,flexShrink:0,objectFit:'cover',boxShadow:'0 0 18px rgba(124,58,237,.35)'}} />
               <div style={{flex:1}}>

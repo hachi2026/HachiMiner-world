@@ -1003,7 +1003,7 @@ export default function HachiMiner() {
       `}</style>
       <div style={{background:'#211a55',borderBottom:'1px solid #4c3a8f',padding:'8px 14px',position:'sticky',top:0,zIndex:100}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:connected?8:0}}>
-          <div style={{fontSize:19,fontWeight:800,color:'#fde047',textShadow:'0 0 4px #fff, 0 0 10px #fde047, 0 0 16px #f97316, 0 0 26px #ef4444, 0 2px 3px rgba(0,0,0,.45)',whiteSpace:'nowrap',display:'inline-block',animation:'hachiFireFloat 2.4s ease-in-out infinite'}}>⛏ HachiMiner</div>
+          <div style={{fontSize:19,fontWeight:800,color:'#dc2626',textShadow:'0 0 6px #fde047, 0 0 14px #f97316, 0 0 24px #f97316, 0 2px 3px rgba(0,0,0,.5)',whiteSpace:'nowrap',display:'inline-block',animation:'hachiFireFloat 2.4s ease-in-out infinite'}}>⛏ HachiMiner</div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <div style={{display:'flex',gap:4}}>
               {(['es','en','pt'] as Lang[]).map(l=><button key={l} onClick={()=>setLang(l)} style={{background:'none',border:`1px solid ${lang===l?'#a78bfa':'#3a3470'}`,borderRadius:4,padding:'2px 6px',fontSize:11,cursor:'pointer',color:lang===l?'#e6edf3':'#9b96c4'}}>{l.toUpperCase()}</button>)}
@@ -1043,7 +1043,7 @@ export default function HachiMiner() {
                 </div>
                 {piggy.bonus>0&&<div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:8}}>
                   <div style={{fontSize:18,fontWeight:700,fontFamily:'monospace',color:'#60a5fa'}}>{fmt(piggy.bonus)}</div>
-                  <div style={{fontSize:12,color:'#8b949e'}}>Drachma disponibles</div>
+                  <div style={{fontSize:12,color:'#8b949e'}}>Drachma</div>
                 </div>}
               </div>
             </div>
@@ -1181,7 +1181,12 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='ranking'&&<div>
-          <div style={sLabel}>Ranking (cada 15 días)</div>
+          <div style={card}><div style={cTitle}>Mis estadísticas</div>
+            {[['Mis puntos',rankStats.points],['Mi posición',rankStats.pos],['Premio pendiente',rankStats.reward],['Total ganado',rankStats.earned]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
+            <div style={{fontSize:11,color:'#8b949e',marginTop:8}}>Próximo reparto: <span style={{color:'#fbbf24',fontWeight:600}}>{rankStats.nextDist}</span></div>
+          </div>
+          <button onClick={claimPrize} style={btnGo}>Cobrar premio</button>
+          <div style={{...sLabel,marginTop:12}}>Ranking (cada 15 días)</div>
           {rankList.length===0?<div style={empty}><div style={{fontSize:28}}>🏆</div><div>Sin participantes aún</div></div>:
           <div style={{maxHeight:440,overflowY:'auto',WebkitOverflowScrolling:'touch',paddingRight:2,marginBottom:8}}>
             {rankList.map((e,i)=>{
@@ -1194,11 +1199,6 @@ export default function HachiMiner() {
             })}
           </div>
           }
-          <div style={card}><div style={cTitle}>Mis estadísticas</div>
-            {[['Mis puntos',rankStats.points],['Mi posición',rankStats.pos],['Premio pendiente',rankStats.reward],['Total ganado',rankStats.earned]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
-            <div style={{fontSize:11,color:'#8b949e',marginTop:8}}>Próximo reparto: <span style={{color:'#fbbf24',fontWeight:600}}>{rankStats.nextDist}</span></div>
-          </div>
-          <button onClick={claimPrize} style={btnGo}>Cobrar premio</button>
           {lastWinners.length>0&&<div style={card}>
             <div style={cTitle}>🏆 Último reparto</div>
             {lastWinners.map(({addr,amount,rank})=>(

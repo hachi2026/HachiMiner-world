@@ -1041,6 +1041,10 @@ export default function HachiMiner() {
                   <div style={{fontSize:26,fontWeight:700,fontFamily:'monospace',color:'#fbbf24'}}>{fmt(piggy.accrued)}</div>
                   <div style={{fontSize:13,color:'#8b949e'}}>HACHI ahorrados</div>
                 </div>
+                {piggy.bonus>0&&<div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:8}}>
+                  <div style={{fontSize:18,fontWeight:700,fontFamily:'monospace',color:'#60a5fa'}}>{fmt(piggy.bonus)}</div>
+                  <div style={{fontSize:12,color:'#8b949e'}}>Drachma disponibles</div>
+                </div>}
               </div>
             </div>
             <button onClick={withdrawDaily} disabled={!piggy.canWithdraw||!connected} style={{...btnG,width:'100%',padding:'10px 12px',opacity:(!piggy.canWithdraw||!connected)?0.4:1}}>Retirar al wallet</button>
@@ -1178,14 +1182,18 @@ export default function HachiMiner() {
 
         {tab==='ranking'&&<div>
           <div style={sLabel}>Ranking (cada 15 días)</div>
-          {rankList.length===0?<div style={empty}><div style={{fontSize:28}}>🏆</div><div>Sin participantes aún</div></div>:rankList.map((e,i)=>{
-            const isMe=e.a.toLowerCase()===addr.toLowerCase(),medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`
-            return <div key={e.a} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',borderRadius:8,marginBottom:4,background:'#1e0840',border:`1px solid ${isMe?'#34d399':'#5b21b6'}`}}>
-              <div style={{fontFamily:'monospace',fontSize:13,fontWeight:700,width:28}}>{medal}</div>
-              <div style={{fontFamily:'monospace',fontSize:12,flex:1}}>{nameFor(e.a)}{isMe&&<span style={{color:'#34d399'}}> (tú)</span>}</div>
-              <div style={{fontFamily:'monospace',fontSize:12,fontWeight:700,color:'#fbbf24'}}>{fmt(e.pts)}</div>
-            </div>
-          })}
+          {rankList.length===0?<div style={empty}><div style={{fontSize:28}}>🏆</div><div>Sin participantes aún</div></div>:
+          <div style={{maxHeight:440,overflowY:'auto',WebkitOverflowScrolling:'touch',paddingRight:2,marginBottom:8}}>
+            {rankList.map((e,i)=>{
+              const isMe=e.a.toLowerCase()===addr.toLowerCase(),medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`
+              return <div key={e.a} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',borderRadius:8,marginBottom:4,background:'#1e0840',border:`1px solid ${isMe?'#34d399':'#5b21b6'}`}}>
+                <div style={{fontFamily:'monospace',fontSize:13,fontWeight:700,width:28}}>{medal}</div>
+                <div style={{fontFamily:'monospace',fontSize:12,flex:1}}>{nameFor(e.a)}{isMe&&<span style={{color:'#34d399'}}> (tú)</span>}</div>
+                <div style={{fontFamily:'monospace',fontSize:12,fontWeight:700,color:'#fbbf24'}}>{fmt(e.pts)}</div>
+              </div>
+            })}
+          </div>
+          }
           <div style={card}><div style={cTitle}>Mis estadísticas</div>
             {[['Mis puntos',rankStats.points],['Mi posición',rankStats.pos],['Premio pendiente',rankStats.reward],['Total ganado',rankStats.earned]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
             <div style={{fontSize:11,color:'#8b949e',marginTop:8}}>Próximo reparto: <span style={{color:'#fbbf24',fontWeight:600}}>{rankStats.nextDist}</span></div>

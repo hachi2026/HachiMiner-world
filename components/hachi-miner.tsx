@@ -902,7 +902,7 @@ export default function HachiMiner() {
       const deadline = Math.floor(Date.now()/1000) + 600
       toast_('Confirmando swap...', '#d29922')
       await sendTxMulti([
-        { to: tokenIn, abi: ERC20, fnName: 'approve', args: [HACHI_SWAP_ADDR, amountInWei] },
+        ...buildPermit2Approvals(tokenIn, HACHI_SWAP_ADDR, amountInWei),
         { to: HACHI_SWAP_ADDR, abi: HACHISWAP_ABI, fnName: 'swap', args: [tokenIn, tokenOut, amountInWei, minAmountOut, deadline] },
       ])
       toast_('✓ Swap realizado', '#3fb950')

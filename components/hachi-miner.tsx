@@ -897,7 +897,14 @@ export default function HachiMiner() {
       const tokenIn  = swapDir === 'h2w' ? C.hachi : C.wld
       const tokenOut = swapDir === 'h2w' ? C.wld   : C.hachi
       const amountInWei = pe(swapIn)
-      const quoted = pe(swapQuote || '0')
+      const pair = new ethers.Contract(HACHI_WLD_PAIR, PAIR_ABI, rpc())
+      const [r0, r1] = await pair.getReserves()
+      const reserveIn  = swapDir === 'h2w' ? r1 : r0
+      const reserveOut = swapDir === 'h2w' ? r0 : r1
+      const amountInWithFee = amountInWei * BigInt(9970)
+      const numerator = amountInWithFee * reserveOut
+      const denominator = reserveIn * BigInt(10000) + amountInWithFee
+      const quoted = numerator / denominator
       const minAmountOut = quoted - (quoted * BigInt(100) / BigInt(10000)) // 1% de tolerancia a slippage
       const deadline = Math.floor(Date.now()/1000) + 600
       toast_('Confirmando swap...', '#d29922')
@@ -1311,7 +1318,7 @@ export default function HachiMiner() {
             <input value={swapIn} onChange={e=>setSwapIn(e.target.value.replace(/[^0-9.]/g,''))} placeholder="0.0" style={{background:'#12022a',border:'1px solid #5b21b6',borderRadius:8,padding:'10px 12px',fontSize:16,color:'#e6edf3',width:'100%',marginBottom:12,fontFamily:'monospace'}} />
             <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Recibís (estimado)</div>
             <div style={{...pBox,marginBottom:12}}>
-              <span style={{fontFamily:'monospace',fontSize:16,color:'#3fb950'}}>{fmt(Number(swapQuote))} {swapDir==='h2w'?'WLD':'HACHI'}</span>
+              <span style={{fontFamily:'monospace',fontSize:16,color:'#3fb950'}}>{swapQuote} {swapDir==='h2w'?'WLD':'HACHI'}</span>
             </div>
             <div style={{fontSize:10,color:'#8b949e',marginBottom:12,lineHeight:1.5}}>Liquidez real de Uniswap · Fee de pool 0.3% + fee de app 0.05% · Tolerancia a slippage 1%</div>
             <button onClick={doSwap} disabled={!connected||swapLoading||!swapIn||Number(swapIn)<=0} style={{...btnP,width:'100%',opacity:(!connected||swapLoading||!swapIn||Number(swapIn)<=0)?0.4:1}}>{swapLoading?'Intercambiando...':'Intercambiar'}</button>

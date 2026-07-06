@@ -41,6 +41,10 @@ const APP_ID = 'app_ba8d66235ecf4bc9e341fff3768d9058'
 const ACTION = 'verify-human'
 
 const ERC20 = ['function balanceOf(address) view returns (uint256)', 'function approve(address,uint256) returns (bool)', 'function allowance(address,address) view returns (uint256)']
+const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
+const HACHI_SWAP_ADDR = '0x24Fe00b4b018ac6173030bc08843F5cC00582B83'
+const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
+const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)']
 // Permit2 (AllowanceTransfer): approve da permiso a un "spender" (nuestro contrato) para mover el token vía Permit2
 const PERMIT2_ABI = [
   'function approve(address token, address spender, uint160 amount, uint48 expiration)',
@@ -106,13 +110,13 @@ const REFERRAL = [
   'function currentNewBonus() view returns (uint256)',
 ]
 
-type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'refs'
+type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'
 type Lang = 'es'|'en'|'pt'
 
 const TR = {
-  es: { connect:'Conectar', verified:'World ID ✓', not_verified:'Sin verificar', daily_claim:'Cobrar 10 HACHI', nav_home:'🏠 Inicio', nav_lics:'📜 Licencias', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_refs:'👥 Referidos', err_connect:'Conecta tu wallet', err_verify:'Verifica tu World ID', err_price:'Ventas pausadas', approving:'Aprobando...', no_lics:'Sin licencias activas', connect_prompt:'Conecta tu wallet para comenzar', access_title:'Acceso restringido', access_desc:'Para licencias SUSHI necesitas 5,000 HACHI lockeados o una licencia WLD activa', day1:'Día 1 — recibís de vuelta', day2:'Día 2 — tu ganancia (24h)' },
-  en: { connect:'Connect', verified:'World ID ✓', not_verified:'Not verified', daily_claim:'Claim 10 HACHI', nav_home:'🏠 Home', nav_lics:'📜 Licenses', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_refs:'👥 Referrals', err_connect:'Connect your wallet', err_verify:'Verify your World ID', err_price:'Sales paused', approving:'Approving...', no_lics:'No active licenses', connect_prompt:'Connect your wallet to start', access_title:'Restricted access', access_desc:'For SUSHI licenses you need 5,000 HACHI locked or an active WLD license', day1:'Day 1 — get back investment', day2:'Day 2 — your profit (24h)' },
-  pt: { connect:'Conectar', verified:'World ID ✓', not_verified:'Não verificado', daily_claim:'Cobrar 10 HACHI', nav_home:'🏠 Início', nav_lics:'📜 Licenças', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_refs:'👥 Indicações', err_connect:'Conecte sua carteira', err_verify:'Verifique seu World ID', err_price:'Vendas pausadas', approving:'Aprovando...', no_lics:'Sem licenças ativas', connect_prompt:'Conecte sua carteira para começar', access_title:'Acesso restrito', access_desc:'Para licenças SUSHI você precisa de 5.000 HACHI bloqueados ou uma licença WLD ativa', day1:'Dia 1 — recupere investimento', day2:'Dia 2 — seu lucro (24h)' },
+  es: { connect:'Conectar', verified:'World ID ✓', not_verified:'Sin verificar', daily_claim:'Cobrar 10 HACHI', nav_home:'🏠 Inicio', nav_lics:'📜 Licencias', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Referidos', err_connect:'Conecta tu wallet', err_verify:'Verifica tu World ID', err_price:'Ventas pausadas', approving:'Aprobando...', no_lics:'Sin licencias activas', connect_prompt:'Conecta tu wallet para comenzar', access_title:'Acceso restringido', access_desc:'Para licencias SUSHI necesitas 5,000 HACHI lockeados o una licencia WLD activa', day1:'Día 1 — recibís de vuelta', day2:'Día 2 — tu ganancia (24h)' },
+  en: { connect:'Connect', verified:'World ID ✓', not_verified:'Not verified', daily_claim:'Claim 10 HACHI', nav_home:'🏠 Home', nav_lics:'📜 Licenses', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Referrals', err_connect:'Connect your wallet', err_verify:'Verify your World ID', err_price:'Sales paused', approving:'Approving...', no_lics:'No active licenses', connect_prompt:'Connect your wallet to start', access_title:'Restricted access', access_desc:'For SUSHI licenses you need 5,000 HACHI locked or an active WLD license', day1:'Day 1 — get back investment', day2:'Day 2 — your profit (24h)' },
+  pt: { connect:'Conectar', verified:'World ID ✓', not_verified:'Não verificado', daily_claim:'Cobrar 10 HACHI', nav_home:'🏠 Início', nav_lics:'📜 Licenças', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Indicações', err_connect:'Conecte sua carteira', err_verify:'Verifique seu World ID', err_price:'Vendas pausadas', approving:'Aprovando...', no_lics:'Sem licenças ativas', connect_prompt:'Conecte sua carteira para começar', access_title:'Acesso restrito', access_desc:'Para licenças SUSHI você precisa de 5.000 HACHI bloqueados ou uma licença WLD ativa', day1:'Dia 1 — recupere investimento', day2:'Dia 2 — seu lucro (24h)' },
 }
 
 const LOGIN = {
@@ -209,6 +213,10 @@ export default function HachiMiner() {
   const [priceAlert, setPriceAlert] = useState(false)
   const [piggy, setPiggy] = useState({accrued:0,bonus:0,canWithdraw:false,secondsUntilNext:0})
   const [activeLicCount, setActiveLicCount] = useState(0)
+  const [swapDir, setSwapDir] = useState<'h2w'|'w2h'>('h2w')
+  const [swapIn, setSwapIn] = useState('')
+  const [swapQuote, setSwapQuote] = useState('0')
+  const [swapLoading, setSwapLoading] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
   const [wldLics, setWldLics] = useState<any[]>([])
@@ -521,6 +529,24 @@ export default function HachiMiner() {
       const count = results.filter((l:any) => l[10] && Number(l[7]) > now).length
       setActiveLicCount(count)
     } catch(e) {}
+  }
+
+  const loadSwapQuote = async (amountStr: string, dir: 'h2w'|'w2h') => {
+    if (!amountStr || Number(amountStr) <= 0) { setSwapQuote('0'); return }
+    try {
+      const p = rpc()
+      const pair = new ethers.Contract(HACHI_WLD_PAIR, PAIR_ABI, p)
+      const [r0, r1] = await pair.getReserves()
+      // token0 = WLD (0x2cfc...), token1 = HACHI (0xbE03...) por orden numérico de dirección
+      const amountInWei = pe(amountStr)
+      const reserveIn  = dir === 'h2w' ? r1 : r0
+      const reserveOut = dir === 'h2w' ? r0 : r1
+      const amountInWithFee = amountInWei * BigInt(9970)
+      const numerator = amountInWithFee * reserveOut
+      const denominator = reserveIn * BigInt(10000) + amountInWithFee
+      const out = numerator / denominator
+      setSwapQuote(fe(out).toFixed(6))
+    } catch(e) { setSwapQuote('0') }
   }
 
   // Interpreta el finalPayload de MiniKit.commandsAsync.* (v1.11) y lanza un error legible.
@@ -856,6 +882,39 @@ export default function HachiMiner() {
     } catch(e:any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80),'#f85149') }
   }
 
+  useEffect(() => {
+    const timer = setTimeout(() => { loadSwapQuote(swapIn, swapDir) }, 400)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [swapIn, swapDir])
+
+  const doSwap = async () => {
+    if (!connected) { toast_(t('err_connect'),'#f85149'); return }
+    const amountIn = Number(swapIn)
+    if (!amountIn || amountIn <= 0) { toast_('Ingresá un monto válido','#f85149'); return }
+    setSwapLoading(true)
+    try {
+      const tokenIn  = swapDir === 'h2w' ? C.hachi : C.wld
+      const tokenOut = swapDir === 'h2w' ? C.wld   : C.hachi
+      const amountInWei = pe(swapIn)
+      const quoted = pe(swapQuote || '0')
+      const minAmountOut = quoted - (quoted * BigInt(100) / BigInt(10000)) // 1% de tolerancia a slippage
+      const deadline = Math.floor(Date.now()/1000) + 600
+      toast_('Confirmando swap...', '#d29922')
+      await sendTxMulti([
+        { to: tokenIn, abi: ERC20, fnName: 'approve', args: [HACHI_SWAP_ADDR, amountInWei] },
+        { to: HACHI_SWAP_ADDR, abi: HACHISWAP_ABI, fnName: 'swap', args: [tokenIn, tokenOut, amountInWei, minAmountOut, deadline] },
+      ])
+      toast_('✓ Swap realizado', '#3fb950')
+      setSwapIn(''); setSwapQuote('0')
+      await loadAll(addr)
+    } catch(e: any) {
+      toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149')
+    } finally {
+      setSwapLoading(false)
+    }
+  }
+
   const wldNames = ['🌱 Básica','⚡ Estándar','💎 Premium','🚀 Elite']
   const wldPrices = ['1 WLD','3 WLD','5 WLD','10 WLD']
   const sushiNames = ['🌱 Bocado','⚡ Bocado Doble','💎 Bocado Grande','🚀 Bocado Real']
@@ -1022,8 +1081,8 @@ export default function HachiMiner() {
 
       {/* NAV */}
       <div style={{background:'#12022a',borderBottom:'1px solid #3b0764',display:'flex',overflowX:'auto',gap:2,padding:'0 12px'}}>
-        {(['home','lics','lock','ranking','pools','refs'] as Tab[]).map((v,i)=>{
-          const labels=[t('nav_home'),t('nav_lics'),t('nav_lock'),t('nav_rank'),t('nav_pools'),t('nav_refs')]
+        {(['home','lics','lock','ranking','pools','swap','refs'] as Tab[]).map((v,i)=>{
+          const labels=[t('nav_home'),t('nav_lics'),t('nav_lock'),t('nav_rank'),t('nav_pools'),t('nav_swap'),t('nav_refs')]
           return <button key={v} onClick={()=>loadTab(v)} style={{background:'none',border:'none',borderBottom:`2px solid ${tab===v?'#a78bfa':'transparent'}`,color:tab===v?'#a78bfa':'#8b949e',padding:'12px 14px',fontSize:13,cursor:'pointer',whiteSpace:'nowrap',fontFamily:'Georgia,serif',textShadow:tab===v?'0 0 8px #a78bfa':''}}>{labels[i]}</button>
         })}
       </div>
@@ -1237,6 +1296,24 @@ export default function HachiMiner() {
           <div style={card}><div style={cTitle}>📊 Estadísticas</div>
             {[['Licencias WLD vendidas',poolsData.wldLics||'—'],['Licencias Bocado vendidas',poolsData.sushiLics||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>🔥 HACHI quemados</span><span style={{fontFamily:'monospace',color:'#f87171',fontWeight:600}}>{poolsData.burned||'—'}</span></div>
+          </div>
+        </div>}
+
+        {tab==='swap'&&<div>
+          <div style={sLabel}>Intercambiar HACHI ↔ WLD</div>
+          <div style={card}>
+            <div style={{display:'flex',gap:8,marginBottom:12}}>
+              <button onClick={()=>setSwapDir('h2w')} style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${swapDir==='h2w'?'#a78bfa':'#3b0764'}`,background:swapDir==='h2w'?'rgba(167,139,250,.15)':'transparent',color:'#e6edf3',fontSize:13,cursor:'pointer'}}>HACHI → WLD</button>
+              <button onClick={()=>setSwapDir('w2h')} style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${swapDir==='w2h'?'#a78bfa':'#3b0764'}`,background:swapDir==='w2h'?'rgba(167,139,250,.15)':'transparent',color:'#e6edf3',fontSize:13,cursor:'pointer'}}>WLD → HACHI</button>
+            </div>
+            <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Enviás</div>
+            <input value={swapIn} onChange={e=>setSwapIn(e.target.value.replace(/[^0-9.]/g,''))} placeholder="0.0" style={{background:'#12022a',border:'1px solid #5b21b6',borderRadius:8,padding:'10px 12px',fontSize:16,color:'#e6edf3',width:'100%',marginBottom:12,fontFamily:'monospace'}} />
+            <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Recibís (estimado)</div>
+            <div style={{...pBox,marginBottom:12}}>
+              <span style={{fontFamily:'monospace',fontSize:16,color:'#3fb950'}}>{fmt(Number(swapQuote))} {swapDir==='h2w'?'WLD':'HACHI'}</span>
+            </div>
+            <div style={{fontSize:10,color:'#8b949e',marginBottom:12,lineHeight:1.5}}>Liquidez real de Uniswap · Fee de pool 0.3% + fee de app 0.05% · Tolerancia a slippage 1%</div>
+            <button onClick={doSwap} disabled={!connected||swapLoading||!swapIn||Number(swapIn)<=0} style={{...btnP,width:'100%',opacity:(!connected||swapLoading||!swapIn||Number(swapIn)<=0)?0.4:1}}>{swapLoading?'Intercambiando...':'Intercambiar'}</button>
           </div>
         </div>}
 

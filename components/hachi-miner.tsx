@@ -1155,7 +1155,7 @@ export default function HachiMiner() {
             </div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-            <button onClick={claimAPY} style={btnG}>Cobrar APY</button>
+            <button onClick={claimAPY} disabled={lockData.nextClaimIn!=='—'} style={{...btnG,opacity:lockData.nextClaimIn!=='—'?0.4:1}}>{lockData.nextClaimIn!=='—'?`Disponible en ${lockData.nextClaimIn}`:'Cobrar APY'}</button>
             <button onClick={doUnstake} style={btnGh}>Retirar HACHI</button>
           </div>
           <div style={sLabel}>Depositar HACHI</div>

@@ -909,6 +909,7 @@ export default function HachiMiner() {
       setSwapIn(''); setSwapQuote('0')
       await loadAll(addr)
     } catch(e: any) {
+      log('swap err: ' + JSON.stringify(e).slice(0,300))
       toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149')
     } finally {
       setSwapLoading(false)

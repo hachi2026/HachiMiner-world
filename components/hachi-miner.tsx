@@ -471,6 +471,9 @@ export default function HachiMiner() {
       const res = await fetch('/api/verify-status?address=' + a)
       const data = await res.json()
       setVerified(Boolean(data.verified))
+      if (data.verified) {
+        fetch('/api/resync-verification?address=' + a).catch(() => {})
+      }
     } catch(e) {}
   }
 

@@ -167,3 +167,11 @@
     @apply font-sans;
   }
 }
+
+/* Fix oficial de World para el error de "rebote de scroll" en iOS
+   (docs.world.org/mini-apps/guidelines/app-guidelines) */
+html, body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+  overflow: scroll;
+}

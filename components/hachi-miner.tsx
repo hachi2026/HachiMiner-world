@@ -233,6 +233,7 @@ export default function HachiMiner() {
   const [swapHistory, setSwapHistory] = useState<any[]>([])
   const [streakStatus, setStreakStatus] = useState({isWhitelisted:false, day:1, nextAmount:0, secondsUntilNext:0})
   const [missionProgress, setMissionProgress] = useState({swaps:0, volume:0, boughtBocado:false, poolAHasStock:true})
+  const [missionLoading, setMissionLoading] = useState(false)
   const [streakHistory, setStreakHistory] = useState<any[]>([])
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
@@ -611,11 +612,13 @@ export default function HachiMiner() {
   }
 
   const loadMissionProgress = async (p: ethers.JsonRpcProvider) => {
+    setMissionLoading(true)
     try {
       const sw = new ethers.Contract(HACHI_SWAP_ADDR, HACHISWAP_ABI, p)
       const core = new ethers.Contract(C.core, HACHI_CORE_SUSHI_EVENT_ABI, p)
       const currentBlock = await p.getBlockNumber()
-      const CHUNK = 100, MAX_CHUNKS = 450
+      const CHUNK = 100, MAX_CHUNKS = 100
+      const minVolumeWei = pe(MISSION_MIN_VOLUME)
       let swapCount = 0, volume = BigInt(0), boughtBocado = false
       let to = currentBlock
       for (let i = 0; i < MAX_CHUNKS && to >= 0; i++) {
@@ -627,15 +630,20 @@ export default function HachiMiner() {
             swapCount++
             volume += e.args.amountOut
           }
-          const bocEvs = await core.queryFilter(core.filters.SushiLicBought(addr), from, to)
-          if (bocEvs.length > 0) boughtBocado = true
+          if (!boughtBocado) {
+            const bocEvs = await core.queryFilter(core.filters.SushiLicBought(addr), from, to)
+            if (bocEvs.length > 0) boughtBocado = true
+          }
         } catch(e) {}
         to = from - 1
+        if (swapCount >= MISSION_MIN_SWAPS && volume >= minVolumeWei && boughtBocado) break
       }
       const [poolA, poolACommitted] = await Promise.all([core.poolA_sushi(), core.poolA_committed()])
       const poolAHasStock = (poolA - poolACommitted) > BigInt(0)
       setMissionProgress({swaps: swapCount, volume: fe(volume), boughtBocado, poolAHasStock})
-    } catch(e) {}
+    } catch(e) {} finally {
+      setMissionLoading(false)
+    }
   }
 
   const loadStreakHistory = async (p: ethers.JsonRpcProvider) => {
@@ -1458,7 +1466,8 @@ export default function HachiMiner() {
             <div style={{display:'flex',gap:3,marginBottom:10}}>
               {[1,2,3,4,5,6,7].map(d=><div key={d} style={{flex:1,height:6,borderRadius:3,background:d<streakStatus.day?'#3fb950':d===streakStatus.day?'#fbbf24':'#3b0764'}} />)}
             </div>
-            {(() => {
+            {missionLoading&&<div style={{fontSize:11,color:'#8b949e',fontStyle:'italic'}}>Revisando tu actividad de hoy...</div>}
+            {!missionLoading&&(() => {
               const missionDone = missionProgress.swaps>=MISSION_MIN_SWAPS && missionProgress.volume>=MISSION_MIN_VOLUME && (missionProgress.boughtBocado || !missionProgress.poolAHasStock)
               if (missionDone) {
                 return <div style={{fontSize:12,color:'#3fb950',fontWeight:600}}>✓ Misión cumplida — tu bono de {fmtPrecise(streakStatus.nextAmount)} SUSHI se paga automáticamente a las 12:00 UTC.</div>

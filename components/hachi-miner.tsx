@@ -1160,9 +1160,6 @@ export default function HachiMiner() {
 
         {tab==='home'&&<div>
           {priceAlert&&<div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:13,color:'#f87171',textAlign:'center'}}>⚠ Ventas WLD pausadas — HACHI devaluado ({fmt(wldHachi)} &gt; {MAX_HACHI.toLocaleString()})</div>}
-          <div style={card}><div style={cTitle}>Estado del sistema</div>
-            {[['Oracle',oracleSt],['1 WLD =',fmt(wldHachi)+' HACHI'],['1 HACHI =',hachiSushi.toFixed(4)+' SUSHI'],['Pool WLD disponible',poolFree],['Licencias WLD disponibles',licsAvail]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
-          </div>
           <div style={card}><div style={cTitle}>HACHI</div>
             {connected&&<div style={{fontSize:12,color:'#c4b5fd',marginBottom:8}}>👋 Bienvenido, <span style={{fontWeight:700,color:'#e6edf3'}}>{nameFor(addr)}</span></div>}
             <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:12}}>
@@ -1182,7 +1179,10 @@ export default function HachiMiner() {
             <div style={{fontSize:10,color:'#8b949e',marginTop:8,lineHeight:1.5}}>{piggy.canWithdraw ? `Podés reclamar ${fmt(piggy.accrued)} HACHI${piggy.bonus>0?` + ${fmt(piggy.bonus)} bonus`:''} ahora.` : `Próximo reclamo disponible en ${Math.ceil(piggy.secondsUntilNext/3600)}h.`} Se puede reclamar una vez cada 24hs.</div>
             <div style={{fontSize:10,color:'#8b949e',marginTop:4}}>Licencias WLD activas: <span style={{color:'#e6edf3',fontWeight:600}}>{activeLicCount}</span></div>
           </div>
-          <button onClick={()=>window.open(HACHI_BUY_URL,'_blank')} style={{...btnG,width:'100%',marginBottom:12}}>🪙 Comprar HACHI</button>
+          <button onClick={()=>loadTab('swap')} style={{...btnG,width:'100%',marginBottom:12}}>🪙 Comprar HACHI</button>
+          <div style={card}><div style={cTitle}>Estado del sistema</div>
+            {[['Oracle',oracleSt],['1 WLD =',fmt(wldHachi)+' HACHI'],['1 HACHI =',hachiSushi.toFixed(4)+' SUSHI'],['Pool WLD disponible',poolFree],['Licencias WLD disponibles',licsAvail]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
+          </div>
           {!connected&&<div style={{textAlign:'center',padding:'32px 16px',color:'#8b949e'}}>
             <div style={{fontSize:32,marginBottom:8}}>👋</div>
             <div style={{fontWeight:600,color:'#e6edf3',marginBottom:4}}>Bienvenido a HachiMiner</div>
@@ -1385,7 +1385,13 @@ export default function HachiMiner() {
               <button onClick={()=>setSwapDir('w2h')} style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${swapDir==='w2h'?'#a78bfa':'#3b0764'}`,background:swapDir==='w2h'?'rgba(167,139,250,.15)':'transparent',color:'#e6edf3',fontSize:13,cursor:'pointer'}}>WLD → HACHI</button>
             </div>
             <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Enviás</div>
-            <input value={swapIn} onChange={e=>setSwapIn(e.target.value.replace(/[^0-9.]/g,''))} placeholder="0.0" style={{background:'#12022a',border:'1px solid #5b21b6',borderRadius:8,padding:'10px 12px',fontSize:16,color:'#e6edf3',width:'100%',marginBottom:12,fontFamily:'monospace'}} />
+            <input value={swapIn} onChange={e=>setSwapIn(e.target.value.replace(/[^0-9.]/g,''))} placeholder="0.0" style={{background:'#12022a',border:'1px solid #5b21b6',borderRadius:8,padding:'10px 12px',fontSize:16,color:'#e6edf3',width:'100%',marginBottom:8,fontFamily:'monospace'}} />
+            <div style={{display:'flex',gap:6,marginBottom:12}}>
+              {[['25%',0.25],['50%',0.5],['MAX',1]].map(([label,pct])=><button key={label} onClick={()=>{
+                const bal = swapDir==='h2w' ? hachiRaw : wldRaw
+                setSwapIn((bal*(pct as number)).toFixed(6))
+              }} style={{...btnGh,flex:1,padding:'6px 8px',fontSize:12}}>{label}</button>)}
+            </div>
             <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Recibís (estimado)</div>
             <div style={{...pBox,marginBottom:12}}>
               <span style={{fontFamily:'monospace',fontSize:16,color:'#3fb950'}}>{swapQuote} {swapDir==='h2w'?'WLD':'HACHI'}</span>

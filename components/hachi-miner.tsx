@@ -42,7 +42,7 @@ const ACTION = 'verify-human'
 
 const ERC20 = ['function balanceOf(address) view returns (uint256)', 'function approve(address,uint256) returns (bool)', 'function allowance(address,address) view returns (uint256)']
 const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
-const HACHI_SWAP_ADDR = '0x2C0edE20F46EB4E49b5FC35D2D803b84E3dc1891'
+const HACHI_SWAP_ADDR = '0x272C6e5724C88A0160Fd28b26C207eD505921E9F'
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
 const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)']
 // Permit2 (AllowanceTransfer): approve da permiso a un "spender" (nuestro contrato) para mover el token vía Permit2

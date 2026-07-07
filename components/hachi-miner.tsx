@@ -44,6 +44,11 @@ const ACTION = 'verify-human'
 const ERC20 = ['function balanceOf(address) view returns (uint256)', 'function approve(address,uint256) returns (bool)', 'function allowance(address,address) view returns (uint256)']
 const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
 const HACHI_SWAP_ADDR = '0x272C6e5724C88A0160Fd28b26C207eD505921E9F'
+const STREAK_ADDR = '0x2625b233B1f1E2187aC56f61A691B82E647D7eF5'
+const STREAK_ABI = ['function getStatus(address) view returns (bool,uint8,uint256,uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)']
+const HACHI_CORE_SUSHI_EVENT_ABI = ['event SushiLicBought(address indexed user, uint256 id, uint256 sushiTotal, uint8 licType, uint256 hachiPrice)', 'function poolA_sushi() view returns (uint256)', 'function poolA_committed() view returns (uint256)']
+const MISSION_MIN_SWAPS = 5
+const MISSION_MIN_VOLUME = 500
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
 const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)', 'event Swapped(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount)']
 // Permit2 (AllowanceTransfer): approve da permiso a un "spender" (nuestro contrato) para mover el token vía Permit2
@@ -226,6 +231,9 @@ export default function HachiMiner() {
   const [swapQuote, setSwapQuote] = useState('0')
   const [swapLoading, setSwapLoading] = useState(false)
   const [swapHistory, setSwapHistory] = useState<any[]>([])
+  const [streakStatus, setStreakStatus] = useState({isWhitelisted:false, day:1, nextAmount:0, secondsUntilNext:0})
+  const [missionProgress, setMissionProgress] = useState({swaps:0, volume:0, boughtBocado:false, poolAHasStock:true})
+  const [streakHistory, setStreakHistory] = useState<any[]>([])
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
@@ -594,6 +602,63 @@ export default function HachiMiner() {
     } catch(e:any) { log('swap history err: ' + (e?.message||'').slice(0,150)) }
   }
 
+  const loadStreakStatus = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const streak = new ethers.Contract(STREAK_ADDR, STREAK_ABI, p)
+      const [isWhitelisted, day, nextAmount, secondsUntilNext] = await streak.getStatus(addr)
+      setStreakStatus({isWhitelisted, day: Number(day), nextAmount: fe(nextAmount), secondsUntilNext: Number(secondsUntilNext)})
+    } catch(e) {}
+  }
+
+  const loadMissionProgress = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const sw = new ethers.Contract(HACHI_SWAP_ADDR, HACHISWAP_ABI, p)
+      const core = new ethers.Contract(C.core, HACHI_CORE_SUSHI_EVENT_ABI, p)
+      const currentBlock = await p.getBlockNumber()
+      const CHUNK = 100, MAX_CHUNKS = 450
+      let swapCount = 0, volume = BigInt(0), boughtBocado = false
+      let to = currentBlock
+      for (let i = 0; i < MAX_CHUNKS && to >= 0; i++) {
+        const from = Math.max(0, to - CHUNK + 1)
+        try {
+          const swEvs = await sw.queryFilter(sw.filters.Swapped(addr), from, to)
+          for (const e of swEvs as any[]) {
+            swapCount++
+            if (e.args.tokenIn.toLowerCase() === C.hachi.toLowerCase()) volume += e.args.amountIn
+          }
+          const bocEvs = await core.queryFilter(core.filters.SushiLicBought(addr), from, to)
+          if (bocEvs.length > 0) boughtBocado = true
+        } catch(e) {}
+        to = from - 1
+      }
+      const [poolA, poolACommitted] = await Promise.all([core.poolA_sushi(), core.poolA_committed()])
+      const poolAHasStock = (poolA - poolACommitted) > BigInt(0)
+      setMissionProgress({swaps: swapCount, volume: fe(volume), boughtBocado, poolAHasStock})
+    } catch(e) {}
+  }
+
+  const loadStreakHistory = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const streak = new ethers.Contract(STREAK_ADDR, STREAK_ABI, p)
+      const currentBlock = await p.getBlockNumber()
+      const CHUNK = 100, MAX_CHUNKS = 450
+      let allEvents: any[] = []
+      let to = currentBlock
+      for (let i = 0; i < MAX_CHUNKS && to >= 0; i++) {
+        const from = Math.max(0, to - CHUNK + 1)
+        try {
+          const evs = await streak.queryFilter(streak.filters.DayCredited(addr), from, to)
+          allEvents = allEvents.concat(evs)
+        } catch(e) {}
+        to = from - 1
+        if (allEvents.length >= 10) break
+      }
+      allEvents.sort((a:any,b:any) => a.blockNumber - b.blockNumber || a.logIndex - b.logIndex)
+      const history = allEvents.slice(-10).reverse().map((e:any) => ({ hash: e.transactionHash, day: Number(e.args.day), amount: fe(e.args.amount) }))
+      setStreakHistory(history)
+    } catch(e) {}
+  }
+
   // Interpreta el finalPayload de MiniKit.commandsAsync.* (v1.11) y lanza un error legible.
   const handleMiniKitResult = (finalPayload: any) => {
     const status = finalPayload?.status
@@ -790,7 +855,7 @@ export default function HachiMiner() {
     if (v==='ranking') loadRanking(p)
     if (v==='pools') loadPools(p)
     if (v==='refs') loadRefs(p)
-    if (v==='swap') loadSwapHistory(p)
+    if (v==='swap') { loadSwapHistory(p); loadStreakStatus(p); loadMissionProgress(p); loadStreakHistory(p) }
   }
 
   const loadWLDLics = async (p: ethers.JsonRpcProvider) => {
@@ -1387,6 +1452,33 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='swap'&&<div>
+          {streakStatus.isWhitelisted&&<div style={{...card,marginBottom:12,border:'1px solid #fbbf24'}}>
+            <div style={cTitle}>🔥 Racha de swaps — Día {streakStatus.day}/7</div>
+            <div style={{display:'flex',gap:3,marginBottom:10}}>
+              {[1,2,3,4,5,6,7].map(d=><div key={d} style={{flex:1,height:6,borderRadius:3,background:d<streakStatus.day?'#3fb950':d===streakStatus.day?'#fbbf24':'#3b0764'}} />)}
+            </div>
+            {(() => {
+              const missionDone = missionProgress.swaps>=MISSION_MIN_SWAPS && missionProgress.volume>=MISSION_MIN_VOLUME && (missionProgress.boughtBocado || !missionProgress.poolAHasStock)
+              if (missionDone) {
+                return <div style={{fontSize:12,color:'#3fb950',fontWeight:600}}>✓ Misión cumplida — tu bono de {fmtPrecise(streakStatus.nextAmount)} SUSHI se paga automáticamente a las 12:00 UTC.</div>
+              }
+              return <div>
+                <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Progreso de hoy:</div>
+                <div style={{fontSize:12,color:missionProgress.swaps>=MISSION_MIN_SWAPS?'#3fb950':'#e6edf3'}}>• Swaps: {missionProgress.swaps}/{MISSION_MIN_SWAPS}</div>
+                <div style={{fontSize:12,color:missionProgress.volume>=MISSION_MIN_VOLUME?'#3fb950':'#e6edf3'}}>• Volumen: {fmtPrecise(missionProgress.volume)}/{MISSION_MIN_VOLUME} HACHI</div>
+                <div style={{fontSize:12,color:(missionProgress.boughtBocado||!missionProgress.poolAHasStock)?'#3fb950':'#e6edf3'}}>• Bocado: {missionProgress.boughtBocado?'comprado ✓':!missionProgress.poolAHasStock?'exento (sin stock)':'falta comprar'}</div>
+              </div>
+            })()}
+          </div>}
+          {streakHistory.length>0&&<div style={{...card,marginBottom:12}}>
+            <div style={cTitle}>Historial de bonos de racha</div>
+            {streakHistory.map((h,i)=><a key={h.hash+i} href={`https://worldscan.org/tx/${h.hash}`} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none'}}>
+              <div style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #3b0764',fontSize:12}}>
+                <span style={{color:'#e6edf3'}}>Día {h.day}</span>
+                <span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(h.amount)} SUSHI ↗</span>
+              </div>
+            </a>)}
+          </div>}
           <div style={sLabel}>Intercambiar HACHI ↔ WLD</div>
           <div style={card}>
             <div style={{display:'flex',gap:8,marginBottom:12}}>

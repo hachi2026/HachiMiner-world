@@ -582,6 +582,7 @@ export default function HachiMiner() {
         to = from - 1
         if (allEvents.length >= 20) break
       }
+      allEvents.sort((a:any,b:any) => a.blockNumber - b.blockNumber || a.logIndex - b.logIndex)
       const history = allEvents.slice(-20).reverse().map((e:any) => ({
         hash: e.transactionHash,
         tokenIn: e.args.tokenIn,

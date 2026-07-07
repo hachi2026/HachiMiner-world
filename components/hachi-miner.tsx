@@ -220,6 +220,8 @@ export default function HachiMiner() {
   const [selWLD, setSelWLD] = useState(0)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
   const [wldLics, setWldLics] = useState<any[]>([])
+  const [wldLicsLoadedAt, setWldLicsLoadedAt] = useState(Date.now())
+  const [liveTick, setLiveTick] = useState(Date.now())
   const [selSUSHI, setSelSUSHI] = useState(0)
   const [sushiPrev, setSushiPrev] = useState({base:'—',d1:'—',d2:'—',total:'—',dailyLeft:'—'})
   const [sushiAccess, setSushiAccess] = useState(false)
@@ -713,7 +715,10 @@ export default function HachiMiner() {
       await loadAll(addr)
     } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
   }
-  const claimWLD = (id: bigint) => execTx('Cobrando HACHI', C.core, CORE, 'claimWLDHachi', [id])
+  const claimWLD = async (id: bigint) => {
+    const ok = await execTx('Cobrando HACHI', C.core, CORE, 'claimWLDHachi', [id])
+    if (ok) loadWLDLics(rpc())
+  }
   const doDeposit = async () => {
     if (!depositAmt||Number(depositAmt)<=0) { toast_('Ingresa un monto válido','#f85149'); return }
     try {
@@ -758,6 +763,7 @@ export default function HachiMiner() {
       const ids = await core.getUserWLDLics(addr)
       const lics = await Promise.all(ids.map(async(id:bigint) => ({id, l:await core.wldLics(id), pend:await core.pendingWLDHachi(id)})))
       setWldLics(lics.filter((x:any) => x.l[10]||x.l[11]))
+      setWldLicsLoadedAt(Date.now())
     } catch(e) {}
   }
 
@@ -884,6 +890,11 @@ export default function HachiMiner() {
       loadRefs(rpc())
     } catch(e:any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80),'#f85149') }
   }
+
+  useEffect(() => {
+    const id = setInterval(() => setLiveTick(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => { loadSwapQuote(swapIn, swapDir) }, 400)
@@ -1148,9 +1159,11 @@ export default function HachiMiner() {
             {wldLics.length===0?<div style={empty}><div style={{fontSize:28}}>💠</div><div>{t('no_lics')}</div></div>:wldLics.map(({id,l,pend})=>{
               const dailyHachi = fe(BigInt(l[4]) * BigInt(86400))
               const dailyDrachma = fe(l[2]) * 0.5
+              const secsSinceLoad = Math.max(0, (liveTick - wldLicsLoadedAt) / 1000)
+              const livePend = fe(pend) + (dailyHachi/86400) * secsSinceLoad
               return <div key={id.toString()} style={card}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><strong>{['Básica','Estándar','Premium','Elite'][l[1]]}</strong><div style={{color:l[10]?'#3fb950':'#8b949e'}}>●</div></div>
-              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente</span><span style={{color:'#3fb950',fontFamily:'monospace'}}>{fe(pend).toFixed(6)} HACHI</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente</span><span style={{color:'#3fb950',fontFamily:'monospace'}}>{livePend.toFixed(6)} HACHI</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Genera por día</span><span style={{fontFamily:'monospace'}}>{dailyHachi.toFixed(6)} HACHI</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Aporta al bono diario</span><span style={{fontFamily:'monospace',color:'#60a5fa'}}>{dailyDrachma.toFixed(4)} Drachma/día</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Vence</span><span style={{fontFamily:'monospace'}}>{new Date(Number(l[7])*1000).toLocaleDateString()}</span></div>

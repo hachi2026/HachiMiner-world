@@ -5,24 +5,21 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-interface IPermit2Approve {
-    function approve(address token, address spender, uint160 amount, uint48 expiration) external;
+interface IPermit2Transfer {
     function transferFrom(address from, address to, uint160 amount, address token) external;
 }
 
-interface IUniversalRouter {
-    function execute(bytes calldata commands, bytes[] calldata inputs, uint256 deadline) external payable;
+interface IUniswapV2Pair {
+    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function token0() external view returns (address);
+    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
 }
 
 contract HachiSwap is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    IPermit2Approve public constant PERMIT2 = IPermit2Approve(0x000000000022D473030F116dDEE9F6B43aC78BA3);
-    IUniversalRouter public constant ROUTER  = IUniversalRouter(0x8ac7bEE993bb44dAb564Ea4bc9EA67Bf9Eb5e743);
-
-    uint8 internal constant V2_SWAP_EXACT_IN = 0x08;
-    uint160 internal constant MAX_UINT160 = type(uint160).max;
-    uint48  internal constant MAX_UINT48  = type(uint48).max;
+    IPermit2Transfer public constant PERMIT2 = IPermit2Transfer(0x000000000022D473030F116dDEE9F6B43aC78BA3);
+    address public constant PAIR = 0xfB461C1EcE675568a1561df75a18d65DDBdc5481;
 
     address public immutable HACHI;
     address public immutable WLD;
@@ -36,7 +33,6 @@ contract HachiSwap is ReentrancyGuard {
 
     event Swapped(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount);
     event UserVerified(address indexed user);
-    event ApprovalsSetUp(address token, uint160 amount, uint48 expiration);
 
     modifier onlyOwner() { require(msg.sender == owner, "not owner"); _; }
     modifier onlyHuman() { require(humanVerified[msg.sender], "World ID required"); _; }
@@ -63,11 +59,37 @@ contract HachiSwap is ReentrancyGuard {
         emit UserVerified(user);
     }
 
-    function setupApprovals(address token) external onlyOwner {
-        require(token == HACHI || token == WLD, "Unsupported token");
-        IERC20(token).forceApprove(address(PERMIT2), type(uint256).max);
-        PERMIT2.approve(token, address(ROUTER), MAX_UINT160, MAX_UINT48);
-        emit ApprovalsSetUp(token, MAX_UINT160, MAX_UINT48);
+    function getAmountOut(address tokenIn, uint256 amountIn) public view returns (uint256 amountOut) {
+        (uint112 r0, uint112 r1,) = IUniswapV2Pair(PAIR).getReserves();
+        address token0 = IUniswapV2Pair(PAIR).token0();
+        (uint256 reserveIn, uint256 reserveOut) = tokenIn == token0
+            ? (uint256(r0), uint256(r1))
+            : (uint256(r1), uint256(r0));
+        require(reserveIn > 0 && reserveOut > 0, "Empty pool");
+
+        uint256 amountInWithFee = amountIn * 997;
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = (reserveIn * 1000) + amountInWithFee;
+        amountOut = numerator / denominator;
+    }
+
+    function _receiveAndTakeFee(address tokenIn, uint256 amountIn) internal returns (uint256 swapAmount, uint256 feeAmount) {
+        uint256 balBefore = IERC20(tokenIn).balanceOf(address(this));
+        PERMIT2.transferFrom(msg.sender, address(this), uint160(amountIn), tokenIn);
+        uint256 received = IERC20(tokenIn).balanceOf(address(this)) - balBefore;
+
+        swapAmount = received;
+        if (appFeeBps > 0) {
+            feeAmount = (received * appFeeBps) / 10000;
+            swapAmount = received - feeAmount;
+            IERC20(tokenIn).safeTransfer(feeCollector, feeAmount);
+        }
+    }
+
+    function _sendToPair(address tokenIn, uint256 swapAmount) internal returns (uint256 actualToPair) {
+        uint256 pairBalBefore = IERC20(tokenIn).balanceOf(PAIR);
+        IERC20(tokenIn).safeTransfer(PAIR, swapAmount);
+        actualToPair = IERC20(tokenIn).balanceOf(PAIR) - pairBalBefore;
     }
 
     function swap(
@@ -77,35 +99,27 @@ contract HachiSwap is ReentrancyGuard {
         uint256 minAmountOut,
         uint256 deadline
     ) external nonReentrant onlyHuman returns (uint256 amountOut) {
+        require(block.timestamp <= deadline, "Expired");
         require(
             (tokenIn == HACHI && tokenOut == WLD) || (tokenIn == WLD && tokenOut == HACHI),
             "Unsupported pair"
         );
         require(amountIn > 0, "Zero amount");
 
-        PERMIT2.transferFrom(msg.sender, address(this), uint160(amountIn), tokenIn);
+        (uint256 swapAmount, uint256 feeAmount) = _receiveAndTakeFee(tokenIn, amountIn);
+        uint256 actualToPair = _sendToPair(tokenIn, swapAmount);
 
-        uint256 swapAmount = amountIn;
-        uint256 feeAmount = 0;
-        if (appFeeBps > 0) {
-            feeAmount = (amountIn * appFeeBps) / 10000;
-            swapAmount = amountIn - feeAmount;
-            IERC20(tokenIn).safeTransfer(feeCollector, feeAmount);
-        }
+        uint256 expectedOut = getAmountOut(tokenIn, actualToPair);
 
-        uint256 balanceBefore = IERC20(tokenOut).balanceOf(msg.sender);
+        address token0 = IUniswapV2Pair(PAIR).token0();
+        (uint256 amount0Out, uint256 amount1Out) = tokenIn == token0
+            ? (uint256(0), expectedOut)
+            : (expectedOut, uint256(0));
 
-        bytes memory commands = abi.encodePacked(V2_SWAP_EXACT_IN);
-        address[] memory path = new address[](2);
-        path[0] = tokenIn;
-        path[1] = tokenOut;
+        uint256 userBalBefore = IERC20(tokenOut).balanceOf(msg.sender);
+        IUniswapV2Pair(PAIR).swap(amount0Out, amount1Out, msg.sender, new bytes(0));
+        amountOut = IERC20(tokenOut).balanceOf(msg.sender) - userBalBefore;
 
-        bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(msg.sender, swapAmount, minAmountOut, path, true);
-
-        ROUTER.execute(commands, inputs, deadline);
-
-        amountOut = IERC20(tokenOut).balanceOf(msg.sender) - balanceBefore;
         require(amountOut >= minAmountOut, "Slippage: amount out too low");
 
         emit Swapped(msg.sender, tokenIn, tokenOut, amountIn, amountOut, feeAmount);

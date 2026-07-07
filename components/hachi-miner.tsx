@@ -225,6 +225,7 @@ export default function HachiMiner() {
   const [swapQuote, setSwapQuote] = useState('0')
   const [swapLoading, setSwapLoading] = useState(false)
   const [swapHistory, setSwapHistory] = useState<any[]>([])
+  const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
   const [wldLics, setWldLics] = useState<any[]>([])
@@ -1391,18 +1392,18 @@ export default function HachiMiner() {
             <button onClick={doSwap} disabled={!connected||swapLoading||!swapIn||Number(swapIn)<=0} style={{...btnP,width:'100%',opacity:(!connected||swapLoading||!swapIn||Number(swapIn)<=0)?0.4:1}}>{swapLoading?'Intercambiando...':'Intercambiar'}</button>
           </div>
           <div style={sLabel}>Tu historial</div>
-          {swapHistory.length===0?<div style={empty}><div style={{fontSize:28}}>🔄</div><div>Sin intercambios todavía</div></div>:swapHistory.map((h,i)=>{
+          {swapHistory.length===0?<div style={empty}><div style={{fontSize:28}}>🔄</div><div>Sin intercambios todavía</div></div>:(swapHistoryExpanded?swapHistory:swapHistory.slice(0,5)).map((h,i)=>{
             const inName = h.tokenIn.toLowerCase()===C.hachi.toLowerCase() ? 'HACHI' : 'WLD'
             const outName = h.tokenOut.toLowerCase()===C.hachi.toLowerCase() ? 'HACHI' : 'WLD'
-            return <div key={h.hash+i} style={{...card,marginBottom:8}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                <span style={{fontSize:13,color:'#e6edf3',fontWeight:600}}>{inName} → {outName}</span>
-                <a href={`https://worldscan.org/tx/${h.hash}`} target="_blank" rel="noopener noreferrer" style={{color:'#a78bfa',fontSize:16,textDecoration:'none'}}>↗</a>
+            return <a key={h.hash+i} href={`https://worldscan.org/tx/${h.hash}`} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none'}}>
+              <div style={{...card,marginBottom:6,padding:'8px 12px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                <span style={{fontSize:12,color:'#e6edf3',fontWeight:600,whiteSpace:'nowrap'}}>{inName}→{outName}</span>
+                <span style={{fontSize:11,fontFamily:'monospace',color:'#8b949e',flex:1,textAlign:'center'}}>{fmtPrecise(fe(h.amountIn))} → <span style={{color:'#3fb950'}}>{fmtPrecise(fe(h.amountOut))}</span></span>
+                <span style={{color:'#a78bfa',fontSize:14}}>↗</span>
               </div>
-              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Enviaste</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(fe(h.amountIn))} {inName}</span></div>
-              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Recibiste</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(fe(h.amountOut))} {outName}</span></div>
-            </div>
+            </a>
           })}
+          {!swapHistoryExpanded&&swapHistory.length>5&&<button onClick={()=>setSwapHistoryExpanded(true)} style={{...btnGh,width:'100%',marginTop:4}}>Ver más ({swapHistory.length-5})</button>}
         </div>}
 
         {tab==='refs'&&<div>

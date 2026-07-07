@@ -567,7 +567,7 @@ export default function HachiMiner() {
       const sw = new ethers.Contract(HACHI_SWAP_ADDR, HACHISWAP_ABI, p)
       const filter = sw.filters.Swapped(addr)
       const currentBlock = await p.getBlockNumber()
-      const fromBlock = Math.max(0, currentBlock - 9000)
+      const fromBlock = Math.max(0, currentBlock - 500000)
       const events = await sw.queryFilter(filter, fromBlock, currentBlock)
       const history = events.slice(-20).reverse().map((e:any) => ({
         hash: e.transactionHash,
@@ -577,7 +577,7 @@ export default function HachiMiner() {
         amountOut: e.args.amountOut,
       }))
       setSwapHistory(history)
-    } catch(e) {}
+    } catch(e:any) { log('swap history err: ' + (e?.message||'').slice(0,150)) }
   }
 
   // Interpreta el finalPayload de MiniKit.commandsAsync.* (v1.11) y lanza un error legible.
@@ -959,6 +959,7 @@ export default function HachiMiner() {
       toast_('✓ Swap realizado', '#3fb950')
       setSwapIn(''); setSwapQuote('0')
       await loadAll(addr)
+      loadSwapHistory(rpc())
     } catch(e: any) {
       log('swap err: ' + JSON.stringify(e).slice(0,900))
       toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149')

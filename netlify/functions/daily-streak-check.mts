@@ -88,10 +88,11 @@ async function runCheck() {
   const swapsByUser = {};
   for (const e of swapEvents) {
     const user = e.args.user.toLowerCase();
-    const tokenIn = e.args.tokenIn.toLowerCase();
+    const tokenOut = e.args.tokenOut.toLowerCase();
+    if (tokenOut !== HACHI_TOKEN) continue;
     if (!swapsByUser[user]) swapsByUser[user] = { count: 0, hachiVolume: 0n };
     swapsByUser[user].count += 1;
-    if (tokenIn === HACHI_TOKEN) swapsByUser[user].hachiVolume += e.args.amountIn;
+    swapsByUser[user].hachiVolume += e.args.amountOut;
   }
   const bocadoByUser = new Set(bocadoEvents.map(e => e.args.user.toLowerCase()));
 

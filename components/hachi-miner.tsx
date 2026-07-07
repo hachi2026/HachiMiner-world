@@ -567,9 +567,20 @@ export default function HachiMiner() {
       const sw = new ethers.Contract(HACHI_SWAP_ADDR, HACHISWAP_ABI, p)
       const filter = sw.filters.Swapped(addr)
       const currentBlock = await p.getBlockNumber()
-      const fromBlock = Math.max(0, currentBlock - 500000)
-      const events = await sw.queryFilter(filter, fromBlock, currentBlock)
-      const history = events.slice(-20).reverse().map((e:any) => ({
+      const CHUNK = 100
+      const MAX_CHUNKS = 30
+      let allEvents: any[] = []
+      let to = currentBlock
+      for (let i = 0; i < MAX_CHUNKS && to >= 0; i++) {
+        const from = Math.max(0, to - CHUNK + 1)
+        try {
+          const evs = await sw.queryFilter(filter, from, to)
+          allEvents = allEvents.concat(evs)
+        } catch(e) {}
+        to = from - 1
+        if (allEvents.length >= 20) break
+      }
+      const history = allEvents.slice(-20).reverse().map((e:any) => ({
         hash: e.transactionHash,
         tokenIn: e.args.tokenIn,
         tokenOut: e.args.tokenOut,

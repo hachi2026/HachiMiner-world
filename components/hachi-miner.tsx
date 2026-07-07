@@ -539,12 +539,15 @@ export default function HachiMiner() {
       const [r0, r1] = await pair.getReserves()
       // token0 = WLD (0x2cfc...), token1 = HACHI (0xbE03...) por orden numérico de dirección
       const amountInWei = pe(amountStr)
+      const adjBps = BigInt(200)
+      const afterAdj = dir === 'h2w' ? amountInWei * (BigInt(10000) - adjBps) / BigInt(10000) : amountInWei
       const reserveIn  = dir === 'h2w' ? r1 : r0
       const reserveOut = dir === 'h2w' ? r0 : r1
-      const amountInWithFee = amountInWei * BigInt(9970)
+      const amountInWithFee = afterAdj * BigInt(9970)
       const numerator = amountInWithFee * reserveOut
       const denominator = reserveIn * BigInt(10000) + amountInWithFee
-      const out = numerator / denominator
+      let out = numerator / denominator
+      if (dir === 'w2h') out = out * (BigInt(10000) - adjBps) / BigInt(10000)
       setSwapQuote(fe(out).toFixed(6))
     } catch(e) { setSwapQuote('0') }
   }
@@ -899,12 +902,15 @@ export default function HachiMiner() {
       const amountInWei = pe(swapIn)
       const pair = new ethers.Contract(HACHI_WLD_PAIR, PAIR_ABI, rpc())
       const [r0, r1] = await pair.getReserves()
+      const adjBps = BigInt(200)
+      const afterAdj = swapDir === 'h2w' ? amountInWei * (BigInt(10000) - adjBps) / BigInt(10000) : amountInWei
       const reserveIn  = swapDir === 'h2w' ? r1 : r0
       const reserveOut = swapDir === 'h2w' ? r0 : r1
-      const amountInWithFee = amountInWei * BigInt(9970)
+      const amountInWithFee = afterAdj * BigInt(9970)
       const numerator = amountInWithFee * reserveOut
       const denominator = reserveIn * BigInt(10000) + amountInWithFee
-      const quoted = numerator / denominator
+      let quoted = numerator / denominator
+      if (swapDir === 'w2h') quoted = quoted * (BigInt(10000) - adjBps) / BigInt(10000)
       const minAmountOut = quoted - (quoted * BigInt(100) / BigInt(10000)) // 1% de tolerancia a slippage
       const deadline = Math.floor(Date.now()/1000) + 600
       toast_('Confirmando swap...', '#d29922')

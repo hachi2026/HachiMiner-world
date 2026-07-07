@@ -1305,6 +1305,17 @@ export default function HachiMiner() {
           <div style={card}><div style={cTitle}>🌍 Total de la comunidad</div>
             {[['HACHI bloqueado',platformStats.totalLocked],['Usuarios activos',platformStats.totalUsers]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
           </div>
+          <div style={sLabel}>Mis depósitos</div>
+          {lockBatches.length===0?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Sin depósitos aún</div></div>:lockBatches.map((b,i)=><div key={i} style={{...card,marginBottom:8}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontFamily:'monospace',fontSize:16,fontWeight:700,color:'#e6edf3'}}>{b.amount.toLocaleString(undefined,{maximumFractionDigits:4})} HACHI</span>
+              {b.ready
+                ? <span style={{color:'#3fb950',fontWeight:700,fontSize:13}}>✓ Disponible</span>
+                : <span style={{color:'#fbbf24',fontWeight:700,fontSize:13}}>⏳ Liberando</span>
+              }
+            </div>
+            {!b.ready&&<div style={{fontSize:12,color:'#8b949e',marginTop:6}}>Se libera el {b.unlocks.toLocaleDateString()} a las {b.unlocks.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>}
+          </div>)}
           <div style={{...card,marginTop:12}}><div style={cTitle}>Niveles del Lock</div>
             <div style={{fontSize:11,color:'#8b949e',marginBottom:10,lineHeight:1.5}}>Con menos de 50,000 HACHI bloqueados (Sin tier) accedés a las licencias Bocado Básicas, pero no generás APY. Desde 50,000 HACHI (Tier 1 — Akira) empezás a ganar rendimiento.</div>
             {[{name:'Akira',min:'50,000',apy:'10%'},{name:'Zen',min:'200,000',apy:'20%'},{name:'Koban',min:'500,000',apy:'30%'},{name:'Tayko',min:'750,000',apy:'40%'},{name:'Hachi',min:'1,000,000',apy:'50%'}].map(({name,min,apy})=>{
@@ -1316,8 +1327,6 @@ export default function HachiMiner() {
               </div>
             })}
           </div>
-          <div style={sLabel}>Mis depósitos</div>
-          {lockBatches.length===0?<div style={empty}><div>Sin depósitos aún</div></div>:lockBatches.map((b,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid #3b0764',fontSize:12}}><span style={{fontFamily:'monospace'}}>{fmt(b.amount)} HACHI</span><span style={{color:b.ready?'#3fb950':'#8b949e'}}>{b.ready?'✓ Disponible':'Hasta '+b.unlocks.toLocaleDateString()}</span></div>)}
         </div>}
 
         {tab==='ranking'&&<div>

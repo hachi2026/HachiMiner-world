@@ -930,6 +930,8 @@ export default function HachiMiner() {
   }
 
   const wldNames = ['🌱 Básica','⚡ Estándar','💎 Premium','🚀 Elite']
+  const now_ts = Math.floor(Date.now()/1000)
+  const hasActiveElite = wldLics.some(({l}) => Number(l[1])===3 && l[10] && Number(l[7])>now_ts)
   const wldPrices = ['1 WLD','3 WLD','5 WLD','10 WLD']
   const sushiNames = ['🌱 Bocado','⚡ Bocado Doble','💎 Bocado Grande','🚀 Bocado Real']
   const sushiPrices = ['500 HACHI','2,000 HACHI','5,000 HACHI','10,000 HACHI']
@@ -1142,24 +1144,31 @@ export default function HachiMiner() {
             <button onClick={()=>setLicTab('sushi')} style={{...(licTab==='sushi'?{...btnG,background:'transparent'}:btnGh),display:'flex',alignItems:'center',gap:6,justifyContent:'center'}}><img src="/hachi-cat-savings.png" width={20} height={20} style={{borderRadius:4,objectFit:'cover',flexShrink:0}} />Bocado</button>
           </div>
           {licTab==='wld'&&<div>
+            <div style={sLabel}>Mis licencias WLD</div>
+            {wldLics.length===0?<div style={empty}><div style={{fontSize:28}}>💠</div><div>{t('no_lics')}</div></div>:wldLics.map(({id,l,pend})=>{
+              const dailyHachi = fe(BigInt(l[4]) * BigInt(86400))
+              const dailyDrachma = fe(l[2]) * 0.5
+              return <div key={id.toString()} style={card}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><strong>{['Básica','Estándar','Premium','Elite'][l[1]]}</strong><div style={{color:l[10]?'#3fb950':'#8b949e'}}>●</div></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente</span><span style={{color:'#3fb950',fontFamily:'monospace'}}>{fe(pend).toFixed(6)} HACHI</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Genera por día</span><span style={{fontFamily:'monospace'}}>{dailyHachi.toFixed(6)} HACHI</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Aporta al bono diario</span><span style={{fontFamily:'monospace',color:'#60a5fa'}}>{dailyDrachma.toFixed(4)} Drachma/día</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Vence</span><span style={{fontFamily:'monospace'}}>{new Date(Number(l[7])*1000).toLocaleDateString()}</span></div>
+              <button onClick={()=>claimWLD(id)} style={{...btnG,marginTop:8}}>Cobrar HACHI</button>
+            </div>})}
             <div style={sLabel}>Comprar licencia WLD</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-              {wldNames.map((n,i)=><div key={i} onClick={()=>setSelWLD(i)} style={{...lCard,border:`1px solid ${selWLD===i?'#fbbf24':'#5b21b6'}`,background:selWLD===i?'rgba(251,191,36,.08)':'#1e0840',boxShadow:selWLD===i?'0 0 12px rgba(251,191,36,.3)':'none'}}>
+              {wldNames.map((n,i)=>{
+                const locked = i===3 && hasActiveElite
+                return <div key={i} onClick={()=>{if(!locked) setSelWLD(i)}} style={{...lCard,border:`1px solid ${selWLD===i?'#fbbf24':'#5b21b6'}`,background:selWLD===i?'rgba(251,191,36,.08)':'#1e0840',boxShadow:selWLD===i?'0 0 12px rgba(251,191,36,.3)':'none',opacity:locked?0.35:1,cursor:locked?'not-allowed':'pointer'}}>
                 <div style={{fontSize:11,fontWeight:700}}>{n}{i===3&&<span style={{color:'#34d399'}}> +5%</span>}</div>
                 <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,color:'#34d399'}}>{fmt(Math.round([1,3,5,10][i]*wldHachi*(i===3?1.35:1.3)))}</div>
                 <div style={{fontSize:10,color:'#8b949e'}}>HACHI · 3 meses · {i===3?'35%':'30%'}</div>
-                <div style={{fontSize:12,fontWeight:700,color:'#fbbf24',marginTop:6}}>{wldPrices[i]}</div>
-              </div>)}
+                <div style={{fontSize:12,fontWeight:700,color:'#fbbf24',marginTop:6}}>{locked?'Ya tenés 1 activa':wldPrices[i]}</div>
+              </div>})}
             </div>
             <div style={pBox}>{[['Tipo',wldNames[selWLD]],['Precio',wldPrices[selWLD]],['HACHI base',wldPrev.base],[selWLD===3?'Total ×1.35 (Elite +5%)':'Total ×1.3',wldPrev.total],['HACHI/día',wldPrev.daily],['Mensual',wldPrev.monthly]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace',fontSize:13}}>{v}</span></div>)}</div>
-            <button onClick={buyWLD} disabled={!connected||wldHachi>MAX_HACHI||licsAvailNum<=0} style={{...btnP,opacity:(!connected||wldHachi>MAX_HACHI||licsAvailNum<=0)?0.4:1}}>{wldHachi>MAX_HACHI?'⚠ Ventas pausadas':licsAvailNum<=0?'Sin stock disponible':`Comprar · ${wldPrices[selWLD]}`}</button>
-            <div style={sLabel}>Licencias WLD activas</div>
-            {wldLics.length===0?<div style={empty}><div style={{fontSize:28}}>💠</div><div>{t('no_lics')}</div></div>:wldLics.map(({id,l,pend})=><div key={id.toString()} style={card}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}><strong>{['Básica','Estándar','Premium','Elite'][l[1]]}</strong><div style={{color:l[10]?'#3fb950':'#8b949e'}}>●</div></div>
-              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente</span><span style={{color:'#3fb950',fontFamily:'monospace'}}>{fmt(fe(pend))} HACHI</span></div>
-              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Vence</span><span style={{fontFamily:'monospace'}}>{new Date(Number(l[7])*1000).toLocaleDateString()}</span></div>
-              <button onClick={()=>claimWLD(id)} style={{...btnG,marginTop:8}}>Cobrar HACHI</button>
-            </div>)}
+            <button onClick={buyWLD} disabled={!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&hasActiveElite)} style={{...btnP,opacity:(!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&hasActiveElite))?0.4:1}}>{wldHachi>MAX_HACHI?'⚠ Ventas pausadas':licsAvailNum<=0?'Sin stock disponible':(selWLD===3&&hasActiveElite)?'Ya tenés una Elite activa':`Comprar · ${wldPrices[selWLD]}`}</button>
           </div>}
           {licTab==='sushi'&&<div>
             {!sushiAccess&&<div style={{background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.35)',borderRadius:8,padding:20,textAlign:'center',marginBottom:12}}>

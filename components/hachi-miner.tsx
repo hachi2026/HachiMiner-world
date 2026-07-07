@@ -44,7 +44,7 @@ const ERC20 = ['function balanceOf(address) view returns (uint256)', 'function a
 const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
 const HACHI_SWAP_ADDR = '0x272C6e5724C88A0160Fd28b26C207eD505921E9F'
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
-const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)']
+const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)', 'event Swapped(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount)']
 // Permit2 (AllowanceTransfer): approve da permiso a un "spender" (nuestro contrato) para mover el token vía Permit2
 const PERMIT2_ABI = [
   'function approve(address token, address spender, uint160 amount, uint48 expiration)',
@@ -183,6 +183,13 @@ const LOGIN = {
 }
 
 const fmt = (n: number) => { if ((!n && n!==0)||isNaN(n)) return '—'; if (n>=1e6) return (n/1e6).toFixed(2)+'M'; if (n>=1e3) return (n/1e3).toFixed(1)+'K'; return Math.round(n).toLocaleString() }
+const fmtPrecise = (n: number): string => {
+  if (!n && n !== 0) return '—'
+  if (n === 0) return '0'
+  const decimals = n >= 1 ? 4 : n >= 0.01 ? 6 : 8
+  const s = n.toFixed(decimals)
+  return s.includes('.') ? s.replace(/0+$/,'').replace(/\.$/,'') : s
+}
 const fmtA = (a: string) => a ? a.slice(0,6)+'...'+a.slice(-4) : '—'
 const fe = (v: bigint) => Number(ethers.formatEther(v))
 const pe = (v: string|number) => ethers.parseEther(String(v))
@@ -217,6 +224,7 @@ export default function HachiMiner() {
   const [swapIn, setSwapIn] = useState('')
   const [swapQuote, setSwapQuote] = useState('0')
   const [swapLoading, setSwapLoading] = useState(false)
+  const [swapHistory, setSwapHistory] = useState<any[]>([])
   const [selWLD, setSelWLD] = useState(0)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
   const [wldLics, setWldLics] = useState<any[]>([])
@@ -554,6 +562,24 @@ export default function HachiMiner() {
     } catch(e) { setSwapQuote('0') }
   }
 
+  const loadSwapHistory = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const sw = new ethers.Contract(HACHI_SWAP_ADDR, HACHISWAP_ABI, p)
+      const filter = sw.filters.Swapped(addr)
+      const currentBlock = await p.getBlockNumber()
+      const fromBlock = Math.max(0, currentBlock - 9000)
+      const events = await sw.queryFilter(filter, fromBlock, currentBlock)
+      const history = events.slice(-20).reverse().map((e:any) => ({
+        hash: e.transactionHash,
+        tokenIn: e.args.tokenIn,
+        tokenOut: e.args.tokenOut,
+        amountIn: e.args.amountIn,
+        amountOut: e.args.amountOut,
+      }))
+      setSwapHistory(history)
+    } catch(e) {}
+  }
+
   // Interpreta el finalPayload de MiniKit.commandsAsync.* (v1.11) y lanza un error legible.
   const handleMiniKitResult = (finalPayload: any) => {
     const status = finalPayload?.status
@@ -750,6 +776,7 @@ export default function HachiMiner() {
     if (v==='ranking') loadRanking(p)
     if (v==='pools') loadPools(p)
     if (v==='refs') loadRefs(p)
+    if (v==='swap') loadSwapHistory(p)
   }
 
   const loadWLDLics = async (p: ethers.JsonRpcProvider) => {
@@ -1351,6 +1378,19 @@ export default function HachiMiner() {
             <div style={{fontSize:10,color:'#8b949e',marginBottom:12,lineHeight:1.5}}>Liquidez real de Uniswap · Fee de pool 0.3% + fee de app 0.05% · Tolerancia a slippage 1%</div>
             <button onClick={doSwap} disabled={!connected||swapLoading||!swapIn||Number(swapIn)<=0} style={{...btnP,width:'100%',opacity:(!connected||swapLoading||!swapIn||Number(swapIn)<=0)?0.4:1}}>{swapLoading?'Intercambiando...':'Intercambiar'}</button>
           </div>
+          <div style={sLabel}>Tu historial</div>
+          {swapHistory.length===0?<div style={empty}><div style={{fontSize:28}}>🔄</div><div>Sin intercambios todavía</div></div>:swapHistory.map((h,i)=>{
+            const inName = h.tokenIn.toLowerCase()===C.hachi.toLowerCase() ? 'HACHI' : 'WLD'
+            const outName = h.tokenOut.toLowerCase()===C.hachi.toLowerCase() ? 'HACHI' : 'WLD'
+            return <div key={h.hash+i} style={{...card,marginBottom:8}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                <span style={{fontSize:13,color:'#e6edf3',fontWeight:600}}>{inName} → {outName}</span>
+                <a href={`https://worldscan.org/tx/${h.hash}`} target="_blank" rel="noopener noreferrer" style={{color:'#a78bfa',fontSize:16,textDecoration:'none'}}>↗</a>
+              </div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Enviaste</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(fe(h.amountIn))} {inName}</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Recibiste</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(fe(h.amountOut))} {outName}</span></div>
+            </div>
+          })}
         </div>}
 
         {tab==='refs'&&<div>

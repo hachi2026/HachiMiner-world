@@ -623,8 +623,9 @@ export default function HachiMiner() {
         try {
           const swEvs = await sw.queryFilter(sw.filters.Swapped(addr), from, to)
           for (const e of swEvs as any[]) {
+            if (e.args.tokenOut.toLowerCase() !== C.hachi.toLowerCase()) continue
             swapCount++
-            if (e.args.tokenIn.toLowerCase() === C.hachi.toLowerCase()) volume += e.args.amountIn
+            volume += e.args.amountOut
           }
           const bocEvs = await core.queryFilter(core.filters.SushiLicBought(addr), from, to)
           if (bocEvs.length > 0) boughtBocado = true

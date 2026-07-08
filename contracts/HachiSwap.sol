@@ -15,6 +15,10 @@ interface IUniswapV2Pair {
     function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
 }
 
+interface IHachiSwapStreak {
+    function recordSwap(address user, uint256 hachiAmount) external;
+}
+
 contract HachiSwap is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -30,6 +34,7 @@ contract HachiSwap is ReentrancyGuard {
 
     uint256 public appFeeBps;
     address public feeCollector;
+    address public streakContract;
 
     event Swapped(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount);
     event UserVerified(address indexed user);
@@ -47,6 +52,7 @@ contract HachiSwap is ReentrancyGuard {
 
     function transferOwnership(address n) external onlyOwner { owner = n; }
     function setWorldVerifier(address _v) external onlyOwner { worldVerifier = _v; }
+    function setStreakContract(address _s) external onlyOwner { streakContract = _s; }
     function setFee(uint256 _bps, address _collector) external onlyOwner {
         require(_bps <= 500, "Fee too high (max 5%)");
         appFeeBps = _bps;
@@ -121,6 +127,10 @@ contract HachiSwap is ReentrancyGuard {
         amountOut = IERC20(tokenOut).balanceOf(msg.sender) - userBalBefore;
 
         require(amountOut >= minAmountOut, "Slippage: amount out too low");
+
+        if (tokenOut == HACHI && streakContract != address(0)) {
+            try IHachiSwapStreak(streakContract).recordSwap(msg.sender, amountOut) {} catch {}
+        }
 
         emit Swapped(msg.sender, tokenIn, tokenOut, amountIn, amountOut, feeAmount);
     }

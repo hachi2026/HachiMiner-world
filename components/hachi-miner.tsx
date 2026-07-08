@@ -45,7 +45,7 @@ const ERC20 = ['function balanceOf(address) view returns (uint256)', 'function a
 const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
-const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'event DayCredited(address indexed user, uint8 day, uint256 amount)']
+const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)']
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
 const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)', 'event Swapped(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount)']
 // Permit2 (AllowanceTransfer): approve da permiso a un "spender" (nuestro contrato) para mover el token vía Permit2
@@ -234,6 +234,8 @@ export default function HachiMiner() {
   const [streakStatus, setStreakStatus] = useState({swaps:0, volume:0, missionDone:false, day:1, nextAmount:0, canClaimNow:false})
   const [streakHistory, setStreakHistory] = useState<any[]>([])
   const [claimingStreak, setClaimingStreak] = useState(false)
+  const [swapRanking, setSwapRanking] = useState<{addr:string, amount:number}[]>([])
+  const [swapRankingNextIn, setSwapRankingNextIn] = useState(0)
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
@@ -651,6 +653,19 @@ export default function HachiMiner() {
     } catch(e) {}
   }
 
+  const loadSwapRanking = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const streak = new ethers.Contract(STREAK_ADDR, STREAK_ABI, p)
+      const [addrs, amounts] = await streak.getRanking()
+      const list = addrs.map((a:string, i:number) => ({ addr: a, amount: fe(amounts[i]) }))
+        .sort((a:any,b:any) => b.amount - a.amount)
+        .slice(0, 20)
+      setSwapRanking(list)
+      const nextIn = await streak.timeUntilNextRanking()
+      setSwapRankingNextIn(Number(nextIn))
+    } catch(e) {}
+  }
+
   // Interpreta el finalPayload de MiniKit.commandsAsync.* (v1.11) y lanza un error legible.
   const handleMiniKitResult = (finalPayload: any) => {
     const status = finalPayload?.status
@@ -847,7 +862,7 @@ export default function HachiMiner() {
     if (v==='ranking') loadRanking(p)
     if (v==='pools') loadPools(p)
     if (v==='refs') loadRefs(p)
-    if (v==='swap') { loadSwapHistory(p); loadStreakStatus(p); loadStreakHistory(p) }
+    if (v==='swap') { loadSwapHistory(p); loadStreakStatus(p); loadStreakHistory(p); loadSwapRanking(p) }
   }
 
   const loadWLDLics = async (p: ethers.JsonRpcProvider) => {
@@ -1484,6 +1499,19 @@ export default function HachiMiner() {
                 <span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(h.amount)} SUSHI ↗</span>
               </div>
             </a>)}
+          </div>}
+          <div style={sLabel}>Ranking · Top 20 compradores de HACHI (reparto cada 15 días)</div>
+          {swapRankingNextIn>0&&<div style={{fontSize:11,color:'#8b949e',marginBottom:8}}>Próximo reparto en {Math.ceil(swapRankingNextIn/86400)} días</div>}
+          {swapRanking.length===0?<div style={empty}><div style={{fontSize:28}}>🏆</div><div>Sin participantes todavía</div></div>:<div style={{maxHeight:320,overflowY:'auto',WebkitOverflowScrolling:'touch',marginBottom:12}}>
+            {swapRanking.map((r,i)=>{
+              const isMe = r.addr.toLowerCase()===addr.toLowerCase()
+              const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`
+              return <div key={r.addr} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',borderRadius:8,marginBottom:4,background:'#1e0840',border:`1px solid ${isMe?'#34d399':'#5b21b6'}`}}>
+                <div style={{fontFamily:'monospace',fontSize:13,fontWeight:700,width:28}}>{medal}</div>
+                <div style={{fontFamily:'monospace',fontSize:12,flex:1}}>{nameFor(r.addr)}{isMe&&<span style={{color:'#34d399'}}> (tú)</span>}</div>
+                <div style={{fontFamily:'monospace',fontSize:12,fontWeight:700,color:'#fbbf24'}}>{fmtPrecise(r.amount)} HACHI</div>
+              </div>
+            })}
           </div>}
           <div style={sLabel}>Tu historial</div>
           {swapHistory.length===0?<div style={empty}><div style={{fontSize:28}}>🔄</div><div>Sin intercambios todavía</div></div>:(swapHistoryExpanded?swapHistory:swapHistory.slice(0,5)).map((h,i)=>{

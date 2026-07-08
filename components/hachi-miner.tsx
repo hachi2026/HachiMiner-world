@@ -627,6 +627,7 @@ export default function HachiMiner() {
       const CHUNK = 100, MAX_CHUNKS = 450, BATCH = 15
       const minVolumeWei = pe(MISSION_MIN_VOLUME)
       let swapCount = 0, volume = BigInt(0), boughtBocado = false
+      let totalSwEvsFound = 0
       let to = currentBlock
       outer:
       for (let batchStart = 0; batchStart < MAX_CHUNKS && to >= 0; batchStart += BATCH) {
@@ -646,6 +647,8 @@ export default function HachiMiner() {
         }))
         for (const { swEvs, bocEvs } of results) {
           for (const e of swEvs as any[]) {
+            totalSwEvsFound++
+            if (totalSwEvsFound <= 5) log('mission ev: in='+e.args.tokenIn.slice(0,8)+' out='+e.args.tokenOut.slice(0,8)+' hachi='+C.hachi.slice(0,8))
             if (e.args.tokenOut.toLowerCase() !== C.hachi.toLowerCase()) continue
             swapCount++
             volume += e.args.amountOut
@@ -655,6 +658,7 @@ export default function HachiMiner() {
         to = cursor
         if (swapCount >= MISSION_MIN_SWAPS && volume >= minVolumeWei && boughtBocado) break outer
       }
+      log('mission total: '+totalSwEvsFound+' swaps encontrados, '+swapCount+' cuentan para la mision')
       const [poolA, poolACommitted] = await Promise.all([core.poolA_sushi(), core.poolA_committed()])
       const poolAHasStock = (poolA - poolACommitted) > BigInt(0)
       setMissionProgress({swaps: swapCount, volume: fe(volume), boughtBocado, poolAHasStock})

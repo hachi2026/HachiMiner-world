@@ -617,26 +617,36 @@ export default function HachiMiner() {
       const sw = new ethers.Contract(HACHI_SWAP_ADDR, HACHISWAP_ABI, p)
       const core = new ethers.Contract(C.core, HACHI_CORE_SUSHI_EVENT_ABI, p)
       const currentBlock = await p.getBlockNumber()
-      const CHUNK = 100, MAX_CHUNKS = 100
+      const CHUNK = 100, MAX_CHUNKS = 100, BATCH = 10
       const minVolumeWei = pe(MISSION_MIN_VOLUME)
       let swapCount = 0, volume = BigInt(0), boughtBocado = false
       let to = currentBlock
-      for (let i = 0; i < MAX_CHUNKS && to >= 0; i++) {
-        const from = Math.max(0, to - CHUNK + 1)
-        try {
-          const swEvs = await sw.queryFilter(sw.filters.Swapped(addr), from, to)
+      outer:
+      for (let batchStart = 0; batchStart < MAX_CHUNKS && to >= 0; batchStart += BATCH) {
+        const ranges: [number, number][] = []
+        let cursor = to
+        for (let j = 0; j < BATCH && cursor >= 0; j++) {
+          const from = Math.max(0, cursor - CHUNK + 1)
+          ranges.push([from, cursor])
+          cursor = from - 1
+        }
+        const results = await Promise.all(ranges.map(async ([from, rTo]) => {
+          const [swEvs, bocEvs] = await Promise.all([
+            sw.queryFilter(sw.filters.Swapped(addr), from, rTo).catch(() => []),
+            boughtBocado ? Promise.resolve([]) : core.queryFilter(core.filters.SushiLicBought(addr), from, rTo).catch(() => []),
+          ])
+          return { swEvs, bocEvs }
+        }))
+        for (const { swEvs, bocEvs } of results) {
           for (const e of swEvs as any[]) {
             if (e.args.tokenOut.toLowerCase() !== C.hachi.toLowerCase()) continue
             swapCount++
             volume += e.args.amountOut
           }
-          if (!boughtBocado) {
-            const bocEvs = await core.queryFilter(core.filters.SushiLicBought(addr), from, to)
-            if (bocEvs.length > 0) boughtBocado = true
-          }
-        } catch(e) {}
-        to = from - 1
-        if (swapCount >= MISSION_MIN_SWAPS && volume >= minVolumeWei && boughtBocado) break
+          if (bocEvs.length > 0) boughtBocado = true
+        }
+        to = cursor
+        if (swapCount >= MISSION_MIN_SWAPS && volume >= minVolumeWei && boughtBocado) break outer
       }
       const [poolA, poolACommitted] = await Promise.all([core.poolA_sushi(), core.poolA_committed()])
       const poolAHasStock = (poolA - poolACommitted) > BigInt(0)

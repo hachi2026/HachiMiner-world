@@ -620,7 +620,7 @@ export default function HachiMiner() {
       const sw = new ethers.Contract(HACHI_SWAP_ADDR, HACHISWAP_ABI, p)
       const core = new ethers.Contract(C.core, HACHI_CORE_SUSHI_EVENT_ABI, p)
       const currentBlock = await p.getBlockNumber()
-      const CHUNK = 100, MAX_CHUNKS = 100, BATCH = 10
+      const CHUNK = 100, MAX_CHUNKS = 450, BATCH = 15
       const minVolumeWei = pe(MISSION_MIN_VOLUME)
       let swapCount = 0, volume = BigInt(0), boughtBocado = false
       let to = currentBlock

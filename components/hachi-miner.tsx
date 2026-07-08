@@ -581,18 +581,22 @@ export default function HachiMiner() {
       const sw = new ethers.Contract(HACHI_SWAP_ADDR, HACHISWAP_ABI, p)
       const filter = sw.filters.Swapped(addr)
       const currentBlock = await p.getBlockNumber()
-      const CHUNK = 100
-      const MAX_CHUNKS = 450
+      const CHUNK = 100, MAX_CHUNKS = 450, BATCH = 15
       let allEvents: any[] = []
       let to = currentBlock
-      for (let i = 0; i < MAX_CHUNKS && to >= 0; i++) {
-        const from = Math.max(0, to - CHUNK + 1)
-        try {
-          const evs = await sw.queryFilter(filter, from, to)
-          allEvents = allEvents.concat(evs)
-        } catch(e) {}
-        to = from - 1
-        if (allEvents.length >= 20) break
+      outer:
+      for (let batchStart = 0; batchStart < MAX_CHUNKS && to >= 0; batchStart += BATCH) {
+        const ranges: [number, number][] = []
+        let cursor = to
+        for (let j = 0; j < BATCH && cursor >= 0; j++) {
+          const from = Math.max(0, cursor - CHUNK + 1)
+          ranges.push([from, cursor])
+          cursor = from - 1
+        }
+        const results = await Promise.all(ranges.map(([from, rTo]) => sw.queryFilter(filter, from, rTo).catch(() => [])))
+        for (const evs of results) allEvents = allEvents.concat(evs)
+        to = cursor
+        if (allEvents.length >= 20) break outer
       }
       allEvents.sort((a:any,b:any) => a.blockNumber - b.blockNumber || a.logIndex - b.logIndex)
       const history = allEvents.slice(-20).reverse().map((e:any) => ({

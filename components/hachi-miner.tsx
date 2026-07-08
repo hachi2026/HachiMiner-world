@@ -582,7 +582,7 @@ export default function HachiMiner() {
       const filter = sw.filters.Swapped(addr)
       const currentBlock = await p.getBlockNumber()
       const CHUNK = 100
-      const MAX_CHUNKS = 30
+      const MAX_CHUNKS = 450
       let allEvents: any[] = []
       let to = currentBlock
       for (let i = 0; i < MAX_CHUNKS && to >= 0; i++) {

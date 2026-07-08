@@ -43,6 +43,7 @@ const ACTION = 'verify-human'
 
 const ERC20 = ['function balanceOf(address) view returns (uint256)', 'function approve(address,uint256) returns (bool)', 'function allowance(address,address) view returns (uint256)']
 const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
+const SWAP_MAINTENANCE_MODE = true // poner en false cuando esté listo para todos
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
 const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)']
@@ -1460,6 +1461,12 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='swap'&&<div>
+          {SWAP_MAINTENANCE_MODE&&!debugMode&&<div style={{background:'rgba(251,191,36,.1)',border:'1px solid rgba(251,191,36,.4)',borderRadius:8,padding:16,marginBottom:12,textAlign:'center'}}>
+            <div style={{fontSize:28,marginBottom:8}}>🛠️</div>
+            <div style={{fontWeight:700,color:'#fbbf24',marginBottom:6}}>Estamos mejorando la experiencia de Swap</div>
+            <div style={{fontSize:13,color:'#8b949e'}}>Volvé pronto — estamos terminando de ajustar todo para que ande perfecto.</div>
+          </div>}
+          {(!SWAP_MAINTENANCE_MODE||debugMode)&&<>
           <div style={sLabel}>Intercambiar HACHI ↔ WLD</div>
           <div style={card}>
             <div style={{display:'flex',gap:8,marginBottom:12}}>
@@ -1526,6 +1533,7 @@ export default function HachiMiner() {
             </a>
           })}
           {!swapHistoryExpanded&&swapHistory.length>5&&<button onClick={()=>setSwapHistoryExpanded(true)} style={{...btnGh,width:'100%',marginTop:4}}>Ver más ({swapHistory.length-5})</button>}
+          </>}
         </div>}
 
         {tab==='refs'&&<div>

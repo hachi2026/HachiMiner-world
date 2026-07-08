@@ -1461,34 +1461,6 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='swap'&&<div>
-          {streakStatus.isWhitelisted&&<div style={{...card,marginBottom:12,border:'1px solid #fbbf24'}}>
-            <div style={cTitle}>🔥 Racha de swaps — Día {streakStatus.day}/7</div>
-            <div style={{display:'flex',gap:3,marginBottom:10}}>
-              {[1,2,3,4,5,6,7].map(d=><div key={d} style={{flex:1,height:6,borderRadius:3,background:d<streakStatus.day?'#3fb950':d===streakStatus.day?'#fbbf24':'#3b0764'}} />)}
-            </div>
-            {missionLoading&&<div style={{fontSize:11,color:'#8b949e',fontStyle:'italic'}}>Revisando tu actividad de hoy...</div>}
-            {!missionLoading&&(() => {
-              const missionDone = missionProgress.swaps>=MISSION_MIN_SWAPS && missionProgress.volume>=MISSION_MIN_VOLUME && (missionProgress.boughtBocado || !missionProgress.poolAHasStock)
-              if (missionDone) {
-                return <div style={{fontSize:12,color:'#3fb950',fontWeight:600}}>✓ Misión cumplida — tu bono de {fmtPrecise(streakStatus.nextAmount)} SUSHI se paga automáticamente a las 12:00 UTC.</div>
-              }
-              return <div>
-                <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Progreso de hoy:</div>
-                <div style={{fontSize:12,color:missionProgress.swaps>=MISSION_MIN_SWAPS?'#3fb950':'#e6edf3'}}>• Swaps: {missionProgress.swaps}/{MISSION_MIN_SWAPS}</div>
-                <div style={{fontSize:12,color:missionProgress.volume>=MISSION_MIN_VOLUME?'#3fb950':'#e6edf3'}}>• Volumen: {fmtPrecise(missionProgress.volume)}/{MISSION_MIN_VOLUME} HACHI</div>
-                <div style={{fontSize:12,color:(missionProgress.boughtBocado||!missionProgress.poolAHasStock)?'#3fb950':'#e6edf3'}}>• Bocado: {missionProgress.boughtBocado?'comprado ✓':!missionProgress.poolAHasStock?'exento (sin stock)':'falta comprar'}</div>
-              </div>
-            })()}
-          </div>}
-          {streakHistory.length>0&&<div style={{...card,marginBottom:12}}>
-            <div style={cTitle}>Historial de bonos de racha</div>
-            {streakHistory.map((h,i)=><a key={h.hash+i} href={`https://worldscan.org/tx/${h.hash}`} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none'}}>
-              <div style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #3b0764',fontSize:12}}>
-                <span style={{color:'#e6edf3'}}>Día {h.day}</span>
-                <span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(h.amount)} SUSHI ↗</span>
-              </div>
-            </a>)}
-          </div>}
           <div style={sLabel}>Intercambiar HACHI ↔ WLD</div>
           <div style={card}>
             <div style={{display:'flex',gap:8,marginBottom:12}}>
@@ -1510,6 +1482,37 @@ export default function HachiMiner() {
             <div style={{fontSize:10,color:'#8b949e',marginBottom:12,lineHeight:1.5}}>Liquidez real de Uniswap · Fee de pool 0.3% + fee de app 0.05% · Tolerancia a slippage 1%</div>
             <button onClick={doSwap} disabled={!connected||swapLoading||!swapIn||Number(swapIn)<=0} style={{...btnP,width:'100%',opacity:(!connected||swapLoading||!swapIn||Number(swapIn)<=0)?0.4:1}}>{swapLoading?'Intercambiando...':'Intercambiar'}</button>
           </div>
+          {streakStatus.isWhitelisted&&<div style={{...card,marginTop:12,marginBottom:12,border:'1px solid #fbbf24'}}>
+            <div style={cTitle}>🔥 Racha de swaps — Día {streakStatus.day}/7</div>
+            <div style={{display:'flex',gap:3,marginBottom:10}}>
+              {[1,2,3,4,5,6,7].map(d=><div key={d} style={{flex:1,height:6,borderRadius:3,background:d<streakStatus.day?'#3fb950':d===streakStatus.day?'#fbbf24':'#3b0764'}} />)}
+            </div>
+            {missionLoading&&<div style={{fontSize:11,color:'#8b949e',fontStyle:'italic'}}>Revisando tu actividad de hoy...</div>}
+            {!missionLoading&&(() => {
+              const missionDone = missionProgress.swaps>=MISSION_MIN_SWAPS && missionProgress.volume>=MISSION_MIN_VOLUME && (missionProgress.boughtBocado || !missionProgress.poolAHasStock)
+              if (missionDone) {
+                return <div style={{fontSize:12,color:'#3fb950',fontWeight:600}}>✓ Misión cumplida — tu bono de {fmtPrecise(streakStatus.nextAmount)} SUSHI se paga automáticamente a las 12:00 UTC.</div>
+              }
+              return <div>
+                <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Progreso de hoy:</div>
+                <div style={{fontSize:12,color:missionProgress.swaps>=MISSION_MIN_SWAPS?'#3fb950':'#e6edf3'}}>• Swaps: {missionProgress.swaps}/{MISSION_MIN_SWAPS}</div>
+                <div style={{fontSize:12,color:missionProgress.volume>=MISSION_MIN_VOLUME?'#3fb950':'#e6edf3'}}>• Volumen: {fmtPrecise(missionProgress.volume)}/{MISSION_MIN_VOLUME} HACHI</div>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                  <span style={{fontSize:12,color:(missionProgress.boughtBocado||!missionProgress.poolAHasStock)?'#3fb950':'#e6edf3'}}>• Bocado: {missionProgress.boughtBocado?'comprado ✓':!missionProgress.poolAHasStock?'exento (sin stock)':'falta comprar'}</span>
+                  {!missionProgress.boughtBocado&&missionProgress.poolAHasStock&&<button onClick={()=>{setLicTab('sushi');loadTab('lics')}} style={{fontSize:11,padding:'3px 10px',borderRadius:6,border:'1px solid #a78bfa',background:'transparent',color:'#a78bfa',cursor:'pointer'}}>Comprar →</button>}
+                </div>
+              </div>
+            })()}
+          </div>}
+          {streakHistory.length>0&&<div style={{...card,marginBottom:12}}>
+            <div style={cTitle}>Historial de bonos de racha</div>
+            {streakHistory.map((h,i)=><a key={h.hash+i} href={`https://worldscan.org/tx/${h.hash}`} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none'}}>
+              <div style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #3b0764',fontSize:12}}>
+                <span style={{color:'#e6edf3'}}>Día {h.day}</span>
+                <span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(h.amount)} SUSHI ↗</span>
+              </div>
+            </a>)}
+          </div>}
           <div style={sLabel}>Tu historial</div>
           {swapHistory.length===0?<div style={empty}><div style={{fontSize:28}}>🔄</div><div>Sin intercambios todavía</div></div>:(swapHistoryExpanded?swapHistory:swapHistory.slice(0,5)).map((h,i)=>{
             const inName = h.tokenIn.toLowerCase()===C.hachi.toLowerCase() ? 'HACHI' : 'WLD'

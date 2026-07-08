@@ -135,6 +135,7 @@ const LOGIN = {
       { icon:'🔒', title:'Lock & APY', desc:'Bloquea HACHI y gana rendimiento sobre tu posición.' },
       { icon:'🏆', title:'Ranking', desc:'Compite por premios según tu actividad.' },
       { icon:'🐱', title:'Reúne y cobra tus HACHI', desc:'Hachi te prepara una recompensa lista para reclamar cada 24hs, según tu actividad (lock y licencias). Un solo toque, sin esperas largas.' },
+      { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Intercambiá HACHI y WLD directo en la app, con la liquidez real de Uniswap.' },
     ],
     stepsTitle: 'Cómo empezar',
     steps: [
@@ -155,6 +156,7 @@ const LOGIN = {
       { icon:'🔒', title:'Lock & APY', desc:'Lock HACHI and earn yield on your position.' },
       { icon:'🏆', title:'Ranking', desc:'Compete for prizes based on your activity.' },
       { icon:'🐱', title:'Collect your HACHI', desc:'Hachi gets a reward ready for you to claim every 24h, based on your activity (lock and licenses). One tap, no long waits.' },
+      { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Exchange HACHI and WLD directly in the app, using real Uniswap liquidity.' },
     ],
     stepsTitle: 'How to start',
     steps: [
@@ -175,6 +177,7 @@ const LOGIN = {
       { icon:'🔒', title:'Lock & APY', desc:'Bloqueie HACHI e ganhe rendimento na sua posição.' },
       { icon:'🏆', title:'Ranking', desc:'Concorra a prêmios conforme sua atividade.' },
       { icon:'🐱', title:'Reúna e resgate seus HACHI', desc:'Hachi prepara uma recompensa pronta para você resgatar a cada 24h, de acordo com sua atividade (lock e licenças). Um toque só, sem esperas longas.' },
+      { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Troque HACHI e WLD direto no app, com a liquidez real da Uniswap.' },
     ],
     stepsTitle: 'Como começar',
     steps: [
@@ -226,7 +229,7 @@ export default function HachiMiner() {
   const [priceAlert, setPriceAlert] = useState(false)
   const [piggy, setPiggy] = useState({accrued:0,bonus:0,canWithdraw:false,secondsUntilNext:0})
   const [activeLicCount, setActiveLicCount] = useState(0)
-  const [swapDir, setSwapDir] = useState<'h2w'|'w2h'>('h2w')
+  const [swapDir, setSwapDir] = useState<'h2w'|'w2h'>('w2h')
   const [swapIn, setSwapIn] = useState('')
   const [swapQuote, setSwapQuote] = useState('0')
   const [swapLoading, setSwapLoading] = useState(false)
@@ -1474,8 +1477,8 @@ export default function HachiMiner() {
           <div style={sLabel}>Intercambiar HACHI ↔ WLD</div>
           <div style={card}>
             <div style={{display:'flex',gap:8,marginBottom:12}}>
-              <button onClick={()=>setSwapDir('h2w')} style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${swapDir==='h2w'?'#a78bfa':'#3b0764'}`,background:swapDir==='h2w'?'rgba(167,139,250,.15)':'transparent',color:'#e6edf3',fontSize:13,cursor:'pointer'}}>HACHI → WLD</button>
               <button onClick={()=>setSwapDir('w2h')} style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${swapDir==='w2h'?'#a78bfa':'#3b0764'}`,background:swapDir==='w2h'?'rgba(167,139,250,.15)':'transparent',color:'#e6edf3',fontSize:13,cursor:'pointer'}}>WLD → HACHI</button>
+              <button onClick={()=>setSwapDir('h2w')} style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${swapDir==='h2w'?'#a78bfa':'#3b0764'}`,background:swapDir==='h2w'?'rgba(167,139,250,.15)':'transparent',color:'#e6edf3',fontSize:13,cursor:'pointer'}}>HACHI → WLD</button>
             </div>
             <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Enviás</div>
             <input value={swapIn} onChange={e=>setSwapIn(e.target.value.replace(/[^0-9.]/g,''))} placeholder="0.0" style={{background:'#12022a',border:'1px solid #5b21b6',borderRadius:8,padding:'10px 12px',fontSize:16,color:'#e6edf3',width:'100%',marginBottom:8,fontFamily:'monospace'}} />

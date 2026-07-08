@@ -37,12 +37,13 @@ export async function GET(request: Request): Promise<Response> {
   const hachiRankingAddr = process.env.HACHI_RANKING_ADDRESS;
   const dailyRewardsAddr = process.env.HACHI_DAILY_REWARDS_ADDRESS;
   const hachiSwapAddr = process.env.HACHI_SWAP_ADDRESS;
+  const hachiSwapStreakAddr = process.env.HACHI_SWAP_STREAK_ADDRESS;
   if (!pk) return NextResponse.json({ error: "No verifier key" }, { status: 500 });
 
   const provider = new ethers.JsonRpcProvider(RPC);
   const wallet = new ethers.Wallet(pk, provider);
 
-  const results = { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false };
+  const results = { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false };
   if (referralManagerAddr) {
     try { results.referralManager = await ensureVerified(address, referralManagerAddr, wallet); }
     catch (e) { console.error("resync ReferralManager:", e); }
@@ -58,6 +59,10 @@ export async function GET(request: Request): Promise<Response> {
   if (hachiSwapAddr) {
     try { results.hachiSwap = await ensureVerified(address, hachiSwapAddr, wallet); }
     catch (e) { console.error("resync HachiSwap:", e); }
+  }
+  if (hachiSwapStreakAddr) {
+    try { results.hachiSwapStreak = await ensureVerified(address, hachiSwapStreakAddr, wallet); }
+    catch (e) { console.error("resync HachiSwapStreak:", e); }
   }
 
   return NextResponse.json({ success: true, results });

@@ -6,6 +6,7 @@ import { ethers } from "ethers";
 const RPC = process.env.WORLDCHAIN_RPC || "https://worldchain-mainnet.g.alchemy.com/public";
 
 const SET_HUMAN_VERIFIED_ABI = ["function setHumanVerified(address user) external"];
+const HACHI_SWAP_STREAK_ADDRESS_ENV = "HACHI_SWAP_STREAK_ADDRESS";
 
 async function syncHumanVerifiedOnChain(userAddress: string) {
   const pk = process.env.VERIFIER_PRIVATE_KEY;
@@ -13,16 +14,17 @@ async function syncHumanVerifiedOnChain(userAddress: string) {
   const hachiRankingAddr = process.env.HACHI_RANKING_ADDRESS;
   const dailyRewardsAddr = process.env.HACHI_DAILY_REWARDS_ADDRESS;
   const hachiSwapAddr = process.env.HACHI_SWAP_ADDRESS;
+  const hachiSwapStreakAddr = process.env[HACHI_SWAP_STREAK_ADDRESS_ENV];
 
   if (!pk) {
     console.error("VERIFIER_PRIVATE_KEY no configurada; no se pudo sincronizar on-chain");
-    return { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false };
+    return { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false };
   }
 
   const provider = new ethers.JsonRpcProvider(RPC);
   const wallet = new ethers.Wallet(pk, provider);
 
-  const results = { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false };
+  const results = { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false };
 
   if (referralManagerAddr) {
     try {
@@ -65,6 +67,17 @@ async function syncHumanVerifiedOnChain(userAddress: string) {
       results.hachiSwap = true;
     } catch (e) {
       console.error("Error sincronizando HachiSwap:", e);
+    }
+  }
+
+  if (hachiSwapStreakAddr) {
+    try {
+      const c = new ethers.Contract(hachiSwapStreakAddr, SET_HUMAN_VERIFIED_ABI, wallet);
+      const tx = await c.setHumanVerified(userAddress);
+      await tx.wait();
+      results.hachiSwapStreak = true;
+    } catch (e) {
+      console.error("Error sincronizando HachiSwapStreak:", e);
     }
   }
 

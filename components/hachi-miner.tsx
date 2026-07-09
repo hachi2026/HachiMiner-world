@@ -663,6 +663,7 @@ export default function HachiMiner() {
         .sort((a:any,b:any) => b.amount - a.amount)
         .slice(0, 20)
       setSwapRanking(list)
+      resolveUsernames(list.map((r:any) => r.addr))
       const nextIn = await streak.timeUntilNextRanking()
       setSwapRankingNextIn(Number(nextIn))
     } catch(e) {}

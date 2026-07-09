@@ -1490,6 +1490,9 @@ export default function HachiMiner() {
             <button onClick={doSwap} disabled={!connected||swapLoading||!swapIn||Number(swapIn)<=0} style={{...btnP,width:'100%',opacity:(!connected||swapLoading||!swapIn||Number(swapIn)<=0)?0.4:1}}>{swapLoading?'Intercambiando...':'Intercambiar'}</button>
           </div>
           {connected&&<div style={{...card,marginTop:12,marginBottom:12,border:'1px solid #fbbf24'}}>
+            <div style={{background:'linear-gradient(90deg,#fbbf24,#f59e0b)',borderRadius:8,padding:'10px 14px',marginBottom:12,textAlign:'center',boxShadow:'0 0 16px rgba(251,191,36,.5)'}}>
+              <div style={{fontSize:14,fontWeight:800,color:'#1e0840',letterSpacing:0.3}}>🎉 Completá el ciclo de 7 días y ganá <span style={{fontSize:16}}>10,000 SUSHI</span> 🎉</div>
+            </div>
             <div style={cTitle}>🔥 Racha de swaps — Día {streakStatus.day}/7</div>
             <div style={{display:'flex',gap:3,marginBottom:10}}>
               {[1,2,3,4,5,6,7].map(d=><div key={d} style={{flex:1,height:6,borderRadius:3,background:d<streakStatus.day?'#3fb950':d===streakStatus.day?'#fbbf24':'#3b0764'}} />)}

@@ -1406,6 +1406,9 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='ranking'&&<div>
+          <div style={{background:'linear-gradient(90deg,#34d399,#10b981)',borderRadius:8,padding:'10px 14px',marginBottom:12,textAlign:'center',boxShadow:'0 0 14px rgba(52,211,153,.4)'}}>
+            <div style={{fontSize:13,fontWeight:800,color:'#052e1f'}}>🎉 Ranking ejecutado — la comunidad eligió, 150,000 HACHI repartidos equitativamente según participación</div>
+          </div>
           <div style={card}><div style={cTitle}>Mis estadísticas</div>
             {[['Mis puntos',rankStats.points],['Mi posición',rankStats.pos],['Premio pendiente',rankStats.reward],['Total ganado',rankStats.earned]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
             <div style={{fontSize:11,color:'#8b949e',marginTop:8}}>Próximo reparto: <span style={{color:'#fbbf24',fontWeight:600}}>{rankStats.nextDist}</span></div>

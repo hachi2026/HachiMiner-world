@@ -46,7 +46,7 @@ const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
 const SWAP_MAINTENANCE_MODE = false // poner en false cuando esté listo para todos
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
-const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)']
+const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)']
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
 const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)', 'event Swapped(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount)']
 // Permit2 (AllowanceTransfer): approve da permiso a un "spender" (nuestro contrato) para mover el token vía Permit2
@@ -232,7 +232,7 @@ export default function HachiMiner() {
   const [swapQuote, setSwapQuote] = useState('0')
   const [swapLoading, setSwapLoading] = useState(false)
   const [swapHistory, setSwapHistory] = useState<any[]>([])
-  const [streakStatus, setStreakStatus] = useState({swaps:0, volume:0, missionDone:false, day:1, nextAmount:0, canClaimNow:false})
+  const [streakStatus, setStreakStatus] = useState({swaps:0, volume:0, missionDone:false, day:1, nextAmount:0, canClaimNow:false, lastCreditedAt:0})
   const [streakHistory, setStreakHistory] = useState<any[]>([])
   const [claimingStreak, setClaimingStreak] = useState(false)
   const [swapRanking, setSwapRanking] = useState<{addr:string, amount:number}[]>([])
@@ -613,7 +613,8 @@ export default function HachiMiner() {
     try {
       const streak = new ethers.Contract(STREAK_ADDR, STREAK_ABI, p)
       const [swaps, volume, missionDone, dayNow, nextAmount, canClaimNow] = await streak.getTodayProgress(addr)
-      setStreakStatus({swaps: Number(swaps), volume: fe(volume), missionDone, day: Number(dayNow), nextAmount: fe(nextAmount), canClaimNow})
+      const lastCredited = await streak.lastCreditedAt(addr).catch(() => BigInt(0))
+      setStreakStatus({swaps: Number(swaps), volume: fe(volume), missionDone, day: Number(dayNow), nextAmount: fe(nextAmount), canClaimNow, lastCreditedAt: Number(lastCredited)})
     } catch(e) {}
   }
 
@@ -1496,7 +1497,16 @@ export default function HachiMiner() {
             <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Progreso de hoy (se resetea a medianoche UTC):</div>
             <div style={{fontSize:12,color:streakStatus.swaps>=5?'#3fb950':'#e6edf3'}}>• Swaps: {streakStatus.swaps}/5</div>
             <div style={{fontSize:12,color:streakStatus.volume>=500?'#3fb950':'#e6edf3',marginBottom:10}}>• Volumen: {fmtPrecise(streakStatus.volume)}/500 HACHI</div>
-            <button onClick={claimStreak} disabled={!streakStatus.canClaimNow||claimingStreak} style={{...btnP,width:'100%',opacity:(streakStatus.canClaimNow&&!claimingStreak)?1:0.4}}>{claimingStreak?'Reclamando...':streakStatus.canClaimNow?`Reclamar ${fmtPrecise(streakStatus.nextAmount)} SUSHI`:'Completá la misión de hoy'}</button>
+            <button onClick={claimStreak} disabled={!streakStatus.canClaimNow||claimingStreak} style={{...btnP,width:'100%',opacity:(streakStatus.canClaimNow&&!claimingStreak)?1:0.4}}>{(() => {
+              if (claimingStreak) return 'Reclamando...'
+              if (streakStatus.canClaimNow) return `Reclamar ${fmtPrecise(streakStatus.nextAmount)} SUSHI`
+              if (streakStatus.missionDone) {
+                const secondsLeft = Math.max(0, (streakStatus.lastCreditedAt + 20*3600) - Math.floor(liveTick/1000))
+                const h = Math.floor(secondsLeft/3600), m = Math.floor((secondsLeft%3600)/60)
+                return `Misión cumplida — próximo en ${h}h ${m}m`
+              }
+              return 'Completá la misión de hoy'
+            })()}</button>
           </div>}
           {streakHistory.length>0&&<div style={{...card,marginBottom:12}}>
             <div style={cTitle}>Historial de bonos de racha</div>

@@ -43,7 +43,7 @@ const ACTION = 'verify-human'
 
 const ERC20 = ['function balanceOf(address) view returns (uint256)', 'function approve(address,uint256) returns (bool)', 'function allowance(address,address) view returns (uint256)']
 const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
-const SWAP_MAINTENANCE_MODE = true // poner en false cuando esté listo para todos
+const SWAP_MAINTENANCE_MODE = false // poner en false cuando esté listo para todos
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
 const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)']

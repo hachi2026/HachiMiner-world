@@ -192,7 +192,7 @@ const LOGIN = {
 const fmt = (n: number) => { if ((!n && n!==0)||isNaN(n)) return '—'; if (n>=1e6) return (n/1e6).toFixed(2)+'M'; if (n>=1e3) return (n/1e3).toFixed(1)+'K'; return Math.round(n).toLocaleString() }
 const fmtPrecise = (n: number): string => {
   if (!n && n !== 0) return '—'
-  if (n === 0) return '0'
+  if (n === 0) return '0.00'
   const decimals = n >= 1 ? 4 : n >= 0.01 ? 6 : 8
   const s = n.toFixed(decimals)
   return s.includes('.') ? s.replace(/0+$/,'').replace(/\.$/,'') : s
@@ -459,7 +459,7 @@ export default function HachiMiner() {
         new ethers.Contract(C.sushi,ERC20,p).balanceOf(a),
       ])
       const hN=fe(h), wN=fe(w)
-      setHachiB(fmt(hN)); setWldB(fmt(wN)); setSushiB(fmt(fe(s)))
+      setHachiB(fmtPrecise(hN)); setWldB(fmtPrecise(wN)); setSushiB(fmtPrecise(fe(s)))
       setHachiRaw(hN); setWldRaw(wN)
     } catch(e) {}
   }
@@ -1504,7 +1504,7 @@ export default function HachiMiner() {
             <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Progreso de hoy (se resetea a medianoche UTC):</div>
             <div style={{fontSize:12,color:streakStatus.swaps>=5?'#3fb950':'#e6edf3'}}>• Swaps: {streakStatus.swaps}/5</div>
             <div style={{fontSize:12,color:streakStatus.volume>=500?'#3fb950':'#e6edf3',marginBottom:10}}>• Volumen: {fmtPrecise(streakStatus.volume)}/500 HACHI</div>
-            <button onClick={claimStreak} disabled={!streakStatus.canClaimNow||claimingStreak} style={{...btnP,width:'100%',opacity:(streakStatus.canClaimNow&&!claimingStreak)?1:0.4}}>{(() => {
+            <button onClick={claimStreak} disabled={!streakStatus.canClaimNow||claimingStreak} style={{...btnP,width:'100%',opacity:(streakStatus.canClaimNow&&!claimingStreak)?1:0.4,boxShadow:streakStatus.canClaimNow?'0 0 20px rgba(52,211,153,.7)':'none',border:streakStatus.canClaimNow?'1px solid #34d399':'none',fontWeight:800}}>{(() => {
               if (claimingStreak) return 'Reclamando...'
               if (streakStatus.canClaimNow) return `Reclamar ${fmtPrecise(streakStatus.nextAmount)} SUSHI`
               if (streakStatus.missionDone) {

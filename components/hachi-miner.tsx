@@ -61,6 +61,7 @@ const CORE = [
   'function getUserWLDLics(address) view returns (uint256[])',
   'function getUserSushiLics(address) view returns (uint256[])',
   'function wldLics(uint256) view returns (address,uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool)',
+  'function sushiLics(uint256) view returns (address,uint8,uint256,uint256,uint256,uint256,bool)',
   'function pendingWLDHachi(uint256) view returns (uint256)',
   'function monthlyWLDRemaining(address) view returns (uint256,uint256)',
   'function getWLDAvailability() view returns (uint256,uint256)',
@@ -114,13 +115,13 @@ const REFERRAL = [
   'function currentNewBonus() view returns (uint256)',
 ]
 
-type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'
+type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'
 type Lang = 'es'|'en'|'pt'
 
 const TR = {
-  es: { connect:'Conectar', verified:'World ID ✓', not_verified:'Sin verificar', daily_claim:'Cobrar 10 HACHI', nav_home:'🏠 Inicio', nav_lics:'📜 Licencias', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Referidos', err_connect:'Conecta tu wallet', err_verify:'Verifica tu World ID', err_price:'Ventas pausadas', approving:'Aprobando...', no_lics:'Sin licencias activas', connect_prompt:'Conecta tu wallet para comenzar', access_title:'Acceso restringido', access_desc:'Para licencias SUSHI necesitas 5,000 HACHI lockeados o una licencia WLD activa', day1:'Día 1 — recibís de vuelta', day2:'Día 2 — tu ganancia (24h)' },
-  en: { connect:'Connect', verified:'World ID ✓', not_verified:'Not verified', daily_claim:'Claim 10 HACHI', nav_home:'🏠 Home', nav_lics:'📜 Licenses', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Referrals', err_connect:'Connect your wallet', err_verify:'Verify your World ID', err_price:'Sales paused', approving:'Approving...', no_lics:'No active licenses', connect_prompt:'Connect your wallet to start', access_title:'Restricted access', access_desc:'For SUSHI licenses you need 5,000 HACHI locked or an active WLD license', day1:'Day 1 — get back investment', day2:'Day 2 — your profit (24h)' },
-  pt: { connect:'Conectar', verified:'World ID ✓', not_verified:'Não verificado', daily_claim:'Cobrar 10 HACHI', nav_home:'🏠 Início', nav_lics:'📜 Licenças', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Indicações', err_connect:'Conecte sua carteira', err_verify:'Verifique seu World ID', err_price:'Vendas pausadas', approving:'Aprovando...', no_lics:'Sem licenças ativas', connect_prompt:'Conecte sua carteira para começar', access_title:'Acesso restrito', access_desc:'Para licenças SUSHI você precisa de 5.000 HACHI bloqueados ou uma licença WLD ativa', day1:'Dia 1 — recupere investimento', day2:'Dia 2 — seu lucro (24h)' },
+  es: { connect:'Conectar', verified:'World ID ✓', not_verified:'Sin verificar', daily_claim:'Cobrar 10 HACHI', nav_home:'🏠 Inicio', nav_lics:'📜 Licencias', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Referidos', nav_estado:'📊 Mi Estado', err_connect:'Conecta tu wallet', err_verify:'Verifica tu World ID', err_price:'Ventas pausadas', approving:'Aprobando...', no_lics:'Sin licencias activas', connect_prompt:'Conecta tu wallet para comenzar', access_title:'Acceso restringido', access_desc:'Para licencias SUSHI necesitas 5,000 HACHI lockeados o una licencia WLD activa', day1:'Día 1 — recibís de vuelta', day2:'Día 2 — tu ganancia (24h)' },
+  en: { connect:'Connect', verified:'World ID ✓', not_verified:'Not verified', daily_claim:'Claim 10 HACHI', nav_home:'🏠 Home', nav_lics:'📜 Licenses', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Referrals', nav_estado:'📊 My Status', err_connect:'Connect your wallet', err_verify:'Verify your World ID', err_price:'Sales paused', approving:'Approving...', no_lics:'No active licenses', connect_prompt:'Connect your wallet to start', access_title:'Restricted access', access_desc:'For SUSHI licenses you need 5,000 HACHI locked or an active WLD license', day1:'Day 1 — get back investment', day2:'Day 2 — your profit (24h)' },
+  pt: { connect:'Conectar', verified:'World ID ✓', not_verified:'Não verificado', daily_claim:'Cobrar 10 HACHI', nav_home:'🏠 Início', nav_lics:'📜 Licenças', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Indicações', nav_estado:'📊 Meu Status', err_connect:'Conecte sua carteira', err_verify:'Verifique seu World ID', err_price:'Vendas pausadas', approving:'Aprovando...', no_lics:'Sem licenças ativas', connect_prompt:'Conecte sua carteira para começar', access_title:'Acesso restrito', access_desc:'Para licenças SUSHI você precisa de 5.000 HACHI bloqueados ou uma licença WLD ativa', day1:'Dia 1 — recupere investimento', day2:'Dia 2 — seu lucro (24h)' },
 }
 
 const LOGIN = {
@@ -256,6 +257,7 @@ export default function HachiMiner() {
   const [hachiRaw, setHachiRaw] = useState(0)
   const [wldRaw, setWldRaw]     = useState(0)
   const [sushiLics] = useState<any[]>([])
+  const [myStatus, setMyStatus] = useState({bocadoCount:0, bocadoSushiTotal:0, streakLifetimeDays:0, loading:false})
   const [lockData, setLockData] = useState({total:'0',tier:'Sin tier',apy:'0%',pending:'0',unstake:'0',unstakeRaw:BigInt(0),nextClaimIn:'—',nextDepositIn:'—',nextDepositSecs:0})
   const [lockBatches, setLockBatches] = useState<any[]>([])
   const [platformStats, setPlatformStats] = useState({totalLocked:'—',totalUsers:'—'})
@@ -876,6 +878,7 @@ export default function HachiMiner() {
     if (v==='lics') loadWLDLics(p)
     if (v==='lock') loadLock(p)
     if (v==='ranking') loadRanking(p)
+    if (v==='estado') { loadMyStatus(p); loadWLDLics(p); loadLock(p); loadRanking(p); loadStreakStatus(p) }
     if (v==='pools') loadPools(p)
     if (v==='refs') loadRefs(p)
     if (v==='swap') { loadSwapHistory(p); loadStreakStatus(p); loadStreakHistory(p); loadSwapRanking(p) }
@@ -964,6 +967,42 @@ export default function HachiMiner() {
       try { log('lastWinners err detail: '+JSON.stringify(e).slice(0,120)) } catch {}
     }
     setRankStats({points:fmt(myPts), totalHist, pos, reward, earned, nextDist})
+  }
+
+  const loadMyStatus = async (p: ethers.JsonRpcProvider) => {
+    setMyStatus(prev => ({...prev, loading: true}))
+    try {
+      const core = new ethers.Contract(C.core, CORE, p)
+      const sushiIds = await core.getUserSushiLics(addr)
+      let bocadoSushiTotal = 0
+      for (const id of sushiIds) {
+        const l = await core.sushiLics(id)
+        bocadoSushiTotal += fe(l[4])
+      }
+
+      const streak = new ethers.Contract(STREAK_ADDR, STREAK_ABI, p)
+      const currentBlock = await p.getBlockNumber()
+      const DEPLOY_BLOCK = 32106154
+      const CHUNK = 100, BATCH = 15
+      let allEvents: any[] = []
+      let from = DEPLOY_BLOCK
+      while (from <= currentBlock) {
+        const ranges: [number, number][] = []
+        let cursor = from
+        for (let j = 0; j < BATCH && cursor <= currentBlock; j++) {
+          const to = Math.min(cursor + CHUNK - 1, currentBlock)
+          ranges.push([cursor, to])
+          cursor = to + 1
+        }
+        const results = await Promise.all(ranges.map(([f,t]) => streak.queryFilter(streak.filters.DayCredited(addr), f, t).catch(() => [])))
+        for (const evs of results) allEvents = allEvents.concat(evs)
+        from = cursor
+      }
+
+      setMyStatus({bocadoCount: sushiIds.length, bocadoSushiTotal, streakLifetimeDays: allEvents.length, loading: false})
+    } catch(e) {
+      setMyStatus(prev => ({...prev, loading: false}))
+    }
   }
 
   const loadPools = async (p: ethers.JsonRpcProvider) => {
@@ -1243,8 +1282,8 @@ export default function HachiMiner() {
 
       {/* NAV */}
       <div style={{background:'#12022a',borderBottom:'1px solid #3b0764',display:'flex',overflowX:'auto',gap:2,padding:'0 12px'}}>
-        {(['home','lics','lock','ranking','pools','swap','refs'] as Tab[]).map((v,i)=>{
-          const labels=[t('nav_home'),t('nav_lics'),t('nav_lock'),t('nav_rank'),t('nav_pools'),t('nav_swap'),t('nav_refs')]
+        {(['home','lics','lock','ranking','pools','swap','refs','estado'] as Tab[]).map((v,i)=>{
+          const labels=[t('nav_home'),t('nav_lics'),t('nav_lock'),t('nav_rank'),t('nav_pools'),t('nav_swap'),t('nav_refs'),t('nav_estado')]
           return <button key={v} onClick={()=>loadTab(v)} style={{background:'none',border:'none',borderBottom:`2px solid ${tab===v?'#a78bfa':'transparent'}`,color:tab===v?'#a78bfa':'#8b949e',padding:'12px 14px',fontSize:13,cursor:'pointer',whiteSpace:'nowrap',fontFamily:'Georgia,serif',textShadow:tab===v?'0 0 8px #a78bfa':''}}>{labels[i]}</button>
         })}
       </div>
@@ -1583,6 +1622,31 @@ export default function HachiMiner() {
           })}
           {!swapHistoryExpanded&&swapHistory.length>5&&<button onClick={()=>setSwapHistoryExpanded(true)} style={{...btnGh,width:'100%',marginTop:4}}>Ver más ({swapHistory.length-5})</button>}
           </>}
+        </div>}
+
+        {tab==='estado'&&<div>
+          <div style={sLabel}>📊 Mi Estado</div>
+          {myStatus.loading&&<div style={{fontSize:11,color:'#8b949e',fontStyle:'italic',marginBottom:8}}>Cargando tus datos...</div>}
+          <div style={card}><div style={cTitle}>📜 Licencias</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Licencias WLD activas</span><span style={{fontFamily:'monospace',fontWeight:600}}>{wldLics.length}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Licencias Bocado</span><span style={{fontFamily:'monospace',fontWeight:600}}>{myStatus.bocadoCount}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>SUSHI recibido de Bocados</span><span style={{fontFamily:'monospace',color:'#fbbf24'}}>{fmtPrecise(myStatus.bocadoSushiTotal)}</span></div>
+          </div>
+          <div style={card}><div style={cTitle}>🔒 Lock & APY</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Total lockeado</span><span style={{fontFamily:'monospace',fontWeight:600}}>{lockData.total} HACHI</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Tier actual</span><span style={{fontFamily:'monospace',color:'#34d399'}}>{lockData.tier}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>APY</span><span style={{fontFamily:'monospace'}}>{lockData.apy}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente de cobrar</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{lockData.pending} HACHI</span></div>
+          </div>
+          <div style={card}><div style={cTitle}>🔥 Racha de swaps</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Día actual del ciclo</span><span style={{fontFamily:'monospace',fontWeight:600}}>{streakStatus.day}/7</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Días completados (de por vida)</span><span style={{fontFamily:'monospace',color:'#fbbf24'}}>{myStatus.streakLifetimeDays}</span></div>
+          </div>
+          <div style={card}><div style={cTitle}>🏆 Ranking (premios cada 15 días)</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Mis puntos</span><span style={{fontFamily:'monospace',fontWeight:600}}>{rankStats.points}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Mi posición</span><span style={{fontFamily:'monospace'}}>{rankStats.pos}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Total ganado histórico</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{rankStats.earned}</span></div>
+          </div>
         </div>}
 
         {tab==='refs'&&<div>

@@ -356,7 +356,7 @@ export default function HachiMiner() {
     const mult = selWLD === 3 ? 1.35 : 1.30
     const total = Math.round(base * mult)
     const perDay = Math.round(total / 90)
-    setWldPrev(p => ({...p, base:fmt(base)+' HACHI', total:fmt(total)+' HACHI', daily:'~'+fmt(perDay)+' HACHI/día'}))
+    setWldPrev(p => ({...p, base:fmt(base)+' HACHI', total:fmt(total)+' HACHI', daily:fmt(perDay)+' HACHI/día'}))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selWLD, wldHachi])
 
@@ -909,7 +909,7 @@ export default function HachiMiner() {
       let base=px*wldHachi, total=Math.round(base*1.3), perDay=Math.round(total/90)
       try { const prev=await new ethers.Contract(C.oracle,ORACLE,p).previewWldLicense(pe(px)); base=fe(prev[0]); total=fe(prev[1]); perDay=fe(prev[2]) } catch(e) {}
       const monthly = await core.monthlyWLDRemaining(addr).catch(() => [BigInt(5),BigInt(0)])
-      setWldPrev({base:fmt(base)+' HACHI', total:fmt(total)+' HACHI', daily:'~'+fmt(perDay)+' HACHI/día', monthly:Number(monthly[1])+'/5 usadas · quedan '+Number(monthly[0])})
+      setWldPrev({base:fmt(base)+' HACHI', total:fmt(total)+' HACHI', daily:fmt(perDay)+' HACHI/día', monthly:Number(monthly[0])+' disponibles'})
       const ids = await core.getUserWLDLics(addr)
       const lics = await Promise.all(ids.map(async(id:bigint) => ({id, l:await core.wldLics(id), pend:await core.pendingWLDHachi(id)})))
       setWldLics(lics.filter((x:any) => x.l[10]||x.l[11]))

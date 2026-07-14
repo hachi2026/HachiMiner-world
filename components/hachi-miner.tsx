@@ -1172,6 +1172,10 @@ export default function HachiMiner() {
             ))}
           </div>
 
+          <div style={{display:'flex',gap:8,width:'100%',marginTop:16}}>
+            <a href="https://chat.whatsapp.com/CKfgBKi9zcvAPJaA3gVr0P" target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:'center',padding:'10px 8px',borderRadius:8,border:'1px solid #25D366',color:'#25D366',fontSize:12,fontWeight:600,textDecoration:'none'}}>💬 WhatsApp</a>
+            <a href="https://t.me/+mg3Tt_4pZJs4NTAx" target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:'center',padding:'10px 8px',borderRadius:8,border:'1px solid #229ED9',color:'#229ED9',fontSize:12,fontWeight:600,textDecoration:'none'}}>✈️ Telegram</a>
+          </div>
           <p style={{fontSize:11,color:'#8b949e',textAlign:'center',marginTop:12,lineHeight:1.5}}>{loginCopy.disclaimer}</p>
         </div>
       </div>

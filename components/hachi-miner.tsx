@@ -120,6 +120,17 @@ const REFERRAL = [
 
 type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'
 type Lang = 'es'|'en'|'pt'
+const detectLang = (): Lang => {
+  if (typeof navigator === 'undefined') return 'es'
+  const langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language]
+  for (const l of langs) {
+    const code = (l || '').toLowerCase().slice(0, 2)
+    if (code === 'en') return 'en'
+    if (code === 'pt') return 'pt'
+    if (code === 'es') return 'es'
+  }
+  return 'es'
+}
 
 const TR = {
   es: { connect:'Conectar', verified:'World ID ✓', not_verified:'Sin verificar', daily_claim:'Cobrar 10 HACHI', nav_home:'🏠 Inicio', nav_lics:'📜 Licencias', nav_lock:'🔒 Lock', nav_rank:'🏆 Ranking', nav_pools:'🌊 Pools', nav_swap:'🔄 Swap', nav_refs:'👥 Referidos', nav_estado:'📊 Mi Estado', err_connect:'Conecta tu wallet', err_verify:'Verifica tu World ID', err_price:'Ventas pausadas', approving:'Aprobando...', no_lics:'Sin licencias activas', connect_prompt:'Conecta tu wallet para comenzar', access_title:'Acceso restringido', access_desc:'Para licencias SUSHI necesitas 5,000 HACHI lockeados o una licencia WLD activa', day1:'Día 1 — recibís de vuelta', day2:'Día 2 — tu ganancia (24h)' },
@@ -211,7 +222,7 @@ const genNonce = () => Array.from(crypto.getRandomValues(new Uint8Array(16))).ma
 export default function HachiMiner() {
   const [tab, setTab] = useState<Tab>('home')
   const [licTab, setLicTab] = useState<'wld'|'sushi'>('wld')
-  const [lang, setLang] = useState<Lang>('es')
+  const [lang, setLang] = useState<Lang>(() => detectLang())
   const [toast, setToast] = useState<{msg:string;color:string}|null>(null)
   const [addr, setAddr] = useState('')
   const [username, setUsername] = useState('')

@@ -1119,7 +1119,8 @@ export default function HachiMiner() {
   // PANTALLA DE INICIO DE SESIÓN — se muestra mientras no haya wallet conectada
   if (!connected) {
     return (
-      <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#2a1f63 0%,#1d1a52 55%,#2b2c78 100%)',color:'#e6edf3',fontFamily:'Georgia,serif',display:'flex',flexDirection:'column'}}>
+      <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#2a1f63 0%,#1d1a52 55%,#2b2c78 100%)',color:'#e6edf3',fontFamily:'Georgia,serif',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
+        <img src="/hachi-cat-savings.png" alt="" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:'140%',maxWidth:700,opacity:0.12,filter:'blur(6px)',pointerEvents:'none',zIndex:0}} />
         {toast&&<div style={{position:'fixed',top:16,right:16,zIndex:999,padding:'10px 16px',borderRadius:8,background:'#161b22',border:`1px solid ${toast.color}`,color:toast.color,fontSize:13,maxWidth:320}}>{toast.msg}</div>}
 
         {/* selector de idioma arriba a la derecha */}
@@ -1127,23 +1128,23 @@ export default function HachiMiner() {
           {SHOW_LANG_BUTTONS&&(['es','en','pt'] as Lang[]).map(l=><button key={l} onClick={()=>setLang(l)} style={{background:'none',border:`1px solid ${lang===l?'#a78bfa':'#30363d'}`,borderRadius:4,padding:'2px 8px',fontSize:11,cursor:'pointer',color:lang===l?'#e6edf3':'#8b949e'}}>{l.toUpperCase()}</button>)}
         </div>
 
-        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'8px 20px 40px',maxWidth:480,margin:'0 auto',width:'100%'}}>
+        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'8px 20px 40px',maxWidth:480,margin:'0 auto',width:'100%',position:'relative',zIndex:1}}>
 
           {/* HERO */}
           <div style={{fontSize:56,marginBottom:8,filter:'drop-shadow(0 0 20px rgba(232,121,249,.6))'}}>⛏</div>
           <h1 style={{fontSize:34,fontWeight:700,color:'#e879f9',textShadow:'0 0 18px rgba(232,121,249,.5)',margin:'0 0 8px',textAlign:'center'}}>HachiMiner</h1>
-          <p style={{fontSize:15,color:'#c4b5fd',fontStyle:'italic',textAlign:'center',margin:'0 0 28px',lineHeight:1.5,maxWidth:360}}>{loginCopy.tagline}</p>
+          <p style={{fontSize:15,color:'#c4b5fd',fontStyle:'italic',textAlign:'center',margin:'0 0 20px',lineHeight:1.5,maxWidth:360}}>{loginCopy.tagline}</p>
+
+          {/* CTA */}
+          <button onClick={connectWallet} style={{...btnP,marginBottom:20,fontSize:15,padding:'14px 16px',width:'100%'}}>
+            {inWA ? loginCopy.ctaWA : loginCopy.cta}
+          </button>
 
           {/* QUÉ ES */}
-          <div style={{...card,width:'100%'}}>
+          <div style={{...card,width:'100%',marginBottom:12}}>
             <div style={cTitle}>{loginCopy.whatTitle}</div>
             <p style={{fontSize:13,color:'#c9d1d9',lineHeight:1.6,margin:0}}>{loginCopy.whatDesc}</p>
           </div>
-
-          {/* CTA */}
-          <button onClick={connectWallet} style={{...btnP,marginTop:8,marginBottom:12,fontSize:15,padding:'14px 16px',width:'100%'}}>
-            {inWA ? loginCopy.ctaWA : loginCopy.cta}
-          </button>
 
           {/* FEATURES */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,width:'100%',marginBottom:12}}>

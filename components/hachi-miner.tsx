@@ -44,6 +44,7 @@ const ACTION = 'verify-human'
 const ERC20 = ['function balanceOf(address) view returns (uint256)', 'function approve(address,uint256) returns (bool)', 'function allowance(address,address) view returns (uint256)']
 const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
 const SWAP_MAINTENANCE_MODE = false // poner en false cuando esté listo para todos
+const SHOW_TOP_NAV = false // poner en true para volver a mostrar la barra de pestañas de arriba
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
 const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)']
@@ -1262,12 +1263,15 @@ export default function HachiMiner() {
       </div>
 
       {/* NAV */}
-      <div style={{background:'#12022a',borderBottom:'1px solid #3b0764',display:'flex',overflowX:'auto',gap:2,padding:'0 12px'}}>
+      {SHOW_TOP_NAV&&<div style={{background:'#12022a',borderBottom:'1px solid #3b0764',display:'flex',overflowX:'auto',gap:2,padding:'0 12px'}}>
         {(['home','lics','lock','ranking','pools','swap','refs','estado'] as Tab[]).map((v,i)=>{
           const labels=[t('nav_home'),t('nav_lics'),t('nav_lock'),t('nav_rank'),t('nav_pools'),t('nav_swap'),t('nav_refs'),t('nav_estado')]
           return <button key={v} onClick={()=>loadTab(v)} style={{background:'none',border:'none',borderBottom:`2px solid ${tab===v?'#a78bfa':'transparent'}`,color:tab===v?'#a78bfa':'#8b949e',padding:'12px 14px',fontSize:13,cursor:'pointer',whiteSpace:'nowrap',fontFamily:'Georgia,serif',textShadow:tab===v?'0 0 8px #a78bfa':''}}>{labels[i]}</button>
         })}
-      </div>
+      </div>}
+      {!SHOW_TOP_NAV&&tab!=='home'&&<div style={{background:'#12022a',borderBottom:'1px solid #3b0764',padding:'8px 12px'}}>
+        <button onClick={()=>loadTab('home')} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',padding:'6px 12px',fontSize:13,cursor:'pointer'}}>← Volver a Inicio</button>
+      </div>}
 
       <div style={{maxWidth:480,margin:'0 auto',padding:16}}>
 
@@ -1280,6 +1284,7 @@ export default function HachiMiner() {
               {icon:'🏆',label:'Ranking',tab:'ranking' as Tab,delay:0.6},
               {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:0.9},
               {icon:'👥',label:'Referidos',tab:'refs' as Tab,delay:1.2},
+              {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:1.8},
             ].map(btn=><button key={btn.tab} onClick={()=>loadTab(btn.tab)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'12px 4px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer',animation:`quickAccessPulse 3s ease-in-out infinite`,animationDelay:`${btn.delay}s`}}>
               <span style={{fontSize:22}}>{btn.icon}</span>
               <span style={{fontSize:10,fontWeight:600}}>{btn.label}</span>

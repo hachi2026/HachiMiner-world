@@ -1120,7 +1120,6 @@ export default function HachiMiner() {
   if (!connected) {
     return (
       <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#2a1f63 0%,#1d1a52 55%,#2b2c78 100%)',color:'#e6edf3',fontFamily:'Georgia,serif',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
-        <img src="/hachi-cat-savings.png" alt="" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:'140%',maxWidth:700,opacity:0.12,filter:'blur(6px)',pointerEvents:'none',zIndex:0}} />
         {toast&&<div style={{position:'fixed',top:16,right:16,zIndex:999,padding:'10px 16px',borderRadius:8,background:'#161b22',border:`1px solid ${toast.color}`,color:toast.color,fontSize:13,maxWidth:320}}>{toast.msg}</div>}
 
         {/* selector de idioma arriba a la derecha */}
@@ -1146,15 +1145,20 @@ export default function HachiMiner() {
             <p style={{fontSize:13,color:'#c9d1d9',lineHeight:1.6,margin:0}}>{loginCopy.whatDesc}</p>
           </div>
 
-          {/* FEATURES */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,width:'100%',marginBottom:12}}>
-            {loginCopy.features.map((f,i)=>(
-              <div key={i} style={{background:'#1e0840',border:'1px solid #5b21b6',borderRadius:10,padding:14,boxShadow:'0 0 12px rgba(124,58,237,.2)'}}>
-                <div style={{fontSize:22,marginBottom:6}}>{f.icon}</div>
-                <div style={{fontSize:13,fontWeight:700,color:'#e6edf3',marginBottom:3}}>{f.title}</div>
-                <div style={{fontSize:11,color:'#8b949e',lineHeight:1.5}}>{f.desc}</div>
+          {/* FEATURES — gato al centro, funciones alrededor en círculo */}
+          <div style={{position:'relative',width:300,height:300,margin:'0 auto 16px',maxWidth:'90vw'}}>
+            <img src="/hachi-cat-savings.png" alt="" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:110,height:110,borderRadius:20,objectFit:'cover',boxShadow:'0 0 30px rgba(232,121,249,.6)',border:'2px solid #e879f9'}} />
+            {loginCopy.features.map((f,i)=>{
+              const n = loginCopy.features.length
+              const angle = (i / n) * 2 * Math.PI - Math.PI / 2
+              const radius = 125
+              const x = 150 + radius * Math.cos(angle)
+              const y = 150 + radius * Math.sin(angle)
+              return <div key={i} style={{position:'absolute',left:x,top:y,transform:'translate(-50%,-50%)',textAlign:'center',width:84}}>
+                <div style={{fontSize:26,marginBottom:2,filter:'drop-shadow(0 0 6px rgba(124,58,237,.5))'}}>{f.icon}</div>
+                <div style={{fontSize:10,fontWeight:700,color:'#e6edf3',lineHeight:1.2}}>{f.title}</div>
               </div>
-            ))}
+            })}
           </div>
 
           {/* PASOS */}

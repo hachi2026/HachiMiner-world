@@ -1269,9 +1269,6 @@ export default function HachiMiner() {
             <div style={{fontSize:10,color:'#8b949e',marginTop:4}}>Licencias WLD activas: <span style={{color:'#e6edf3',fontWeight:600}}>{activeLicCount}</span></div>
           </div>
           <button onClick={()=>loadTab('swap')} style={{...btnG,width:'100%',marginBottom:12}}>🪙 Comprar HACHI</button>
-          <div style={card}><div style={cTitle}>Estado del sistema</div>
-            {[['Oracle',oracleSt],['1 WLD =',fmt(wldHachi)+' HACHI'],['1 HACHI =',hachiSushi.toFixed(4)+' SUSHI'],['Pool WLD disponible',poolFree],['Licencias WLD disponibles',licsAvail]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
-          </div>
           {!connected&&<div style={{textAlign:'center',padding:'32px 16px',color:'#8b949e'}}>
             <div style={{fontSize:32,marginBottom:8}}>👋</div>
             <div style={{fontWeight:600,color:'#e6edf3',marginBottom:4}}>Bienvenido a HachiMiner</div>
@@ -1468,6 +1465,9 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='pools'&&<div>
+          <div style={card}><div style={cTitle}>Estado del sistema</div>
+            {[['Oracle',oracleSt],['1 WLD =',fmt(wldHachi)+' HACHI'],['1 HACHI =',hachiSushi.toFixed(4)+' SUSHI'],['Pool WLD disponible',poolFree],['Licencias WLD disponibles',licsAvail]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
+          </div>
           <div style={sLabel}>Estado de pools</div>
           <div style={card}><div style={cTitle}>💠 Pool WLD</div>
             {[['Total',poolsData.wldTotal||'—'],['Reservado',poolsData.wldComm||'—'],['Libre',poolsData.wldFree||'—'],['Total pagado',poolsData.wldPaid||'—'],['Licencias disponibles',poolsData.licsAvail||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}

@@ -143,7 +143,7 @@ const LOGIN = {
   es: {
     tagline: 'Minería de HACHI verificada con World ID en World Chain',
     whatTitle: '¿Qué es HachiMiner?',
-    whatDesc: 'HachiMiner es una mini app de World que te permite minar tokens HACHI y operar con licencias WLD y Bocado directamente en World Chain. Compra licencias, bloquea tokens para ganar APY, participa en el ranking y deja que Hachi ahorre HACHI por vos en su alcancía.',
+    whatDesc: 'HachiMiner es una mini app de World que te permite minar tokens HACHI y operar con licencias WLD y Bocado directamente en World Chain. Compra licencias, bloquea tokens para ganar APY, intercambiá HACHI y WLD con el Swap, sumá puntos en el ranking, y reclamá tu HACHI y Drachma acumulados cada 24hs.',
     features: [
       { icon:'📜', title:'Licencias', desc:'Compra tu licencia WLD y obtén beneficios adicionales en Bocados según tu nivel — a mayor nivel, mayor acceso.' },
       { icon:'🔒', title:'Lock & APY', desc:'Bloquea HACHI y gana rendimiento sobre tu posición.' },
@@ -164,7 +164,7 @@ const LOGIN = {
   en: {
     tagline: 'World ID-verified HACHI mining on World Chain',
     whatTitle: 'What is HachiMiner?',
-    whatDesc: 'HachiMiner is a World mini app that lets you mine HACHI tokens and trade WLD and Bocado licenses directly on World Chain. Buy licenses, lock tokens to earn APY, climb the ranking, and let Hachi save HACHI for you in his piggy bank.',
+    whatDesc: 'HachiMiner is a World mini app that lets you mine HACHI tokens and trade WLD and Bocado licenses directly on World Chain. Buy licenses, lock tokens to earn APY, swap HACHI and WLD, climb the ranking, and claim your accumulated HACHI and Drachma every 24 hours.',
     features: [
       { icon:'📜', title:'Licenses', desc:'Buy your WLD license and get extra Bocado benefits based on your tier — higher tier, greater access.' },
       { icon:'🔒', title:'Lock & APY', desc:'Lock HACHI and earn yield on your position.' },
@@ -185,7 +185,7 @@ const LOGIN = {
   pt: {
     tagline: 'Mineração de HACHI verificada com World ID na World Chain',
     whatTitle: 'O que é o HachiMiner?',
-    whatDesc: 'O HachiMiner é um mini app da World que permite minerar tokens HACHI e operar com licenças WLD e Bocado diretamente na World Chain. Compre licenças, bloqueie tokens para ganhar APY, suba no ranking e deixe o Hachi guardar HACHI por você no cofrinho dele.',
+    whatDesc: 'O HachiMiner é um mini app da World que permite minerar tokens HACHI e operar com licenças WLD e Bocado diretamente na World Chain. Compre licenças, bloqueie tokens para ganhar APY, troque HACHI e WLD com o Swap, suba no ranking, e resgate seu HACHI e Drachma acumulados a cada 24 horas.',
     features: [
       { icon:'📜', title:'Licenças', desc:'Compre sua licença WLD e obtenha benefícios extras em Bocados conforme seu nível — quanto maior o nível, maior o acesso.' },
       { icon:'🔒', title:'Lock & APY', desc:'Bloqueie HACHI e ganhe rendimento na sua posição.' },
@@ -1139,12 +1139,6 @@ export default function HachiMiner() {
             {inWA ? loginCopy.ctaWA : loginCopy.cta}
           </button>
 
-          {/* QUÉ ES */}
-          <div style={{...card,width:'100%',marginBottom:12}}>
-            <div style={cTitle}>{loginCopy.whatTitle}</div>
-            <p style={{fontSize:13,color:'#c9d1d9',lineHeight:1.6,margin:0}}>{loginCopy.whatDesc}</p>
-          </div>
-
           {/* FEATURES — gato al centro, funciones alrededor en círculo */}
           <div style={{position:'relative',width:300,height:300,margin:'0 auto 16px',maxWidth:'90vw'}}>
             <img src="/hachi-cat-savings.png" alt="" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:110,height:110,borderRadius:20,objectFit:'cover',boxShadow:'0 0 30px rgba(232,121,249,.6)',border:'2px solid #e879f9'}} />
@@ -1159,6 +1153,12 @@ export default function HachiMiner() {
                 <div style={{fontSize:10,fontWeight:700,color:'#e6edf3',lineHeight:1.2}}>{f.title}</div>
               </div>
             })}
+          </div>
+
+          {/* QUÉ ES */}
+          <div style={{...card,width:'100%',marginBottom:12}}>
+            <div style={cTitle}>{loginCopy.whatTitle}</div>
+            <p style={{fontSize:13,color:'#c9d1d9',lineHeight:1.6,margin:0}}>{loginCopy.whatDesc}</p>
           </div>
 
           {/* PASOS */}

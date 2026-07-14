@@ -1299,7 +1299,8 @@ export default function HachiMiner() {
               {icon:'👥',label:'Referidos',tab:'refs' as Tab,delay:1.2},
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:1.8},
               {icon:'📊',label:'Mi Estado',tab:'estado' as Tab,delay:2.1},
-            ].map(btn=><button key={btn.tab} onClick={()=>loadTab(btn.tab)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'12px 4px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer',animation:`quickAccessPulse 3s ease-in-out infinite`,animationDelay:`${btn.delay}s`}}>
+              {icon:'🛒',label:'Comprar Licencia',tab:'lics' as Tab,delay:2.4,openBuy:true},
+            ].map(btn=><button key={btn.tab} onClick={()=>{loadTab(btn.tab); if((btn as any).openBuy) setShowBuyWLD(true)}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'12px 4px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer',animation:`quickAccessPulse 3s ease-in-out infinite`,animationDelay:`${btn.delay}s`}}>
               <span style={{fontSize:22}}>{btn.icon}</span>
               <span style={{fontSize:10,fontWeight:600}}>{btn.label}</span>
             </button>)}
@@ -1369,6 +1370,7 @@ export default function HachiMiner() {
                 <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,color:'#34d399'}}>{fmt(Math.round([1,3,5,10][i]*wldHachi*(i===3?1.35:1.3)))}</div>
                 <div style={{fontSize:10,color:'#8b949e'}}>HACHI · 3 meses · {i===3?'35%':'30%'}</div>
                 <div style={{fontSize:9,color:'#60a5fa',marginTop:4}}>Desbloquea hasta: {sushiNames[i]}</div>
+                <div style={{fontSize:9,color:'#a78bfa',marginTop:2}}>{([1,3,5,10][i]*0.5).toFixed(1)} Drachma/día</div>
                 <div style={{fontSize:12,fontWeight:700,color:'#fbbf24',marginTop:6}}>{locked?'Ya tenés 1 activa':wldPrices[i]}</div>
               </div>})}
             </div>

@@ -45,6 +45,7 @@ const ERC20 = ['function balanceOf(address) view returns (uint256)', 'function a
 const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
 const SWAP_MAINTENANCE_MODE = false // poner en false cuando esté listo para todos
 const SHOW_TOP_NAV = false // poner en true para volver a mostrar la barra de pestañas de arriba
+const SHOW_LANG_BUTTONS = false // poner en true cuando estén traducidas todas las pantallas
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
 const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)']
@@ -1118,7 +1119,7 @@ export default function HachiMiner() {
 
         {/* selector de idioma arriba a la derecha */}
         <div style={{display:'flex',justifyContent:'flex-end',gap:4,padding:16}}>
-          {(['es','en','pt'] as Lang[]).map(l=><button key={l} onClick={()=>setLang(l)} style={{background:'none',border:`1px solid ${lang===l?'#a78bfa':'#30363d'}`,borderRadius:4,padding:'2px 8px',fontSize:11,cursor:'pointer',color:lang===l?'#e6edf3':'#8b949e'}}>{l.toUpperCase()}</button>)}
+          {SHOW_LANG_BUTTONS&&(['es','en','pt'] as Lang[]).map(l=><button key={l} onClick={()=>setLang(l)} style={{background:'none',border:`1px solid ${lang===l?'#a78bfa':'#30363d'}`,borderRadius:4,padding:'2px 8px',fontSize:11,cursor:'pointer',color:lang===l?'#e6edf3':'#8b949e'}}>{l.toUpperCase()}</button>)}
         </div>
 
         <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'8px 20px 40px',maxWidth:480,margin:'0 auto',width:'100%'}}>
@@ -1262,7 +1263,7 @@ export default function HachiMiner() {
           <div style={{fontSize:25,fontWeight:800,color:'#dc2626',WebkitTextStroke:'1px #000',textShadow:'0 0 6px #fde047, 0 0 14px #f97316, 0 0 24px #f97316, 0 2px 3px rgba(0,0,0,.5)',whiteSpace:'nowrap',display:'inline-block',animation:'hachiFireFloat 2.4s ease-in-out infinite'}}>⛏ HachiMiner</div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             <div style={{display:'flex',gap:4}}>
-              {(['es','en','pt'] as Lang[]).map(l=><button key={l} onClick={()=>setLang(l)} style={{background:'none',border:`1px solid ${lang===l?'#a78bfa':'#3a3470'}`,borderRadius:4,padding:'2px 6px',fontSize:11,cursor:'pointer',color:lang===l?'#e6edf3':'#9b96c4'}}>{l.toUpperCase()}</button>)}
+              {SHOW_LANG_BUTTONS&&(['es','en','pt'] as Lang[]).map(l=><button key={l} onClick={()=>setLang(l)} style={{background:'none',border:`1px solid ${lang===l?'#a78bfa':'#3a3470'}`,borderRadius:4,padding:'2px 6px',fontSize:11,cursor:'pointer',color:lang===l?'#e6edf3':'#9b96c4'}}>{l.toUpperCase()}</button>)}
             </div>
             <button onClick={connectWallet} style={{background:'#7c3aed',color:'#fff',border:'none',borderRadius:8,padding:'7px 14px',fontSize:13,fontWeight:600,cursor:'pointer',boxShadow:'0 0 14px rgba(124,58,237,.5)',whiteSpace:'nowrap'}}>{connected?nameFor(addr):t('connect')}</button>
           </div>

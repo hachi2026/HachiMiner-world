@@ -256,6 +256,8 @@ export default function HachiMiner() {
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [showBuyWLD, setShowBuyWLD] = useState(false)
+  const [showInfoSwap, setShowInfoSwap] = useState(false)
+  const [showInfoLics, setShowInfoLics] = useState(false)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
   const [wldLics, setWldLics] = useState<any[]>([])
   const [wldLicsLoadedAt, setWldLicsLoadedAt] = useState(Date.now())
@@ -1339,6 +1341,19 @@ export default function HachiMiner() {
             <button onClick={()=>setLicTab('sushi')} style={{...(licTab==='sushi'?{...btnG,background:'transparent'}:btnGh),display:'flex',alignItems:'center',gap:6,justifyContent:'center'}}><img src="/hachi-cat-savings.png" width={20} height={20} style={{borderRadius:4,objectFit:'cover',flexShrink:0}} />Bocado</button>
           </div>
           {licTab==='wld'&&<div>
+            <button onClick={()=>setShowInfoLics(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funcionan las licencias?</button>
+            {showInfoLics&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
+              <strong>Licencias WLD:</strong> pagás WLD una vez y recibís HACHI de forma lineal durante 3 meses (30% de retorno total, 35% en Elite). Además desbloquean acceso a comprar Bocado de nivel más alto. Podés tener hasta <strong>5 licencias WLD nuevas por mes</strong>.
+              <br/><br/>
+              <strong>Cuántos Bocados Básicos podés comprar por día</strong> (según tu licencia WLD activa más alta):
+              <br/>• Sin licencia WLD: 1 por día
+              <br/>• Básica: 2 por día
+              <br/>• Estándar: 3 por día
+              <br/>• Premium: 4 por día
+              <br/>• Elite: 5 por día
+              <br/><br/>
+              <strong>Licencias Bocado:</strong> pagás HACHI y recibís SUSHI al instante (el monto base + 25% de bonus), sin esperar.
+            </div>}
             <div style={sLabel}>Mis licencias WLD</div>
             {wldLics.length===0?<div style={empty}><div style={{fontSize:28}}>💠</div><div>{t('no_lics')}</div></div>:<div style={card}>
               {wldLics.map(({id,l,pend})=>{
@@ -1545,6 +1560,16 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='swap'&&<div>
+          <button onClick={()=>setShowInfoSwap(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona el Swap?</button>
+          {showInfoSwap&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
+            El Swap te permite intercambiar HACHI y WLD directo en la app, usando la liquidez real del pool de Uniswap (no un precio inventado).
+            <br/><br/>
+            Cada vez que <strong>comprás HACHI</strong> (WLD→HACHI):
+            <br/>• Sumás puntos para el <strong>Ranking de compradores</strong> (Top 20, reparto de premios cada 15 días)
+            <br/>• Contás para la <strong>misión diaria de racha</strong>: hacé 5 compras de HACHI que sumen 500 HACHI o más el mismo día calendario (se resetea a medianoche UTC), y reclamás un bono de SUSHI que crece cada día que sigas la racha — desde 1,000 hasta 10,000 al llegar al día 7.
+            <br/><br/>
+            Si un día no llegás a cumplir la misión, no perdés nada — solo no sumás ese día. Pero si pasan más de 48hs sin reclamar ningún bono, la racha vuelve a empezar del día 1.
+          </div>}
           {SWAP_MAINTENANCE_MODE&&!debugMode&&<div style={{background:'rgba(251,191,36,.1)',border:'1px solid rgba(251,191,36,.4)',borderRadius:8,padding:16,marginBottom:12,textAlign:'center'}}>
             <div style={{fontSize:28,marginBottom:8}}>🛠️</div>
             <div style={{fontWeight:700,color:'#fbbf24',marginBottom:6}}>Estamos mejorando la experiencia de Swap</div>

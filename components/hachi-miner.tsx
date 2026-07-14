@@ -1354,11 +1354,12 @@ export default function HachiMiner() {
               })}
               <button onClick={claimAllWLD} style={{...btnG,width:'100%',marginTop:4}}>Cobrar todo</button>
             </div>}
-            {!showBuyWLD&&<button onClick={()=>setShowBuyWLD(true)} style={{...btnP,width:'100%',marginBottom:12}}>🛒 Comprá tu licencia</button>}
-            {showBuyWLD&&<>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-              <span style={sLabel}>Comprar licencia WLD</span>
-              <button onClick={()=>setShowBuyWLD(false)} style={{background:'none',border:'none',color:'#8b949e',fontSize:12,cursor:'pointer'}}>✕ Cerrar</button>
+            <button onClick={()=>setShowBuyWLD(true)} style={{...btnP,width:'100%',marginBottom:12}}>🛒 Comprá tu licencia</button>
+          </div>}
+          {showBuyWLD&&<div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#0f0224',zIndex:200,overflowY:'auto',padding:16}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <span style={{...sLabel,margin:0}}>Comprar licencia WLD</span>
+              <button onClick={()=>setShowBuyWLD(false)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#e6edf3',fontSize:13,padding:'6px 12px',cursor:'pointer'}}>✕ Cerrar</button>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
               {wldNames.map((n,i)=>{
@@ -1372,8 +1373,7 @@ export default function HachiMiner() {
               </div>})}
             </div>
             <div style={pBox}>{[['Tipo',wldNames[selWLD]],['Precio',wldPrices[selWLD]],['HACHI base',wldPrev.base],[selWLD===3?'Total ×1.35 (Elite +5%)':'Total ×1.3',wldPrev.total],['HACHI/día',wldPrev.daily],['Mensual',wldPrev.monthly]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace',fontSize:13}}>{v}</span></div>)}</div>
-            <button onClick={buyWLD} disabled={!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&hasActiveElite)} style={{...btnP,opacity:(!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&hasActiveElite))?0.4:1}}>{wldHachi>MAX_HACHI?'⚠ Ventas pausadas':licsAvailNum<=0?'Sin stock disponible':(selWLD===3&&hasActiveElite)?'Ya tenés una Elite activa':`Comprar · ${wldPrices[selWLD]}`}</button>
-            </>}
+            <button onClick={buyWLD} disabled={!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&hasActiveElite)} style={{...btnP,width:'100%',opacity:(!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&hasActiveElite))?0.4:1}}>{wldHachi>MAX_HACHI?'⚠ Ventas pausadas':licsAvailNum<=0?'Sin stock disponible':(selWLD===3&&hasActiveElite)?'Ya tenés una Elite activa':`Comprar · ${wldPrices[selWLD]}`}</button>
           </div>}
           {licTab==='sushi'&&<div>
             {!sushiAccess&&<div style={{background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.35)',borderRadius:8,padding:20,textAlign:'center',marginBottom:12}}>

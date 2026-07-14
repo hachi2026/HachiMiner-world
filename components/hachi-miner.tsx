@@ -1294,14 +1294,14 @@ export default function HachiMiner() {
           {priceAlert&&<div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:13,color:'#f87171',textAlign:'center'}}>⚠ Ventas WLD pausadas — HACHI devaluado ({fmt(wldHachi)} &gt; {MAX_HACHI.toLocaleString()})</div>}
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
             {[
-              {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:0},
+              {icon:'🐱',label:'Mi Estado',tab:'estado' as Tab,delay:0},
               {icon:'📜',label:'Licencias',tab:'lics' as Tab,delay:0.3},
-              {icon:'🏆',label:'Ranking',tab:'ranking' as Tab,delay:0.6},
-              {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:0.9},
-              {icon:'👥',label:'Referidos',tab:'refs' as Tab,delay:1.2},
-              {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:1.8},
-              {icon:'📊',label:'Mi Estado',tab:'estado' as Tab,delay:2.1},
-              {icon:'🛒',label:'Comprar Licencia',tab:'lics' as Tab,delay:2.4,openBuy:true},
+              {icon:'🛒',label:'Comprar Licencia',tab:'lics' as Tab,delay:0.6,openBuy:true},
+              {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
+              {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:1.2},
+              {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:1.5},
+              {icon:'🏆',label:'Ranking',tab:'ranking' as Tab,delay:1.8},
+              {icon:'👥',label:'Referidos',tab:'refs' as Tab,delay:2.1},
             ].map(btn=><button key={btn.tab} onClick={()=>{loadTab(btn.tab); if((btn as any).openBuy) setShowBuyWLD(true)}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'12px 4px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer',animation:`quickAccessPulse 3s ease-in-out infinite`,animationDelay:`${btn.delay}s`}}>
               <span style={{fontSize:22}}>{btn.icon}</span>
               <span style={{fontSize:10,fontWeight:600}}>{btn.label}</span>

@@ -46,7 +46,7 @@ const HACHI_WLD_PAIR = '0xfB461C1EcE675568a1561df75a18d65DDBdc5481'
 const SWAP_MAINTENANCE_MODE = false // poner en false cuando esté listo para todos
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
-const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)']
+const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)']
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
 const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)', 'event Swapped(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount)']
 // Permit2 (AllowanceTransfer): approve da permiso a un "spender" (nuestro contrato) para mover el token vía Permit2
@@ -257,7 +257,7 @@ export default function HachiMiner() {
   const [hachiRaw, setHachiRaw] = useState(0)
   const [wldRaw, setWldRaw]     = useState(0)
   const [sushiLics] = useState<any[]>([])
-  const [myStatus, setMyStatus] = useState({bocadoCount:0, bocadoSushiTotal:0, streakLifetimeDays:0, loading:false})
+  const [myStatus, setMyStatus] = useState({bocadoCount:0, bocadoSushiTotal:0, streakLifetimeDays:0, cyclesCompleted:0, loading:false})
   const [lockData, setLockData] = useState({total:'0',tier:'Sin tier',apy:'0%',pending:'0',unstake:'0',unstakeRaw:BigInt(0),nextClaimIn:'—',nextDepositIn:'—',nextDepositSecs:0})
   const [lockBatches, setLockBatches] = useState<any[]>([])
   const [platformStats, setPlatformStats] = useState({totalLocked:'—',totalUsers:'—'})
@@ -974,17 +974,15 @@ export default function HachiMiner() {
     try {
       const core = new ethers.Contract(C.core, CORE, p)
       const sushiIds = await core.getUserSushiLics(addr)
-      let bocadoSushiTotal = 0
-      for (const id of sushiIds) {
-        const l = await core.sushiLics(id)
-        bocadoSushiTotal += fe(l[4])
-      }
+      const sushiDetails = await Promise.all(sushiIds.map((id:bigint) => core.sushiLics(id)))
+      const bocadoSushiTotal = sushiDetails.reduce((sum:number, l:any) => sum + fe(l[4]), 0)
 
       const streak = new ethers.Contract(STREAK_ADDR, STREAK_ABI, p)
       const currentBlock = await p.getBlockNumber()
       const DEPLOY_BLOCK = 32106154
       const CHUNK = 100, BATCH = 15
-      let allEvents: any[] = []
+      let dayEvents: any[] = []
+      let cycleEvents: any[] = []
       let from = DEPLOY_BLOCK
       while (from <= currentBlock) {
         const ranges: [number, number][] = []
@@ -994,12 +992,15 @@ export default function HachiMiner() {
           ranges.push([cursor, to])
           cursor = to + 1
         }
-        const results = await Promise.all(ranges.map(([f,t]) => streak.queryFilter(streak.filters.DayCredited(addr), f, t).catch(() => [])))
-        for (const evs of results) allEvents = allEvents.concat(evs)
+        const results = await Promise.all(ranges.map(([f,t]) => Promise.all([
+          streak.queryFilter(streak.filters.DayCredited(addr), f, t).catch(() => []),
+          streak.queryFilter(streak.filters.CycleCompleted(addr), f, t).catch(() => []),
+        ])))
+        for (const [d, c] of results) { dayEvents = dayEvents.concat(d); cycleEvents = cycleEvents.concat(c) }
         from = cursor
       }
 
-      setMyStatus({bocadoCount: sushiIds.length, bocadoSushiTotal, streakLifetimeDays: allEvents.length, loading: false})
+      setMyStatus({bocadoCount: sushiIds.length, bocadoSushiTotal, streakLifetimeDays: dayEvents.length, cyclesCompleted: cycleEvents.length, loading: false})
     } catch(e) {
       setMyStatus(prev => ({...prev, loading: false}))
     }
@@ -1639,8 +1640,12 @@ export default function HachiMiner() {
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente de cobrar</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{lockData.pending} HACHI</span></div>
           </div>
           <div style={card}><div style={cTitle}>🔥 Racha de swaps</div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Día actual del ciclo</span><span style={{fontFamily:'monospace',fontWeight:600}}>{streakStatus.day}/7</span></div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Días completados (de por vida)</span><span style={{fontFamily:'monospace',color:'#fbbf24'}}>{myStatus.streakLifetimeDays}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Ciclos completados (7 días)</span><span style={{fontFamily:'monospace',fontWeight:600,color:'#fbbf24'}}>{myStatus.cyclesCompleted}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Días completados (de por vida)</span><span style={{fontFamily:'monospace'}}>{myStatus.streakLifetimeDays}</span></div>
+          </div>
+          <div style={card}><div style={cTitle}>🎁 Disponible para reclamar (diario)</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmt(piggy.accrued)}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Drachma</span><span style={{fontFamily:'monospace',color:'#60a5fa'}}>{piggy.bonus.toFixed(2)}</span></div>
           </div>
           <div style={card}><div style={cTitle}>🏆 Ranking (premios cada 15 días)</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Mis puntos</span><span style={{fontFamily:'monospace',fontWeight:600}}>{rankStats.points}</span></div>

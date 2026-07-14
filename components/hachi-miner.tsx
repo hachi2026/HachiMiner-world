@@ -464,7 +464,7 @@ export default function HachiMiner() {
         new ethers.Contract(C.sushi,ERC20,p).balanceOf(a),
       ])
       const hN=fe(h), wN=fe(w)
-      setHachiB(fmtPrecise(hN)); setWldB(fmtPrecise(wN)); setSushiB(fmtPrecise(fe(s)))
+      setHachiB(hN.toFixed(2)); setWldB(wN.toFixed(2)); setSushiB(fe(s).toFixed(2))
       setHachiRaw(hN); setWldRaw(wN)
     } catch(e) {}
   }

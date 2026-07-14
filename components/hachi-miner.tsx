@@ -1220,6 +1220,10 @@ export default function HachiMiner() {
           0%,100% { transform: translateY(0px); }
           50% { transform: translateY(-4px); }
         }
+        @keyframes quickAccessPulse {
+          0%,100% { box-shadow: 0 0 6px rgba(167,139,250,.3); }
+          50% { box-shadow: 0 0 14px rgba(167,139,250,.6); }
+        }
       `}</style>
       <div style={{background:'#211a55',borderBottom:'1px solid #4c3a8f',padding:'8px 14px',position:'sticky',top:0,zIndex:100}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,marginBottom:connected?8:0}}>
@@ -1249,6 +1253,18 @@ export default function HachiMiner() {
 
         {tab==='home'&&<div>
           {priceAlert&&<div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:13,color:'#f87171',textAlign:'center'}}>⚠ Ventas WLD pausadas — HACHI devaluado ({fmt(wldHachi)} &gt; {MAX_HACHI.toLocaleString()})</div>}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
+            {[
+              {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:0},
+              {icon:'📜',label:'Licencias',tab:'lics' as Tab,delay:0.3},
+              {icon:'🏆',label:'Ranking',tab:'ranking' as Tab,delay:0.6},
+              {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:0.9},
+              {icon:'👥',label:'Referidos',tab:'refs' as Tab,delay:1.2},
+            ].map(btn=><button key={btn.tab} onClick={()=>loadTab(btn.tab)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'12px 4px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer',animation:`quickAccessPulse 3s ease-in-out infinite`,animationDelay:`${btn.delay}s`}}>
+              <span style={{fontSize:22}}>{btn.icon}</span>
+              <span style={{fontSize:10,fontWeight:600}}>{btn.label}</span>
+            </button>)}
+          </div>
           <div style={card}><div style={cTitle}>HACHI</div>
             {connected&&<div style={{fontSize:12,color:'#c4b5fd',marginBottom:8}}>👋 Bienvenido, <span style={{fontWeight:700,color:'#e6edf3'}}>{nameFor(addr)}</span></div>}
             <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:12}}>

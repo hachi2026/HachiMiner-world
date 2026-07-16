@@ -1425,11 +1425,11 @@ export default function HachiMiner() {
               <strong>Licencias WLD:</strong> pagás WLD una vez y recibís HACHI de forma lineal durante 3 meses (30% de retorno total, 35% en Elite). Además desbloquean acceso a comprar Bocado de nivel más alto. Podés tener hasta <strong>5 licencias WLD nuevas por mes</strong>.
               <br/><br/>
               <strong>Cuántos Bocados Básicos podés comprar por día</strong> (según tu licencia WLD activa más alta):
-              <br/>• Sin licencia WLD: 1 por día
-              <br/>• Básica: 2 por día
-              <br/>• Estándar: 3 por día
-              <br/>• Premium: 4 por día
-              <br/>• Elite: 5 por día
+              <br/>• Sin licencia WLD: no disponible
+              <br/>• Básica: 1 por día
+              <br/>• Estándar: 2 por día
+              <br/>• Premium: 3 por día
+              <br/>• Elite: 4 por día
               <br/><br/>
               <strong>Licencias Bocado:</strong> pagás HACHI y recibís SUSHI al instante (el monto base + 25% de bonus), sin esperar.
             </div>}
@@ -1479,49 +1479,30 @@ export default function HachiMiner() {
             </div>}
             {sushiAccess&&<>
               <div style={{...sLabel,display:'flex',alignItems:'center',gap:10}}><img src="/hachi-cat-savings.png" alt="" width={88} height={88} style={{borderRadius:14,flexShrink:0,objectFit:'cover',boxShadow:'0 0 18px rgba(124,58,237,.35)'}} />Convertí tus HACHI en Bocado</div>
-              {(()=>{
-                const specialIdx = wldTierActive===255?null:wldTierActive===0?0:wldTierActive
-                const secsLeft = Math.max(0, lastSpecialTs + 5*86400 - Math.floor(Date.now()/1000))
-                const sd=Math.floor(secsLeft/86400), sh=Math.floor((secsLeft%86400)/3600), sm=Math.floor((secsLeft%3600)/60)
-                const cards:{idx:number,special:boolean,label:string|null,disabled:boolean}[] = [
-                  {idx:0, special:false, label:null, disabled:false},
-                  ...(specialIdx!==null?[{idx:specialIdx, special:true, label:specialAvail?'✨ Especial disponible':(sd===0&&sh===0?`⏳ Disponible en ${sm}m`:`⏳ Disponible en ${sd}d ${sh}h`), disabled:!specialAvail}]:[])
-                ]
-                return(
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-                    {cards.map((c,ci)=><div key={ci} onClick={c.disabled?undefined:()=>setSelSUSHI(c.idx)} style={{...lCard,border:`1px solid ${selSUSHI===c.idx&&!c.disabled?'#fbbf24':'#5b21b6'}`,background:c.disabled?'rgba(30,8,64,.5)':selSUSHI===c.idx?'rgba(251,191,36,.08)':'#1e0840',opacity:c.disabled?.5:1,cursor:c.disabled?'default':'pointer'}}>
-                      <div style={{fontSize:11,fontWeight:700}}>{sushiNames[c.idx]}</div>
-                      {c.label&&<div style={{fontSize:10,fontWeight:600,color:specialAvail?'#34d399':'#d29922',marginBottom:2}}>{c.label}</div>}
-                      <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,color:'#34d399'}}>{fmt(Math.round([500,2000,5000,10000][c.idx]*hachiSushi*1.25))}</div>
-                      <div style={{fontSize:10,color:'#8b949e'}}>SUSHI inmediato ×1.25</div>
-                      <div style={{fontSize:12,fontWeight:700,color:'#fbbf24',marginTop:6}}>{sushiPrices[c.idx]}</div>
-                    </div>)}
-                  </div>
-                )
-              })()}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+                <div onClick={()=>setSelSUSHI(0)} style={{...lCard,border:`1px solid ${selSUSHI===0?'#fbbf24':'#5b21b6'}`,background:selSUSHI===0?'rgba(251,191,36,.08)':'#1e0840',cursor:'pointer'}}>
+                  <div style={{fontSize:11,fontWeight:700}}>{sushiNames[0]}</div>
+                  <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,color:'#34d399'}}>{fmt(Math.round(500*hachiSushi*1.25))}</div>
+                  <div style={{fontSize:10,color:'#8b949e'}}>SUSHI inmediato ×1.25</div>
+                  <div style={{fontSize:12,fontWeight:700,color:'#fbbf24',marginTop:6}}>{sushiPrices[0]}</div>
+                </div>
+              </div>
               <div style={pBox}>{[['Tipo',sushiNames[selSUSHI]],['Precio',sushiPrices[selSUSHI]],['SUSHI base',sushiPrev.base],['Bonus inmediato','+25%'],['Recibís al instante (×1.25)',sushiPrev.total]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace',fontSize:13}}>{v}</span></div>)}</div>
               {(()=>{
                 const poolEmpty = !(poolsData.poolAFreeNum > 0)
-                const maxBasicNow = wldTierActive===255?1:wldTierActive===0?2:wldTierActive===1?3:wldTierActive===2?4:5
-                const dailyLimitHit = selSUSHI===0 && basicBoughtToday >= maxBasicNow && !specialAvail
+                const maxBasicNow = wldTierActive===255?0:wldTierActive===0?1:wldTierActive===1?2:wldTierActive===2?3:4
+                const dailyLimitHit = selSUSHI===0 && basicBoughtToday >= maxBasicNow
                 const disabled = poolEmpty || dailyLimitHit
                 const label = poolEmpty ? '⏳ Sin fondos en el pool ahora — probá más tarde' : dailyLimitHit ? '🚫 Límite diario alcanzado, volvé mañana' : `Comprar · ${sushiPrices[selSUSHI]}`
                 return <button onClick={buySUSHI} disabled={disabled} style={{...btnG, opacity: disabled?0.5:1, cursor: disabled?'not-allowed':'pointer'}}>{label}</button>
               })()}
               {(()=>{
                 const tierLabel = wldTierActive===255?'Sin licencia WLD':['Básica','Estándar','Premium','Elite'][wldTierActive]??'—'
-                const maxBasic  = wldTierActive===255?1:wldTierActive===0?2:wldTierActive===1?3:wldTierActive===2?4:5
-                const specialType = wldTierActive===0?'Básica adicional':wldTierActive===1?'Estándar':wldTierActive===2?'Premium':wldTierActive===3?'Elite':null
+                const maxBasic  = wldTierActive===255?0:wldTierActive===0?1:wldTierActive===1?2:wldTierActive===2?3:4
                 return (
                   <div style={{background:'rgba(124,58,237,.08)',border:'1px solid #5b21b6',borderRadius:8,padding:12,marginTop:12,fontSize:12}}>
                     <div style={{...row,marginBottom:4}}><span style={{color:'#8b949e'}}>WLD activa</span><span style={{fontWeight:700,color:'#fbbf24'}}>{tierLabel}</span></div>
-                    <div style={{...row,marginBottom:4}}><span style={{color:'#8b949e'}}>Básicas hoy</span><span style={{fontFamily:'monospace',fontWeight:600}}>{basicBoughtToday} / {maxBasic}</span></div>
-                    {specialType&&(()=>{
-                      if (specialAvail) return <div style={row}><span style={{color:'#8b949e'}}>Especial (c/5 días)</span><span style={{color:'#3fb950',fontWeight:600}}>{`✓ Disponible · ${specialType}`}</span></div>
-                      const secsLeft = Math.max(0, lastSpecialTs + 5*86400 - Math.floor(Date.now()/1000))
-                      const sd=Math.floor(secsLeft/86400), sh=Math.floor((secsLeft%86400)/3600), sm=Math.floor((secsLeft%3600)/60)
-                      return <div style={row}><span style={{color:'#8b949e'}}>Especial (c/5 días)</span><span style={{color:'#d29922',fontWeight:600}}>{sd===0&&sh===0?`Disponible en ${sm}m`:`Disponible en ${sd}d ${sh}h`}</span></div>
-                    })()}
+                    <div style={row}><span style={{color:'#8b949e'}}>Bocados hoy</span><span style={{fontFamily:'monospace',fontWeight:600}}>{basicBoughtToday} / {maxBasic}</span></div>
                   </div>
                 )
               })()}

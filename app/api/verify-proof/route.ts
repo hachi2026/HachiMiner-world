@@ -7,6 +7,7 @@ const RPC = process.env.WORLDCHAIN_RPC || "https://worldchain-mainnet.g.alchemy.
 
 const SET_HUMAN_VERIFIED_ABI = ["function setHumanVerified(address user) external"];
 const HACHI_SWAP_STREAK_ADDRESS_ENV = "HACHI_SWAP_STREAK_ADDRESS";
+const HACHI_DRACHMA_MINER_ADDRESS_ENV = "HACHI_DRACHMA_MINER_ADDRESS";
 
 async function syncHumanVerifiedOnChain(userAddress: string) {
   const pk = process.env.VERIFIER_PRIVATE_KEY;
@@ -15,16 +16,17 @@ async function syncHumanVerifiedOnChain(userAddress: string) {
   const dailyRewardsAddr = process.env.HACHI_DAILY_REWARDS_ADDRESS;
   const hachiSwapAddr = process.env.HACHI_SWAP_ADDRESS;
   const hachiSwapStreakAddr = process.env[HACHI_SWAP_STREAK_ADDRESS_ENV];
+  const hachiDrachmaMinerAddr = process.env[HACHI_DRACHMA_MINER_ADDRESS_ENV];
 
   if (!pk) {
     console.error("VERIFIER_PRIVATE_KEY no configurada; no se pudo sincronizar on-chain");
-    return { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false };
+    return { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false, hachiDrachmaMiner: false };
   }
 
   const provider = new ethers.JsonRpcProvider(RPC);
   const wallet = new ethers.Wallet(pk, provider);
 
-  const results = { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false };
+  const results = { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false, hachiDrachmaMiner: false };
 
   if (referralManagerAddr) {
     try {
@@ -78,6 +80,17 @@ async function syncHumanVerifiedOnChain(userAddress: string) {
       results.hachiSwapStreak = true;
     } catch (e) {
       console.error("Error sincronizando HachiSwapStreak:", e);
+    }
+  }
+
+  if (hachiDrachmaMinerAddr) {
+    try {
+      const c = new ethers.Contract(hachiDrachmaMinerAddr, SET_HUMAN_VERIFIED_ABI, wallet);
+      const tx = await c.setHumanVerified(userAddress);
+      await tx.wait();
+      results.hachiDrachmaMiner = true;
+    } catch (e) {
+      console.error("Error sincronizando HachiDrachmaMiner:", e);
     }
   }
 

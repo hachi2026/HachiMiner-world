@@ -270,6 +270,7 @@ export default function HachiMiner() {
   const [showBuyWLD, setShowBuyWLD] = useState(false)
   const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
+  const [showInfoDrachma, setShowInfoDrachma] = useState(false)
   const [showInfoSwap, setShowInfoSwap] = useState(false)
   const [showInfoLics, setShowInfoLics] = useState(false)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
@@ -1374,12 +1375,13 @@ export default function HachiMiner() {
               {icon:'📜',label:'Licencias',tab:'lics' as Tab,delay:0.3},
               {icon:'🛒',label:'Comprar Licencia',tab:'lics' as Tab,delay:0.6,openBuy:true},
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
-              ...(debugMode ? [{icon:'⚱️',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7}] : []),
+              {icon:'🪙',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7,isNew:true},
               {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:1.2},
               {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:1.5},
               {icon:'🏆',label:'Ranking',tab:'ranking' as Tab,delay:1.8},
               {icon:'👥',label:'Referidos',tab:'refs' as Tab,delay:2.1},
-            ].map(btn=><button key={btn.tab} onClick={()=>{loadTab(btn.tab); if((btn as any).openBuy) setShowBuyWLD(true)}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'12px 4px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer',animation:`quickAccessPulse 3s ease-in-out infinite`,animationDelay:`${btn.delay}s`}}>
+            ].map(btn=><button key={btn.tab} onClick={()=>{loadTab(btn.tab); if((btn as any).openBuy) setShowBuyWLD(true)}} style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'12px 4px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer',animation:`quickAccessPulse 3s ease-in-out infinite`,animationDelay:`${btn.delay}s`}}>
+              {(btn as any).isNew&&<span style={{position:'absolute',top:-6,right:-6,background:'#f59e0b',color:'#1e0840',fontSize:8,fontWeight:800,padding:'2px 5px',borderRadius:8,boxShadow:'0 0 8px rgba(245,158,11,.6)'}}>NUEVO</span>}
               <span style={{fontSize:22}}>{btn.icon}</span>
               <span style={{fontSize:10,fontWeight:600}}>{btn.label}</span>
             </button>)}
@@ -1770,8 +1772,16 @@ export default function HachiMiner() {
           </div>
         </div>}
 
-        {tab==='drachmaminer'&&debugMode&&<div>
-          <div style={sLabel}>⚱️ Drachma Miner (modo debug)</div>
+        {tab==='drachmaminer'&&<div>
+          <div style={sLabel}>🪙 Drachma Miner</div>
+          <button onClick={()=>setShowInfoDrachma(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona el Drachma Miner?</button>
+          {showInfoDrachma&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
+            Con una licencia WLD activa o un Lock de al menos 50,000 HACHI, podés "minar" Drachma: elegís un nivel (según tu tier más alto) y pagás HACHI por un monto fijo de Drachma, con un descuento sobre el precio real de mercado.
+            <br/><br/>
+            El Drachma no llega de golpe — se genera de a poco durante 15 días, y lo vas reclamando cuando quieras con el botón "Reclamar Drachma".
+            <br/><br/>
+            Solo podés tener <strong>1 minería activa a la vez</strong> — cuando termine de generarse del todo, podés arrancar una nueva.
+          </div>}
           {drachmaMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
             <div style={card}>
               <div style={cTitle}>Tu tier: {['Básica','Estándar','Premium','Elite'][drachmaMiner.tier]}</div>

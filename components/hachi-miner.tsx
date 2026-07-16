@@ -1463,7 +1463,7 @@ export default function HachiMiner() {
                 <div style={{fontSize:11,fontWeight:700}}>{n}{i===3&&<span style={{color:'#34d399'}}> +5%</span>}</div>
                 <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,color:'#34d399'}}>{fmt(Math.round([1,3,5,10][i]*wldHachi*(i===3?1.35:1.3)))}</div>
                 <div style={{fontSize:10,color:'#8b949e'}}>HACHI · 3 meses · {i===3?'35%':'30%'}</div>
-                <div style={{fontSize:9,color:'#60a5fa',marginTop:4}}>Desbloquea hasta: {sushiNames[i]}</div>
+                <div style={{fontSize:9,color:'#60a5fa',marginTop:4}}>🪙 Acceso a Drachma Miner (nivel {wldNames[i]})</div>
                 <div style={{fontSize:9,color:'#a78bfa',marginTop:2}}>{([1,3,5,10][i]*0.5).toFixed(1)} Drachma/día</div>
                 <div style={{fontSize:12,fontWeight:700,color:'#fbbf24',marginTop:6}}>{locked?'Ya tenés 1 activa':wldPrices[i]}</div>
               </div>})}

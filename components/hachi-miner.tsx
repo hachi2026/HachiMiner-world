@@ -28,6 +28,7 @@ const C = {
   hachi:    '0xbE0313f279580FDD1aA1b1b6888407E6504fF19E',
   wld:      '0x2cfc85d8e48f8eab294be644d9e25c3030863003',
   sushi:    '0xab09a728e53d3d6bc438be95eed46da0bbe7fb38',
+  drachma:  '0xEdE54d9c024ee80C85ec0a75eD2d8774c7Fbac9B',
   // Permit2 canónico de Uniswap (misma dirección en todas las redes EVM, incl. World Chain)
   permit2:  '0x000000000022D473030F116dDEE9F6B43aC78BA3',
 }
@@ -47,6 +48,17 @@ const SWAP_MAINTENANCE_MODE = false // poner en false cuando esté listo para to
 const SHOW_TOP_NAV = false // poner en true para volver a mostrar la barra de pestañas de arriba
 const SHOW_LANG_BUTTONS = false // poner en true cuando estén traducidas todas las pantallas
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
+const DRACHMA_MINER_ADDR = '0x19d23871C64F29e22F31AcC094A255e5B1aAD577'
+const DRACHMA_MINER_ABI = [
+  'function getUserTier(address) view returns (uint8)',
+  'function costInHachi(uint8) view returns (uint256)',
+  'function tierDrachmaAmounts(uint256) view returns (uint256)',
+  'function mineDrachma(uint8,uint256) returns (uint256)',
+  'function claimDrachma(uint256)',
+  'function activeMineId(address) view returns (uint256)',
+  'function mines(uint256) view returns (address,uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool)',
+  'function pendingDrachma(uint256) view returns (uint256)',
+]
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
 const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)']
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
@@ -119,7 +131,7 @@ const REFERRAL = [
   'function currentNewBonus() view returns (uint256)',
 ]
 
-type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'
+type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'
 type Lang = 'es'|'en'|'pt'
 const detectLang = (): Lang => {
   if (typeof navigator === 'undefined') return 'es'
@@ -256,6 +268,8 @@ export default function HachiMiner() {
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [showBuyWLD, setShowBuyWLD] = useState(false)
+  const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0})
+  const [selDrachmaTier, setSelDrachmaTier] = useState(0)
   const [showInfoSwap, setShowInfoSwap] = useState(false)
   const [showInfoLics, setShowInfoLics] = useState(false)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
@@ -897,6 +911,7 @@ export default function HachiMiner() {
     if (v==='lock') loadLock(p)
     if (v==='ranking') loadRanking(p)
     if (v==='estado') { loadMyStatus(p); loadWLDLics(p); loadLock(p); loadRanking(p); loadStreakStatus(p) }
+    if (v==='drachmaminer') { loadDrachmaMiner(p) }
     if (v==='pools') loadPools(p)
     if (v==='refs') loadRefs(p)
     if (v==='swap') { loadSwapHistory(p); loadStreakStatus(p); loadStreakHistory(p); loadSwapRanking(p) }
@@ -1000,6 +1015,53 @@ export default function HachiMiner() {
     } catch(e) {
       setMyStatus(prev => ({...prev, loading: false}))
     }
+  }
+
+  const loadDrachmaMiner = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const dm = new ethers.Contract(DRACHMA_MINER_ADDR, DRACHMA_MINER_ABI, p)
+      const [tier, activeId] = await Promise.all([dm.getUserTier(addr), dm.activeMineId(addr)])
+      const amounts = await Promise.all([0,1,2,3].map(i => dm.tierDrachmaAmounts(i)))
+      const costs = await Promise.all([0,1,2,3].map(i => dm.costInHachi(i).catch(() => BigInt(0))))
+
+      let mineInfo = {active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0}
+      if (Number(activeId) > 0) {
+        const [m, pending] = await Promise.all([dm.mines(activeId), dm.pendingDrachma(activeId)])
+        mineInfo = {active: m[8], drachmaTotal: fe(m[3]), drachmaClaimed: fe(m[4]), pending: fe(pending), endTime: Number(m[6])}
+      }
+
+      setDrachmaMiner({
+        tier: Number(tier),
+        amounts: amounts.map(fe),
+        costs: costs.map(fe),
+        activeMineId: Number(activeId),
+        ...mineInfo,
+      })
+    } catch(e:any) { log('drachma miner err: '+(e?.message||'').slice(0,80)) }
+  }
+
+  const mineDrachmaAction = async () => {
+    if (!connected) { toast_(t('err_connect'),'#f85149'); return }
+    try {
+      toast_('Minando Drachma...', '#d29922')
+      const costWithSlippage = drachmaMiner.costs[selDrachmaTier] * 1.02
+      const costWei = pe(costWithSlippage)
+      await sendTxMulti([
+        ...buildPermit2Approvals(C.hachi, DRACHMA_MINER_ADDR, costWei),
+        { to: DRACHMA_MINER_ADDR, abi: DRACHMA_MINER_ABI, fnName: 'mineDrachma', args: [selDrachmaTier, costWei] },
+      ])
+      toast_('✓ Drachma en generación (15 días)', '#3fb950')
+      loadDrachmaMiner(rpc())
+    } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
+  }
+
+  const claimDrachmaMineAction = async () => {
+    try {
+      toast_('Reclamando Drachma...', '#d29922')
+      await sendTx(DRACHMA_MINER_ADDR, DRACHMA_MINER_ABI, 'claimDrachma', [drachmaMiner.activeMineId])
+      toast_('✓ Drachma reclamado', '#3fb950')
+      loadDrachmaMiner(rpc())
+    } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
   }
 
   const loadPools = async (p: ethers.JsonRpcProvider) => {
@@ -1309,6 +1371,7 @@ export default function HachiMiner() {
               {icon:'📜',label:'Licencias',tab:'lics' as Tab,delay:0.3},
               {icon:'🛒',label:'Comprar Licencia',tab:'lics' as Tab,delay:0.6,openBuy:true},
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
+              ...(debugMode ? [{icon:'⚱️',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7}] : []),
               {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:1.2},
               {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:1.5},
               {icon:'🏆',label:'Ranking',tab:'ranking' as Tab,delay:1.8},
@@ -1702,6 +1765,34 @@ export default function HachiMiner() {
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Mi posición</span><span style={{fontFamily:'monospace'}}>{rankStats.pos}</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Total ganado histórico</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{rankStats.earned}</span></div>
           </div>
+        </div>}
+
+        {tab==='drachmaminer'&&debugMode&&<div>
+          <div style={sLabel}>⚱️ Drachma Miner (modo debug)</div>
+          {drachmaMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
+            <div style={card}>
+              <div style={cTitle}>Tu tier: {['Básica','Estándar','Premium','Elite'][drachmaMiner.tier]}</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12,marginTop:8}}>
+                {['Básica','Estándar','Premium','Elite'].map((n,i)=>{
+                  const locked = i > drachmaMiner.tier
+                  return <div key={i} onClick={()=>{if(!locked) setSelDrachmaTier(i)}} style={{...lCard,border:`1px solid ${selDrachmaTier===i?'#fbbf24':'#5b21b6'}`,background:selDrachmaTier===i?'rgba(251,191,36,.08)':'#1e0840',opacity:locked?0.35:1,cursor:locked?'not-allowed':'pointer'}}>
+                    <div style={{fontSize:11,fontWeight:700}}>{n}</div>
+                    <div style={{fontFamily:'monospace',fontSize:16,fontWeight:700,color:'#60a5fa'}}>{fmtPrecise(drachmaMiner.amounts[i])} Drachma</div>
+                    <div style={{fontSize:10,color:'#8b949e'}}>Costo: {fmtPrecise(drachmaMiner.costs[i])} HACHI</div>
+                  </div>
+                })}
+              </div>
+              <button onClick={mineDrachmaAction} disabled={!connected||drachmaMiner.active} style={{...btnP,width:'100%',opacity:(!connected||drachmaMiner.active)?0.4:1}}>{drachmaMiner.active?'Ya tenés una mina activa':`Minar · ${fmtPrecise(drachmaMiner.costs[selDrachmaTier])} HACHI`}</button>
+            </div>
+            {drachmaMiner.active&&<div style={{...card,marginTop:12}}>
+              <div style={cTitle}>Tu minería activa</div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Total</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(drachmaMiner.drachmaTotal)} Drachma</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Ya reclamado</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(drachmaMiner.drachmaClaimed)} Drachma</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente ahora</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(drachmaMiner.pending)} Drachma</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Termina</span><span style={{fontFamily:'monospace'}}>{new Date(drachmaMiner.endTime*1000).toLocaleDateString()}</span></div>
+              <button onClick={claimDrachmaMineAction} disabled={drachmaMiner.pending<=0} style={{...btnG,width:'100%',marginTop:8,opacity:drachmaMiner.pending>0?1:0.4}}>Reclamar Drachma</button>
+            </div>}
+          </>}
         </div>}
 
         {tab==='refs'&&<div>

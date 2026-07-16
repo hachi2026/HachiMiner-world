@@ -1052,7 +1052,10 @@ export default function HachiMiner() {
       ])
       toast_('✓ Drachma en generación (15 días)', '#3fb950')
       loadDrachmaMiner(rpc())
-    } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
+    } catch(e: any) {
+      log('drachma mine err: ' + JSON.stringify(e).slice(0,900))
+      toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149')
+    }
   }
 
   const claimDrachmaMineAction = async () => {

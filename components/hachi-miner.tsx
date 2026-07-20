@@ -33,6 +33,31 @@ const C = {
   permit2:  '0x000000000022D473030F116dDEE9F6B43aC78BA3',
 }
 
+function isVotingOpen(): boolean {
+  const now = new Date()
+  const gmt4 = new Date(now.getTime() - 4 * 3600 * 1000)
+  const day = gmt4.getUTCDay() // 0=Dom,1=Lun,...,4=Jue,5=Vie,6=Sab
+  const hour = gmt4.getUTCHours()
+  if (day === 4 && hour >= 20) return true // jueves desde las 20:00
+  if (day === 5 || day === 6) return true // viernes y sábado, todo el día
+  if (day === 0 && hour < 20) return true // domingo hasta las 19:59
+  return false
+}
+
+function secondsUntilNextVoting(): number {
+  const now = new Date()
+  const gmt4Now = new Date(now.getTime() - 4 * 3600 * 1000)
+  const day = gmt4Now.getUTCDay()
+  let daysUntilThursday = (4 - day + 7) % 7
+  const target = new Date(Date.UTC(
+    gmt4Now.getUTCFullYear(), gmt4Now.getUTCMonth(), gmt4Now.getUTCDate() + daysUntilThursday,
+    20, 0, 0
+  ))
+  let diff = (target.getTime() - gmt4Now.getTime()) / 1000
+  if (diff <= 0) diff += 7 * 86400
+  return Math.floor(diff)
+}
+
 const RPC = 'https://worldchain-mainnet.g.alchemy.com/public'
 const HACHI_BUY_URL = 'https://world.org/mini-app?app_id=app_e5ba7c3061400e361f98ce44d8b1b9c4&path=/token/0xbe0313f279580fdd1aa1b1b6888407e6504ff19e'
 const WORLDCHAIN_ID = 480
@@ -1424,6 +1449,19 @@ export default function HachiMiner() {
 
         {tab==='home'&&<div>
           {priceAlert&&<div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:13,color:'#f87171',textAlign:'center'}}>⚠ Ventas WLD pausadas — HACHI devaluado ({fmt(wldHachi)} &gt; {MAX_HACHI.toLocaleString()})</div>}
+          {(()=>{
+            const open = isVotingOpen()
+            const secs = open ? 0 : secondsUntilNextVoting()
+            const d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600)
+            return <div style={{background:'linear-gradient(135deg,#7c3aed,#a78bfa)',borderRadius:10,padding:14,marginBottom:12,textAlign:'center',boxShadow:'0 0 16px rgba(124,58,237,.4)'}}>
+              <div style={{fontSize:14,fontWeight:800,color:'#fff',marginBottom:4}}>🗳️ {open?'¡Votación abierta ahora!':'Próxima votación'}</div>
+              <div style={{fontSize:12,color:'#f3e8ff',marginBottom:10,lineHeight:1.4}}>{open?<>Votá por nuestro partido y mandá la captura a la comunidad — participás de un sorteo de <strong>10,000 SUSHI</strong>.</>:<>Faltan <strong>{d}d {h}h</strong> para la próxima votación.</>}</div>
+              {open
+                ? <a href="https://www.worldrepublic.org/es/govern/parties/1f9bc8d0-9ae5-46fe-b6e1-0282cb782c41?ref=GEFSRZRZ" target="_blank" rel="noopener noreferrer" style={{display:'inline-block',background:'#fff',color:'#7c3aed',fontSize:13,fontWeight:700,padding:'8px 20px',borderRadius:8,textDecoration:'none'}}>Ir a votar →</a>
+                : <span style={{display:'inline-block',background:'rgba(255,255,255,.25)',color:'#fff',fontSize:13,fontWeight:600,padding:'8px 20px',borderRadius:8}}>Todavía no disponible</span>
+              }
+            </div>
+          })()}
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
             {[
               {icon:'🐱',label:'Mi Estado',tab:'estado' as Tab,delay:0},

@@ -58,9 +58,11 @@ const DRACHMA_MINER_ABI = [
   'function activeMineId(address) view returns (uint256)',
   'function mines(uint256) view returns (address,uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool)',
   'function pendingDrachma(uint256) view returns (uint256)',
+  'function drachmaPool() view returns (uint256)',
+  'function drachmaCommitted() view returns (uint256)',
 ]
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
-const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)']
+const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'function streakSushiPool() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)']
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
 const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)', 'event Swapped(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount)']
 // Permit2 (AllowanceTransfer): approve da permiso a un "spender" (nuestro contrato) para mover el token vía Permit2
@@ -260,7 +262,7 @@ export default function HachiMiner() {
   const [swapQuote, setSwapQuote] = useState('0')
   const [swapLoading, setSwapLoading] = useState(false)
   const [swapHistory, setSwapHistory] = useState<any[]>([])
-  const [streakStatus, setStreakStatus] = useState({swaps:0, volume:0, missionDone:false, day:1, nextAmount:0, canClaimNow:false, lastCreditedAt:0})
+  const [streakStatus, setStreakStatus] = useState({swaps:0, volume:0, missionDone:false, day:1, nextAmount:0, canClaimNow:false, lastCreditedAt:0, poolFree:0})
   const [streakHistory, setStreakHistory] = useState<any[]>([])
   const [claimingStreak, setClaimingStreak] = useState(false)
   const [swapRanking, setSwapRanking] = useState<{addr:string, amount:number}[]>([])
@@ -268,7 +270,7 @@ export default function HachiMiner() {
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [showBuyWLD, setShowBuyWLD] = useState(false)
-  const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0})
+  const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
   const [showInfoDrachma, setShowInfoDrachma] = useState(false)
   const [showInfoSwap, setShowInfoSwap] = useState(false)
@@ -649,7 +651,8 @@ export default function HachiMiner() {
       const streak = new ethers.Contract(STREAK_ADDR, STREAK_ABI, p)
       const [swaps, volume, missionDone, dayNow, nextAmount, canClaimNow] = await streak.getTodayProgress(addr)
       const lastCredited = await streak.lastCreditedAt(addr).catch(() => BigInt(0))
-      setStreakStatus({swaps: Number(swaps), volume: fe(volume), missionDone, day: Number(dayNow), nextAmount: fe(nextAmount), canClaimNow, lastCreditedAt: Number(lastCredited)})
+      const poolFree = await streak.streakSushiPool().catch(() => BigInt(0))
+      setStreakStatus({swaps: Number(swaps), volume: fe(volume), missionDone, day: Number(dayNow), nextAmount: fe(nextAmount), canClaimNow, lastCreditedAt: Number(lastCredited), poolFree: fe(poolFree)})
     } catch(e) {}
   }
 
@@ -1031,11 +1034,13 @@ export default function HachiMiner() {
         mineInfo = {active: m[8], drachmaTotal: fe(m[3]), drachmaClaimed: fe(m[4]), pending: fe(pending), endTime: Number(m[6])}
       }
 
+      const [dPool, dCommitted]: [bigint, bigint] = await Promise.all([dm.drachmaPool(), dm.drachmaCommitted()])
       setDrachmaMiner({
         tier: Number(tier),
         amounts: amounts.map(fe),
         costs: costs.map(fe),
         activeMineId: Number(activeId),
+        poolFree: fe(dPool - dCommitted),
         ...mineInfo,
       })
     } catch(e:any) { log('drachma miner err: '+(e?.message||'').slice(0,80)) }
@@ -1672,6 +1677,7 @@ export default function HachiMiner() {
             <div style={{display:'flex',gap:3,marginBottom:10}}>
               {[1,2,3,4,5,6,7].map(d=><div key={d} style={{flex:1,height:6,borderRadius:3,background:d<streakStatus.day?'#3fb950':d===streakStatus.day?'#fbbf24':'#3b0764'}} />)}
             </div>
+            <div style={{fontSize:10,color:'#8b949e',marginBottom:8,textAlign:'right'}}>Pool disponible: {fmtPrecise(streakStatus.poolFree)} SUSHI</div>
             <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Progreso de hoy (se resetea a medianoche UTC):</div>
             <div style={{fontSize:12,color:streakStatus.swaps>=5?'#3fb950':'#e6edf3'}}>• Swaps: {streakStatus.swaps}/5</div>
             <div style={{fontSize:12,color:streakStatus.volume>=500?'#3fb950':'#e6edf3',marginBottom:10}}>• Volumen: {fmtPrecise(streakStatus.volume)}/500 HACHI</div>
@@ -1755,6 +1761,7 @@ export default function HachiMiner() {
 
         {tab==='drachmaminer'&&<div>
           <div style={sLabel}>🪙 Drachma Miner</div>
+          <div style={{fontSize:10,color:'#8b949e',marginBottom:8,textAlign:'right'}}>Pool disponible: {fmtPrecise(drachmaMiner.poolFree)} Drachma</div>
           <button onClick={()=>setShowInfoDrachma(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona el Drachma Miner?</button>
           {showInfoDrachma&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
             Con una licencia WLD activa o un Lock de al menos 50,000 HACHI, podés "minar" Drachma: elegís un nivel (según tu tier más alto) y pagás HACHI por un monto fijo de Drachma, con un descuento sobre el precio real de mercado.

@@ -1218,7 +1218,7 @@ export default function HachiMiner() {
 
   const wldNames = ['🌱 Básica','⚡ Estándar','💎 Premium','🚀 Elite']
   const now_ts = Math.floor(Date.now()/1000)
-  const hasActiveElite = wldLics.some(({l}) => Number(l[1])===3 && l[10] && Number(l[7])>now_ts)
+  const activeEliteCount = wldLics.filter(({l}) => Number(l[1])===3 && l[10] && Number(l[7])>now_ts).length
   const wldPrices = ['1 WLD','3 WLD','5 WLD','10 WLD']
   const sushiNames = ['🌱 Bocado','⚡ Bocado Doble','💎 Bocado Grande','🚀 Bocado Real']
   const sushiPrices = ['500 HACHI','2,000 HACHI','5,000 HACHI','10,000 HACHI']
@@ -1500,7 +1500,7 @@ export default function HachiMiner() {
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
               {wldNames.map((n,i)=>{
-                const locked = i===3 && hasActiveElite
+                const locked = i===3 && activeEliteCount>=2
                 return <div key={i} onClick={()=>{if(!locked) setSelWLD(i)}} style={{...lCard,border:`1px solid ${selWLD===i?'#fbbf24':'#5b21b6'}`,background:selWLD===i?'rgba(251,191,36,.08)':'#1e0840',boxShadow:selWLD===i?'0 0 12px rgba(251,191,36,.3)':'none',opacity:locked?0.35:1,cursor:locked?'not-allowed':'pointer'}}>
                 <div style={{fontSize:11,fontWeight:700}}>{n}{i===3&&<span style={{color:'#34d399'}}> +5%</span>}</div>
                 <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,color:'#34d399'}}>{fmt(Math.round([1,3,5,10][i]*wldHachi*(i===3?1.35:1.3)))}</div>
@@ -1511,7 +1511,7 @@ export default function HachiMiner() {
               </div>})}
             </div>
             <div style={pBox}>{[['Tipo',wldNames[selWLD]],['Precio',wldPrices[selWLD]],['HACHI base',wldPrev.base],[selWLD===3?'Total ×1.35 (Elite +5%)':'Total ×1.3',wldPrev.total],['HACHI/día',wldPrev.daily],['Mensual',wldPrev.monthly]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace',fontSize:13}}>{v}</span></div>)}</div>
-            <button onClick={buyWLD} disabled={!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&hasActiveElite)} style={{...btnP,width:'100%',opacity:(!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&hasActiveElite))?0.4:1}}>{wldHachi>MAX_HACHI?'⚠ Ventas pausadas':licsAvailNum<=0?'Sin stock disponible':(selWLD===3&&hasActiveElite)?'Ya tenés una Elite activa':`Comprar · ${wldPrices[selWLD]}`}</button>
+            <button onClick={buyWLD} disabled={!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&activeEliteCount>=2)} style={{...btnP,width:'100%',opacity:(!connected||wldHachi>MAX_HACHI||licsAvailNum<=0||(selWLD===3&&activeEliteCount>=2))?0.4:1}}>{wldHachi>MAX_HACHI?'⚠ Ventas pausadas':licsAvailNum<=0?'Sin stock disponible':(selWLD===3&&activeEliteCount>=2)?'Ya tenés 2 Elite activas (máximo)':`Comprar · ${wldPrices[selWLD]}`}</button>
           </div>}
           {licTab==='sushi'&&<div>
             {!sushiAccess&&<div style={{background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.35)',borderRadius:8,padding:20,textAlign:'center',marginBottom:12}}>
@@ -1772,7 +1772,7 @@ export default function HachiMiner() {
           {myStatus.loading&&<div style={{fontSize:11,color:'#8b949e',fontStyle:'italic',marginBottom:8}}>Cargando tus datos...</div>}
           <div style={card}><div style={cTitle}>📜 Licencias</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Licencias WLD activas</span><span style={{fontFamily:'monospace',fontWeight:600}}>{wldLics.length}</span></div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Acceso a Bocado hasta</span><span style={{fontFamily:'monospace',fontWeight:600,color:'#34d399'}}>{hasActiveElite?sushiNames[3]:wldLics.some(({l}:any)=>Number(l[1])>=2&&l[10])?sushiNames[2]:wldLics.some(({l}:any)=>Number(l[1])>=1&&l[10])?sushiNames[1]:wldLics.length>0?sushiNames[0]:'—'}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Acceso a Bocado hasta</span><span style={{fontFamily:'monospace',fontWeight:600,color:'#34d399'}}>{activeEliteCount>0?sushiNames[3]:wldLics.some(({l}:any)=>Number(l[1])>=2&&l[10])?sushiNames[2]:wldLics.some(({l}:any)=>Number(l[1])>=1&&l[10])?sushiNames[1]:wldLics.length>0?sushiNames[0]:'—'}</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Licencias Bocado compradas</span><span style={{fontFamily:'monospace',fontWeight:600}}>{myStatus.bocadoCount}</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Bocado especial</span><span style={{fontFamily:'monospace',color:myStatus.specialAvail?'#3fb950':'#8b949e'}}>{myStatus.specialAvail?'Disponible ahora':`en ${Math.max(0,Math.ceil((myStatus.lastSpecial+5*86400-Date.now()/1000)/86400))} días`}</span></div>
           </div>

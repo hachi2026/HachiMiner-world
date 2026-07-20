@@ -171,6 +171,8 @@ const LOGIN = {
       { icon:'🏆', title:'Ranking', desc:'Compite por premios según tu actividad.' },
       { icon:'🐱', title:'Reúne y cobra tus HACHI', desc:'Hachi te prepara una recompensa lista para reclamar cada 24hs, según tu actividad (lock y licencias). Un solo toque, sin esperas largas.' },
       { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Intercambiá HACHI y WLD directo en la app, con la liquidez real de Uniswap.' },
+      { icon:'🪙', title:'Drachma Miner', desc:'Minerá Drachma pagando HACHI, según tu nivel de licencia o Lock.' },
+      { icon:'📅', title:'Bono Semanal', desc:'Ganá SUSHI cada semana según tus licencias WLD activas.' },
     ],
     stepsTitle: 'Cómo empezar',
     steps: [
@@ -192,6 +194,8 @@ const LOGIN = {
       { icon:'🏆', title:'Ranking', desc:'Compete for prizes based on your activity.' },
       { icon:'🐱', title:'Collect your HACHI', desc:'Hachi gets a reward ready for you to claim every 24h, based on your activity (lock and licenses). One tap, no long waits.' },
       { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Exchange HACHI and WLD directly in the app, using real Uniswap liquidity.' },
+      { icon:'🪙', title:'Drachma Miner', desc:'Mine Drachma by paying HACHI, based on your license or Lock tier.' },
+      { icon:'📅', title:'Weekly Bonus', desc:'Earn SUSHI every week based on your active WLD licenses.' },
     ],
     stepsTitle: 'How to start',
     steps: [
@@ -213,6 +217,8 @@ const LOGIN = {
       { icon:'🏆', title:'Ranking', desc:'Concorra a prêmios conforme sua atividade.' },
       { icon:'🐱', title:'Reúna e resgate seus HACHI', desc:'Hachi prepara uma recompensa pronta para você resgatar a cada 24h, de acordo com sua atividade (lock e licenças). Um toque só, sem esperas longas.' },
       { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Troque HACHI e WLD direto no app, com a liquidez real da Uniswap.' },
+      { icon:'🪙', title:'Drachma Miner', desc:'Minere Drachma pagando HACHI, conforme seu nível de licença ou Lock.' },
+      { icon:'📅', title:'Bônus Semanal', desc:'Ganhe SUSHI toda semana conforme suas licenças WLD ativas.' },
     ],
     stepsTitle: 'Como começar',
     steps: [
@@ -1237,8 +1243,10 @@ export default function HachiMiner() {
         <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'8px 20px 40px',maxWidth:480,margin:'0 auto',width:'100%',position:'relative',zIndex:1}}>
 
           {/* HERO */}
-          <div style={{fontSize:56,marginBottom:8,filter:'drop-shadow(0 0 20px rgba(232,121,249,.6))'}}>⛏</div>
-          <h1 style={{fontSize:34,fontWeight:700,color:'#e879f9',textShadow:'0 0 18px rgba(232,121,249,.5)',margin:'0 0 8px',textAlign:'center'}}>HachiMiner</h1>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:8}}>
+            <div style={{fontSize:38,filter:'drop-shadow(0 0 16px rgba(251,191,36,.6))'}}>⛏</div>
+            <h1 style={{fontSize:34,fontWeight:700,color:'#fbbf24',textShadow:'0 0 18px rgba(251,191,36,.5)',margin:0,textAlign:'center'}}>HachiMiner</h1>
+          </div>
           <p style={{fontSize:15,color:'#c4b5fd',fontStyle:'italic',textAlign:'center',margin:'0 0 20px',lineHeight:1.5,maxWidth:360}}>{loginCopy.tagline}</p>
 
           {/* CTA */}
@@ -1248,24 +1256,22 @@ export default function HachiMiner() {
 
           {/* FEATURES — gato al centro, funciones alrededor en círculo */}
           <div style={{position:'relative',width:300,height:300,margin:'0 auto 16px',maxWidth:'90vw'}}>
-            <img src="/hachi-cat-savings.png" alt="" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:110,height:110,borderRadius:20,objectFit:'cover',boxShadow:'0 0 30px rgba(232,121,249,.6)',border:'2px solid #e879f9'}} />
-            {loginCopy.features.map((f,i)=>{
-              const n = loginCopy.features.length
-              const angle = (i / n) * 2 * Math.PI - Math.PI / 2
-              const radius = 125
-              const x = 150 + radius * Math.cos(angle)
-              const y = 150 + radius * Math.sin(angle)
-              return <div key={i} style={{position:'absolute',left:x,top:y,transform:'translate(-50%,-50%)',textAlign:'center',width:84}}>
-                <div style={{fontSize:26,marginBottom:2,filter:'drop-shadow(0 0 6px rgba(124,58,237,.5))'}}>{f.icon}</div>
-                <div style={{fontSize:10,fontWeight:700,color:'#e6edf3',lineHeight:1.2}}>{f.title}</div>
-              </div>
-            })}
-          </div>
-
-          {/* QUÉ ES */}
-          <div style={{...card,width:'100%',marginBottom:12}}>
-            <div style={cTitle}>{loginCopy.whatTitle}</div>
-            <p style={{fontSize:13,color:'#c9d1d9',lineHeight:1.6,margin:0}}>{loginCopy.whatDesc}</p>
+            <img src="/hachi-cat-savings.png" alt="" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:110,height:110,borderRadius:20,objectFit:'cover',boxShadow:'0 0 30px rgba(232,121,249,.6)',border:'2px solid #e879f9',zIndex:1}} />
+            <div style={{position:'absolute',inset:0,animation:'orbitRotate 40s linear infinite'}}>
+              {loginCopy.features.map((f,i)=>{
+                const n = loginCopy.features.length
+                const angle = (i / n) * 2 * Math.PI - Math.PI / 2
+                const radius = 125
+                const x = 150 + radius * Math.cos(angle)
+                const y = 150 + radius * Math.sin(angle)
+                return <div key={i} style={{position:'absolute',left:x,top:y,transform:'translate(-50%,-50%)',textAlign:'center',width:84}}>
+                  <div style={{animation:'orbitCounterRotate 40s linear infinite'}}>
+                    <div style={{fontSize:26,marginBottom:2,filter:'drop-shadow(0 0 6px rgba(124,58,237,.5))'}}>{f.icon}</div>
+                    <div style={{fontSize:10,fontWeight:700,color:'#e6edf3',lineHeight:1.2}}>{f.title}</div>
+                  </div>
+                </div>
+              })}
+            </div>
           </div>
 
           {/* PASOS */}
@@ -1280,7 +1286,7 @@ export default function HachiMiner() {
           </div>
 
           <div style={{display:'flex',gap:8,width:'100%',marginTop:16}}>
-            <a href="https://chat.whatsapp.com/CKfgBKi9zcvAPJaA3gVr0P" target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:'center',padding:'10px 8px',borderRadius:8,border:'1px solid #25D366',color:'#25D366',fontSize:12,fontWeight:600,textDecoration:'none'}}>💬 WhatsApp</a>
+            <a href="https://whatsapp.com/channel/0029Vb7aycxDjiOasgPK2k1h" target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:'center',padding:'11px 8px',borderRadius:10,background:'linear-gradient(135deg,#25D366,#128C7E)',color:'#fff',fontSize:12,fontWeight:700,textDecoration:'none',boxShadow:'0 2px 10px rgba(37,211,102,.35)'}}>📣 Canal Oficial</a>
             <a href="https://t.me/+mg3Tt_4pZJs4NTAx" target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:'center',padding:'10px 8px',borderRadius:8,border:'1px solid #229ED9',color:'#229ED9',fontSize:12,fontWeight:600,textDecoration:'none'}}>✈️ Telegram</a>
           </div>
           <p style={{fontSize:11,color:'#8b949e',textAlign:'center',marginTop:12,lineHeight:1.5}}>{loginCopy.disclaimer}</p>
@@ -1377,6 +1383,14 @@ export default function HachiMiner() {
         @keyframes quickAccessPulse {
           0%,100% { box-shadow: 0 0 6px rgba(167,139,250,.3); }
           50% { box-shadow: 0 0 14px rgba(167,139,250,.6); }
+        }
+        @keyframes orbitRotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes orbitCounterRotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(-360deg); }
         }
       `}</style>
       <div style={{background:'#211a55',borderBottom:'1px solid #4c3a8f',padding:'8px 14px',position:'sticky',top:0,zIndex:100}}>

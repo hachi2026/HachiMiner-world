@@ -171,7 +171,7 @@ const LOGIN = {
       { icon:'🏆', title:'Ranking', desc:'Compite por premios según tu actividad.' },
       { icon:'🐱', title:'Reúne y cobra tus HACHI', desc:'Hachi te prepara una recompensa lista para reclamar cada 24hs, según tu actividad (lock y licencias). Un solo toque, sin esperas largas.' },
       { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Intercambiá HACHI y WLD directo en la app, con la liquidez real de Uniswap.' },
-      { icon:'🪙', title:'Drachma Miner', desc:'Minerá Drachma pagando HACHI, según tu nivel de licencia o Lock.' },
+      { icon:'🪙', iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh', title:'Drachma Miner', desc:'Minerá Drachma pagando HACHI, según tu nivel de licencia o Lock.' },
       { icon:'📅', title:'Bono Semanal', desc:'Ganá SUSHI cada semana según tus licencias WLD activas.' },
     ],
     stepsTitle: 'Cómo empezar',
@@ -194,7 +194,7 @@ const LOGIN = {
       { icon:'🏆', title:'Ranking', desc:'Compete for prizes based on your activity.' },
       { icon:'🐱', title:'Collect your HACHI', desc:'Hachi gets a reward ready for you to claim every 24h, based on your activity (lock and licenses). One tap, no long waits.' },
       { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Exchange HACHI and WLD directly in the app, using real Uniswap liquidity.' },
-      { icon:'🪙', title:'Drachma Miner', desc:'Mine Drachma by paying HACHI, based on your license or Lock tier.' },
+      { icon:'🪙', iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh', title:'Drachma Miner', desc:'Mine Drachma by paying HACHI, based on your license or Lock tier.' },
       { icon:'📅', title:'Weekly Bonus', desc:'Earn SUSHI every week based on your active WLD licenses.' },
     ],
     stepsTitle: 'How to start',
@@ -217,7 +217,7 @@ const LOGIN = {
       { icon:'🏆', title:'Ranking', desc:'Concorra a prêmios conforme sua atividade.' },
       { icon:'🐱', title:'Reúna e resgate seus HACHI', desc:'Hachi prepara uma recompensa pronta para você resgatar a cada 24h, de acordo com sua atividade (lock e licenças). Um toque só, sem esperas longas.' },
       { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Troque HACHI e WLD direto no app, com a liquidez real da Uniswap.' },
-      { icon:'🪙', title:'Drachma Miner', desc:'Minere Drachma pagando HACHI, conforme seu nível de licença ou Lock.' },
+      { icon:'🪙', iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh', title:'Drachma Miner', desc:'Minere Drachma pagando HACHI, conforme seu nível de licença ou Lock.' },
       { icon:'📅', title:'Bônus Semanal', desc:'Ganhe SUSHI toda semana conforme suas licenças WLD ativas.' },
     ],
     stepsTitle: 'Como começar',
@@ -1266,7 +1266,7 @@ export default function HachiMiner() {
                 const y = 150 + radius * Math.sin(angle)
                 return <div key={i} style={{position:'absolute',left:x,top:y,transform:'translate(-50%,-50%)',textAlign:'center',width:84}}>
                   <div style={{animation:'orbitCounterRotate 40s linear infinite'}}>
-                    <div style={{fontSize:26,marginBottom:2,filter:'drop-shadow(0 0 6px rgba(124,58,237,.5))'}}>{f.icon}</div>
+                    {(f as any).iconImg ? <img src={(f as any).iconImg} alt="" width={26} height={26} style={{borderRadius:13,objectFit:'cover',marginBottom:2,filter:'drop-shadow(0 0 6px rgba(124,58,237,.5))'}} /> : <div style={{fontSize:26,marginBottom:2,filter:'drop-shadow(0 0 6px rgba(124,58,237,.5))'}}>{f.icon}</div>}
                     <div style={{fontSize:10,fontWeight:700,color:'#e6edf3',lineHeight:1.2}}>{f.title}</div>
                   </div>
                 </div>
@@ -1286,8 +1286,8 @@ export default function HachiMiner() {
           </div>
 
           <div style={{display:'flex',gap:8,width:'100%',marginTop:16}}>
-            <a href="https://whatsapp.com/channel/0029Vb7aycxDjiOasgPK2k1h" target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:'center',padding:'11px 8px',borderRadius:10,background:'linear-gradient(135deg,#25D366,#128C7E)',color:'#fff',fontSize:12,fontWeight:700,textDecoration:'none',boxShadow:'0 2px 10px rgba(37,211,102,.35)'}}>📣 Canal Oficial</a>
-            <a href="https://t.me/+mg3Tt_4pZJs4NTAx" target="_blank" rel="noopener noreferrer" style={{flex:1,textAlign:'center',padding:'10px 8px',borderRadius:8,border:'1px solid #229ED9',color:'#229ED9',fontSize:12,fontWeight:600,textDecoration:'none'}}>✈️ Telegram</a>
+            <a href="https://whatsapp.com/channel/0029Vb7aycxDjiOasgPK2k1h" target="_blank" rel="noopener noreferrer" style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'11px 8px',borderRadius:10,background:'linear-gradient(135deg,#25D366,#128C7E)',color:'#fff',fontSize:12,fontWeight:700,textDecoration:'none',boxShadow:'0 2px 10px rgba(37,211,102,.35)'}}><img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/whatsapp.svg" alt="" width={16} height={16} style={{filter:'brightness(0) invert(1)'}} />Canal Oficial</a>
+            <a href="https://t.me/+mg3Tt_4pZJs4NTAx" target="_blank" rel="noopener noreferrer" style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'10px 8px',borderRadius:8,border:'1px solid #229ED9',color:'#229ED9',fontSize:12,fontWeight:600,textDecoration:'none'}}><img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/telegram.svg" alt="" width={16} height={16} style={{filter:'invert(52%) sepia(89%) saturate(1996%) hue-rotate(166deg) brightness(97%) contrast(96%)'}} />Telegram</a>
           </div>
           <p style={{fontSize:11,color:'#8b949e',textAlign:'center',marginTop:12,lineHeight:1.5}}>{loginCopy.disclaimer}</p>
         </div>
@@ -1430,7 +1430,7 @@ export default function HachiMiner() {
               {icon:'📜',label:'Licencias',tab:'lics' as Tab,delay:0.3},
               {icon:'🛒',label:'Comprar Licencia',tab:'lics' as Tab,delay:0.6,openBuy:true},
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
-              {icon:'🪙',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7,isNew:true},
+              {icon:'🪙',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7,isNew:true,iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
               {icon:'📅',label:'Bono Semanal',tab:'weeklybonus' as Tab,delay:3.0,isNew:true},
               {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:1.2},
               {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:1.5},
@@ -1438,7 +1438,7 @@ export default function HachiMiner() {
               {icon:'👥',label:'Referidos',tab:'refs' as Tab,delay:2.1},
             ].map(btn=><button key={btn.tab} onClick={()=>{loadTab(btn.tab); if((btn as any).openBuy) setShowBuyWLD(true)}} style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'12px 4px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer',animation:`quickAccessPulse 3s ease-in-out infinite`,animationDelay:`${btn.delay}s`}}>
               {(btn as any).isNew&&<span style={{position:'absolute',top:-6,right:-6,background:'#f59e0b',color:'#1e0840',fontSize:8,fontWeight:800,padding:'2px 5px',borderRadius:8,boxShadow:'0 0 8px rgba(245,158,11,.6)'}}>NUEVO</span>}
-              <span style={{fontSize:22}}>{btn.icon}</span>
+              {(btn as any).iconImg ? <img src={(btn as any).iconImg} alt="" width={22} height={22} style={{borderRadius:11,objectFit:'cover'}} /> : <span style={{fontSize:22}}>{btn.icon}</span>}
               <span style={{fontSize:10,fontWeight:600}}>{btn.label}</span>
             </button>)}
           </div>

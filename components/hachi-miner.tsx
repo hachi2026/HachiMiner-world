@@ -92,6 +92,7 @@ const WEEKLY_BONUS_ABI = [
   'function previewClaim(address) view returns (uint256)',
   'function claimBonus()',
   'function lastActionTime(address) view returns (uint256)',
+  'function sushiPool() view returns (uint256)',
 ]
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
 const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'function streakSushiPool() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)']
@@ -310,7 +311,7 @@ export default function HachiMiner() {
   const [showBuyWLD, setShowBuyWLD] = useState(false)
   const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
-  const [weeklyBonus, setWeeklyBonus] = useState({dailyRate:0, pending:0, everClaimed:false})
+  const [weeklyBonus, setWeeklyBonus] = useState({dailyRate:0, pending:0, everClaimed:false, poolFree:0})
   const [claimingWeekly, setClaimingWeekly] = useState(false)
   const [showInfoDrachma, setShowInfoDrachma] = useState(false)
   const [showInfoWeekly, setShowInfoWeekly] = useState(false)
@@ -1091,10 +1092,10 @@ export default function HachiMiner() {
   const loadWeeklyBonus = async (p: ethers.JsonRpcProvider) => {
     try {
       const wb = new ethers.Contract(WEEKLY_BONUS_ADDR, WEEKLY_BONUS_ABI, p)
-      const [dailyRate, pending, lastAction] = await Promise.all([
-        wb.getDailyRate(addr), wb.previewClaim(addr), wb.lastActionTime(addr),
+      const [dailyRate, pending, lastAction, pool] = await Promise.all([
+        wb.getDailyRate(addr), wb.previewClaim(addr), wb.lastActionTime(addr), wb.sushiPool(),
       ])
-      setWeeklyBonus({dailyRate: fe(dailyRate), pending: fe(pending), everClaimed: Number(lastAction) > 0})
+      setWeeklyBonus({dailyRate: fe(dailyRate), pending: fe(pending), everClaimed: Number(lastAction) > 0, poolFree: fe(pool)})
     } catch(e) {}
   }
 
@@ -1874,7 +1875,10 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='weeklybonus'&&<div>
-          <div style={sLabel}>📅 Bono de Minería Semanal</div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <span style={sLabel}>📅 Bono de Minería Semanal</span>
+            <span style={{fontSize:10,color:'#8b949e'}}>Pool: {fmtPrecise(weeklyBonus.poolFree)} SUSHI</span>
+          </div>
           <button onClick={()=>setShowInfoWeekly(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona este bono?</button>
           {showInfoWeekly&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
             Este bono combina 2 fuentes, calculadas en vivo:

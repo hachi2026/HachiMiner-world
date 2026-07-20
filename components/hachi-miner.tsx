@@ -165,7 +165,7 @@ const REFERRAL = [
   'function currentNewBonus() view returns (uint256)',
 ]
 
-type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'|'weeklybonus'
+type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'|'weeklybonus'|'voting'
 type Lang = 'es'|'en'|'pt'
 const detectLang = (): Lang => {
   if (typeof navigator === 'undefined') return 'es'
@@ -1449,19 +1449,6 @@ export default function HachiMiner() {
 
         {tab==='home'&&<div>
           {priceAlert&&<div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:13,color:'#f87171',textAlign:'center'}}>⚠ Ventas WLD pausadas — HACHI devaluado ({fmt(wldHachi)} &gt; {MAX_HACHI.toLocaleString()})</div>}
-          {(()=>{
-            const open = isVotingOpen()
-            const secs = open ? 0 : secondsUntilNextVoting()
-            const d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600)
-            return <div style={{background:'linear-gradient(135deg,#7c3aed,#a78bfa)',borderRadius:10,padding:14,marginBottom:12,textAlign:'center',boxShadow:'0 0 16px rgba(124,58,237,.4)'}}>
-              <div style={{fontSize:14,fontWeight:800,color:'#fff',marginBottom:4}}>🗳️ {open?'¡Votación abierta ahora!':'Próxima votación'}</div>
-              <div style={{fontSize:12,color:'#f3e8ff',marginBottom:10,lineHeight:1.4}}>{open?<>Votá por nuestro partido y mandá la captura a la comunidad — participás de un sorteo de <strong>10,000 SUSHI</strong>.</>:<>Faltan <strong>{d}d {h}h</strong> para la próxima votación.</>}</div>
-              {open
-                ? <a href="https://www.worldrepublic.org/es/govern/parties/1f9bc8d0-9ae5-46fe-b6e1-0282cb782c41?ref=GEFSRZRZ" target="_blank" rel="noopener noreferrer" style={{display:'inline-block',background:'#fff',color:'#7c3aed',fontSize:13,fontWeight:700,padding:'8px 20px',borderRadius:8,textDecoration:'none'}}>Ir a votar →</a>
-                : <span style={{display:'inline-block',background:'rgba(255,255,255,.25)',color:'#fff',fontSize:13,fontWeight:600,padding:'8px 20px',borderRadius:8}}>Todavía no disponible</span>
-              }
-            </div>
-          })()}
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
             {[
               {icon:'🐱',label:'Mi Estado',tab:'estado' as Tab,delay:0},
@@ -1470,6 +1457,7 @@ export default function HachiMiner() {
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
               {icon:'🪙',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7,isNew:true,iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
               {icon:'📅',label:'Bono Semanal',tab:'weeklybonus' as Tab,delay:3.0,isNew:true},
+              {icon:'🗳️',label:'Votación',tab:'voting' as Tab,delay:3.3,isNew:true},
               {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:1.2},
               {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:1.5},
               {icon:'🏆',label:'Ranking',tab:'ranking' as Tab,delay:1.8},
@@ -1904,6 +1892,28 @@ export default function HachiMiner() {
               No tenés licencia WLD activa ni una minería de Drachma activa — por eso tu tasa es 0. Comprá una licencia WLD o empezá una minería de Drachma para activar este bono.
             </div>}
             <button onClick={claimWeeklyBonus} disabled={claimingWeekly||(weeklyBonus.everClaimed&&weeklyBonus.pending<=0)} style={{...btnP,width:'100%',marginTop:8,opacity:(claimingWeekly||(weeklyBonus.everClaimed&&weeklyBonus.pending<=0))?0.4:1}}>{claimingWeekly?'Reclamando...':!weeklyBonus.everClaimed?'Activar y reclamar mi bono':weeklyBonus.pending>0?`Reclamar ${weeklyBonus.pending.toFixed(2)} SUSHI`:'Todavía no disponible'}</button>
+          </div>
+        </div>}
+
+        {tab==='voting'&&<div>
+          <div style={sLabel}>🗳️ Votación — Partido Hachi en World Republic</div>
+          <div style={card}>
+            {(()=>{
+              const open = isVotingOpen()
+              const secs = open ? 0 : secondsUntilNextVoting()
+              const d = Math.floor(secs / 86400), h = Math.floor((secs % 86400) / 3600)
+              return <div style={{textAlign:'center',marginBottom:14}}>
+                <div style={{fontSize:15,fontWeight:800,color:open?'#3fb950':'#e6edf3',marginBottom:6}}>{open?'✓ Votación abierta ahora mismo':'⏳ Próxima votación'}</div>
+                {!open&&<div style={{fontSize:13,color:'#8b949e'}}>Faltan <strong style={{color:'#fbbf24'}}>{d}d {h}h</strong></div>}
+              </div>
+            })()}
+            <div style={{background:'rgba(124,58,237,.08)',border:'1px solid #5b21b6',borderRadius:8,padding:14,marginBottom:14,fontSize:13,color:'#c4b5fd',lineHeight:1.6}}>
+              🎁 <strong>Recibís 10,000 SUSHI</strong> por tu voto, y además participás de un <strong>sorteo aleatorio</strong>. Solo tenés que compartir la captura de tu voto en la comunidad.
+            </div>
+            <div style={{fontSize:12,color:'#8b949e',marginBottom:14,lineHeight:1.6}}>
+              La votación se abre todas las semanas, de <strong>jueves 20:00</strong> a <strong>domingo 19:59</strong> (hora de Chile / GMT-4). El enlace funciona siempre — cuando entrás fuera de ese horario, vas a ver la página del partido pero sin el botón de votar habilitado todavía.
+            </div>
+            <a href="https://www.worldrepublic.org/es/govern/parties/1f9bc8d0-9ae5-46fe-b6e1-0282cb782c41?ref=GEFSRZRZ" target="_blank" rel="noopener noreferrer" style={{display:'block',textAlign:'center',background:'linear-gradient(135deg,#7c3aed,#a78bfa)',color:'#fff',fontSize:14,fontWeight:700,padding:'12px 20px',borderRadius:10,textDecoration:'none',boxShadow:'0 0 16px rgba(124,58,237,.4)'}}>Ir al Partido Hachi →</a>
           </div>
         </div>}
 

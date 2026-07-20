@@ -61,6 +61,13 @@ const DRACHMA_MINER_ABI = [
   'function drachmaPool() view returns (uint256)',
   'function drachmaCommitted() view returns (uint256)',
 ]
+const WEEKLY_BONUS_ADDR = '0x67ECFC02B852FDd9D55D0cBF8866cE6ff74126dF'
+const WEEKLY_BONUS_ABI = [
+  'function getDailyRate(address) view returns (uint256)',
+  'function previewClaim(address) view returns (uint256)',
+  'function claimBonus()',
+  'function lastActionTime(address) view returns (uint256)',
+]
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
 const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'function streakSushiPool() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)']
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
@@ -133,7 +140,7 @@ const REFERRAL = [
   'function currentNewBonus() view returns (uint256)',
 ]
 
-type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'
+type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'|'weeklybonus'
 type Lang = 'es'|'en'|'pt'
 const detectLang = (): Lang => {
   if (typeof navigator === 'undefined') return 'es'
@@ -272,6 +279,8 @@ export default function HachiMiner() {
   const [showBuyWLD, setShowBuyWLD] = useState(false)
   const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
+  const [weeklyBonus, setWeeklyBonus] = useState({dailyRate:0, pending:0, everClaimed:false})
+  const [claimingWeekly, setClaimingWeekly] = useState(false)
   const [showInfoDrachma, setShowInfoDrachma] = useState(false)
   const [showInfoSwap, setShowInfoSwap] = useState(false)
   const [showInfoLics, setShowInfoLics] = useState(false)
@@ -916,6 +925,7 @@ export default function HachiMiner() {
     if (v==='ranking') loadRanking(p)
     if (v==='estado') { loadMyStatus(p); loadWLDLics(p); loadLock(p); loadRanking(p); loadStreakStatus(p) }
     if (v==='drachmaminer') { loadDrachmaMiner(p) }
+    if (v==='weeklybonus') { loadWeeklyBonus(p) }
     if (v==='pools') loadPools(p)
     if (v==='refs') loadRefs(p)
     if (v==='swap') { loadSwapHistory(p); loadStreakStatus(p); loadStreakHistory(p); loadSwapRanking(p) }
@@ -1044,6 +1054,31 @@ export default function HachiMiner() {
         ...mineInfo,
       })
     } catch(e:any) { log('drachma miner err: '+(e?.message||'').slice(0,80)) }
+  }
+
+  const loadWeeklyBonus = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const wb = new ethers.Contract(WEEKLY_BONUS_ADDR, WEEKLY_BONUS_ABI, p)
+      const [dailyRate, pending, lastAction] = await Promise.all([
+        wb.getDailyRate(addr), wb.previewClaim(addr), wb.lastActionTime(addr),
+      ])
+      setWeeklyBonus({dailyRate: fe(dailyRate), pending: fe(pending), everClaimed: Number(lastAction) > 0})
+    } catch(e) {}
+  }
+
+  const claimWeeklyBonus = async () => {
+    if (!connected) { toast_(t('err_connect'),'#f85149'); return }
+    setClaimingWeekly(true)
+    try {
+      toast_('Reclamando bono semanal...', '#d29922')
+      await sendTx(WEEKLY_BONUS_ADDR, WEEKLY_BONUS_ABI, 'claimBonus', [])
+      toast_('✓ Bono semanal reclamado', '#3fb950')
+      loadWeeklyBonus(rpc())
+    } catch(e: any) {
+      toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149')
+    } finally {
+      setClaimingWeekly(false)
+    }
   }
 
   const mineDrachmaAction = async () => {
@@ -1381,6 +1416,7 @@ export default function HachiMiner() {
               {icon:'🛒',label:'Comprar Licencia',tab:'lics' as Tab,delay:0.6,openBuy:true},
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
               {icon:'🪙',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7,isNew:true},
+              {icon:'📅',label:'Bono Semanal',tab:'weeklybonus' as Tab,delay:3.0,isNew:true},
               {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:1.2},
               {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:1.5},
               {icon:'🏆',label:'Ranking',tab:'ranking' as Tab,delay:1.8},
@@ -1794,6 +1830,18 @@ export default function HachiMiner() {
               <button onClick={claimDrachmaMineAction} disabled={drachmaMiner.pending<=0} style={{...btnG,width:'100%',marginTop:8,opacity:drachmaMiner.pending>0?1:0.4}}>Reclamar Drachma</button>
             </div>}
           </>}
+        </div>}
+
+        {tab==='weeklybonus'&&<div>
+          <div style={sLabel}>📅 Bono de Minería Semanal</div>
+          <div style={card}>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Tu tasa diaria</span><span style={{fontFamily:'monospace',fontWeight:600,color:'#60a5fa'}}>{weeklyBonus.dailyRate.toFixed(2)} SUSHI/día</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Disponible para reclamar</span><span style={{fontFamily:'monospace',fontWeight:700,color:'#3fb950'}}>{weeklyBonus.pending.toFixed(2)} SUSHI</span></div>
+            {weeklyBonus.dailyRate<=0&&<div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:10,marginTop:10,marginBottom:4,fontSize:12,color:'#f87171',lineHeight:1.5}}>
+              No tenés licencia WLD activa ni una minería de Drachma activa — por eso tu tasa es 0. Comprá una licencia WLD o empezá una minería de Drachma para activar este bono.
+            </div>}
+            <button onClick={claimWeeklyBonus} disabled={claimingWeekly||(weeklyBonus.everClaimed&&weeklyBonus.pending<=0)} style={{...btnP,width:'100%',marginTop:8,opacity:(claimingWeekly||(weeklyBonus.everClaimed&&weeklyBonus.pending<=0))?0.4:1}}>{claimingWeekly?'Reclamando...':!weeklyBonus.everClaimed?'Activar y reclamar mi bono':weeklyBonus.pending>0?`Reclamar ${weeklyBonus.pending.toFixed(2)} SUSHI`:'Todavía no disponible'}</button>
+          </div>
         </div>}
 
         {tab==='refs'&&<div>

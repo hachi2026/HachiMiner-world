@@ -282,6 +282,7 @@ export default function HachiMiner() {
   const [weeklyBonus, setWeeklyBonus] = useState({dailyRate:0, pending:0, everClaimed:false})
   const [claimingWeekly, setClaimingWeekly] = useState(false)
   const [showInfoDrachma, setShowInfoDrachma] = useState(false)
+  const [showInfoWeekly, setShowInfoWeekly] = useState(false)
   const [showInfoSwap, setShowInfoSwap] = useState(false)
   const [showInfoLics, setShowInfoLics] = useState(false)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
@@ -1834,6 +1835,16 @@ export default function HachiMiner() {
 
         {tab==='weeklybonus'&&<div>
           <div style={sLabel}>📅 Bono de Minería Semanal</div>
+          <button onClick={()=>setShowInfoWeekly(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona este bono?</button>
+          {showInfoWeekly&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
+            Este bono combina 2 fuentes, calculadas en vivo:
+            <br/>• <strong>100 SUSHI/día por cada WLD invertido</strong> en tus licencias WLD activas
+            <br/>• Un bono fijo diario si tenés una <strong>minería de Drachma activa</strong>: 250 (Básica), 500 (Estándar), 750 (Premium) o 1000 (Elite) SUSHI/día según tu tier
+            <br/><br/>
+            Se acumula hasta un tope de <strong>7 días</strong>. El primer reclamo ya paga de inmediato. Después, hay que esperar 7 días entre reclamos — salvo que se te venzan todas tus licencias/minería, en cuyo caso podés reclamar antes sin esperar.
+            <br/><br/>
+            Ojo: una vez que corresponda reclamar, tenés <strong>3 días de gracia</strong> — si no reclamás en ese plazo, ese saldo se pierde y vuelve al pool.
+          </div>}
           <div style={card}>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Tu tasa diaria</span><span style={{fontFamily:'monospace',fontWeight:600,color:'#60a5fa'}}>{weeklyBonus.dailyRate.toFixed(2)} SUSHI/día</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Disponible para reclamar</span><span style={{fontFamily:'monospace',fontWeight:700,color:'#3fb950'}}>{weeklyBonus.pending.toFixed(2)} SUSHI</span></div>

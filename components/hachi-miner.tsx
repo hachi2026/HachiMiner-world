@@ -74,6 +74,21 @@ const SHOW_TOP_NAV = false // poner en true para volver a mostrar la barra de pe
 const SHOW_LANG_BUTTONS = false // poner en true cuando estén traducidas todas las pantallas
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
 const DRACHMA_MINER_ADDR = '0x19d23871C64F29e22F31AcC094A255e5B1aAD577'
+const WLD_MINER_ADDR = '0x35C82EC1C5414b228eF39b65fAC545409fc92d75'
+const WLD_MINER_ABI = [
+  'function getUserTier(address) view returns (uint8)',
+  'function maxInvestableWld(address) view returns (uint256)',
+  'function previewMine(uint256,uint8) view returns (uint256,uint256)',
+  'function mineWld(uint256,uint8,uint256,uint256) returns (uint256)',
+  'function claimRewards(uint256)',
+  'function activeMineId(address) view returns (uint256)',
+  'function mines(uint256) view returns (address,uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool)',
+  'function pendingRewards(uint256) view returns (uint256,uint256)',
+  'function hachiPool() view returns (uint256)',
+  'function drachmaPool() view returns (uint256)',
+  'function hachiCommitted() view returns (uint256)',
+  'function drachmaCommitted() view returns (uint256)',
+]
 const DRACHMA_MINER_ABI = [
   'function getUserTier(address) view returns (uint8)',
   'function costInHachi(uint8) view returns (uint256)',
@@ -166,7 +181,7 @@ const REFERRAL = [
   'function currentNewBonus() view returns (uint256)',
 ]
 
-type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'|'weeklybonus'|'voting'
+type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'|'weeklybonus'|'voting'|'wldminer'
 type Lang = 'es'|'en'|'pt'
 const detectLang = (): Lang => {
   if (typeof navigator === 'undefined') return 'es'
@@ -311,6 +326,13 @@ export default function HachiMiner() {
   const [showBuyWLD, setShowBuyWLD] = useState(false)
   const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
+  const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0})
+  const [selWldAmount, setSelWldAmount] = useState('')
+  const [selWldVariant, setSelWldVariant] = useState(0)
+  const [wldMinerPreview, setWldMinerPreview] = useState({hachi:0, drachma:0})
+  const [showInfoWldMiner, setShowInfoWldMiner] = useState(false)
+  const [miningWld, setMiningWld] = useState(false)
+  const [claimingWldMiner, setClaimingWldMiner] = useState(false)
   const [weeklyBonus, setWeeklyBonus] = useState({dailyRate:0, pending:0, everClaimed:false, poolFree:0})
   const [claimingWeekly, setClaimingWeekly] = useState(false)
   const [showInfoDrachma, setShowInfoDrachma] = useState(false)
@@ -958,6 +980,7 @@ export default function HachiMiner() {
     if (v==='ranking') loadRanking(p)
     if (v==='estado') { loadMyStatus(p); loadWLDLics(p); loadLock(p); loadRanking(p); loadStreakStatus(p) }
     if (v==='drachmaminer') { loadDrachmaMiner(p) }
+    if (v==='wldminer') { loadWldMiner(p) }
     if (v==='weeklybonus') { loadWeeklyBonus(p) }
     if (v==='pools') loadPools(p)
     if (v==='refs') loadRefs(p)
@@ -1087,6 +1110,76 @@ export default function HachiMiner() {
         ...mineInfo,
       })
     } catch(e:any) { log('drachma miner err: '+(e?.message||'').slice(0,80)) }
+  }
+
+  const loadWldMiner = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const wm = new ethers.Contract(WLD_MINER_ADDR, WLD_MINER_ABI, p)
+      const [tier, cap, activeId, hPool, hCommitted, dPool, dCommitted]: [bigint, bigint, bigint, bigint, bigint, bigint, bigint] = await Promise.all([
+        wm.getUserTier(addr), wm.maxInvestableWld(addr), wm.activeMineId(addr),
+        wm.hachiPool(), wm.hachiCommitted(), wm.drachmaPool(), wm.drachmaCommitted(),
+      ])
+      let mineInfo = {active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0}
+      if (Number(activeId) > 0) {
+        const [m, pending] = await Promise.all([wm.mines(activeId), wm.pendingRewards(activeId)])
+        mineInfo = {
+          active: m[10], variant: Number(m[1]),
+          hachiTotal: fe(m[3]), hachiClaimed: fe(m[4]),
+          drachmaTotal: fe(m[5]), drachmaClaimed: fe(m[6]),
+          pendingHachi: fe(pending[0]), pendingDrachma: fe(pending[1]),
+          endTime: Number(m[8]),
+        }
+      }
+      setWldMiner({
+        tier: Number(tier), cap: fe(cap), activeMineId: Number(activeId),
+        poolFreeHachi: fe(hPool - hCommitted), poolFreeDrachma: fe(dPool - dCommitted),
+        ...mineInfo,
+      })
+    } catch(e:any) { log('wld miner err: '+(e?.message||'').slice(0,80)) }
+  }
+
+  const previewWldMine = async () => {
+    const wldAmount = parseFloat(selWldAmount)
+    if (!wldAmount || wldAmount <= 0) { setWldMinerPreview({hachi:0, drachma:0}); return }
+    try {
+      const wm = new ethers.Contract(WLD_MINER_ADDR, WLD_MINER_ABI, rpc())
+      const [hachiTotal, drachmaTotal] = await wm.previewMine(pe(wldAmount), selWldVariant)
+      setWldMinerPreview({hachi: fe(hachiTotal), drachma: fe(drachmaTotal)})
+    } catch(e) { setWldMinerPreview({hachi:0, drachma:0}) }
+  }
+
+  const mineWldAction = async () => {
+    if (!connected) { toast_(t('err_connect'),'#f85149'); return }
+    const wldAmount = parseFloat(selWldAmount)
+    if (!wldAmount || wldAmount <= 0) { toast_('Ingresá un monto válido', '#f85149'); return }
+    setMiningWld(true)
+    try {
+      toast_('Minando...', '#d29922')
+      const wm = new ethers.Contract(WLD_MINER_ADDR, WLD_MINER_ABI, rpc())
+      const wldWei = pe(wldAmount)
+      const [hachiTotal, drachmaTotal] = await wm.previewMine(wldWei, selWldVariant)
+      const minHachi = (hachiTotal * BigInt(98)) / BigInt(100)
+      const minDrachma = (drachmaTotal * BigInt(98)) / BigInt(100)
+      await sendTxMulti([
+        ...buildPermit2Approvals(C.wld, WLD_MINER_ADDR, wldWei),
+        { to: WLD_MINER_ADDR, abi: WLD_MINER_ABI, fnName: 'mineWld', args: [wldWei, selWldVariant, minHachi, minDrachma] },
+      ])
+      toast_('✓ Minería iniciada', '#3fb950')
+      setSelWldAmount('')
+      loadWldMiner(rpc())
+    } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
+    finally { setMiningWld(false) }
+  }
+
+  const claimWldMinerAction = async () => {
+    setClaimingWldMiner(true)
+    try {
+      toast_('Reclamando...', '#d29922')
+      await sendTx(WLD_MINER_ADDR, WLD_MINER_ABI, 'claimRewards', [wldMiner.activeMineId])
+      toast_('✓ Reclamado', '#3fb950')
+      loadWldMiner(rpc())
+    } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
+    finally { setClaimingWldMiner(false) }
   }
 
   const loadWeeklyBonus = async (p: ethers.JsonRpcProvider) => {
@@ -1459,6 +1552,7 @@ export default function HachiMiner() {
               {icon:'🪙',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7,isNew:true,iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
               {icon:'📅',label:'Bono Semanal',tab:'weeklybonus' as Tab,delay:3.0,isNew:true},
               {icon:'🗳️',label:'Votación',tab:'voting' as Tab,delay:3.3,isNew:true},
+              {icon:'⛏️',label:'WLD Miner',tab:'wldminer' as Tab,delay:3.6,isNew:true},
               {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:1.2},
               {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:1.5},
               {icon:'🏆',label:'Ranking',tab:'ranking' as Tab,delay:1.8},
@@ -1919,6 +2013,47 @@ export default function HachiMiner() {
             </div>
             <a href="https://www.worldrepublic.org/es/govern/parties/1f9bc8d0-9ae5-46fe-b6e1-0282cb782c41?ref=GEFSRZRZ" target="_blank" rel="noopener noreferrer" style={{display:'block',textAlign:'center',background:'linear-gradient(135deg,#7c3aed,#a78bfa)',color:'#fff',fontSize:14,fontWeight:700,padding:'12px 20px',borderRadius:10,textDecoration:'none',boxShadow:'0 0 16px rgba(124,58,237,.4)'}}>Ir al Partido Hachi →</a>
           </div>
+        </div>}
+
+        {tab==='wldminer'&&<div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <span style={sLabel}>⛏️ WLD Miner</span>
+            <span style={{fontSize:10,color:'#8b949e'}}>Pools: {fmtPrecise(wldMiner.poolFreeHachi)} HACHI / {fmtPrecise(wldMiner.poolFreeDrachma)} Drachma</span>
+          </div>
+          <button onClick={()=>setShowInfoWldMiner(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona?</button>
+          {showInfoWldMiner&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
+            Pagás WLD y recibís HACHI + Drachma combinados (70%/30%), generados de a poco durante el plazo que elijas. Cuanto más largo el plazo, mayor el retorno.
+            <br/><br/>
+            El tope de WLD que podés invertir depende de tu licencia WLD o Lock (el que sea más alto). Solo podés tener <strong>1 minería activa a la vez</strong>.
+          </div>}
+          {wldMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
+            <div style={card}>
+              <div style={{fontSize:12,color:'#8b949e',marginBottom:8}}>Tu tope máximo: <strong style={{color:'#fbbf24'}}>{fmtPrecise(wldMiner.cap)} WLD</strong></div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:10}}>
+                {[['7 días','10%'],['15 días','15%'],['30 días','30%']].map(([d,r],i)=>
+                  <div key={i} onClick={()=>{setSelWldVariant(i); previewWldMine()}} style={{...lCard,padding:8,border:`1px solid ${selWldVariant===i?'#fbbf24':'#5b21b6'}`,background:selWldVariant===i?'rgba(251,191,36,.08)':'#1e0840',cursor:'pointer'}}>
+                    <div style={{fontSize:11,fontWeight:700}}>{d}</div>
+                    <div style={{fontSize:14,fontWeight:700,color:'#34d399'}}>{r}</div>
+                  </div>
+                )}
+              </div>
+              <input type="number" value={selWldAmount} onChange={e=>setSelWldAmount(e.target.value)} onBlur={previewWldMine} placeholder="Cantidad de WLD" style={{width:'100%',padding:10,borderRadius:8,border:'1px solid #5b21b6',background:'#1e0840',color:'#e6edf3',fontSize:14,marginBottom:10}} />
+              {(wldMinerPreview.hachi>0||wldMinerPreview.drachma>0)&&<div style={{...pBox,marginBottom:10}}>
+                <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Recibirías (HACHI)</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(wldMinerPreview.hachi)}</span></div>
+                <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Recibirías (Drachma)</span><span style={{fontFamily:'monospace',color:'#60a5fa'}}>{fmtPrecise(wldMinerPreview.drachma)}</span></div>
+              </div>}
+              <button onClick={mineWldAction} disabled={!connected||miningWld||wldMiner.active} style={{...btnP,width:'100%',opacity:(!connected||miningWld||wldMiner.active)?0.4:1}}>{wldMiner.active?'Ya tenés una minería activa':miningWld?'Minando...':'Minar'}</button>
+            </div>
+            {wldMiner.active&&<div style={{...card,marginTop:12}}>
+              <div style={cTitle}>Tu minería activa</div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI total / reclamado</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(wldMiner.hachiTotal)} / {fmtPrecise(wldMiner.hachiClaimed)}</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Drachma total / reclamado</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(wldMiner.drachmaTotal)} / {fmtPrecise(wldMiner.drachmaClaimed)}</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente HACHI</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(wldMiner.pendingHachi)}</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente Drachma</span><span style={{fontFamily:'monospace',color:'#60a5fa'}}>{fmtPrecise(wldMiner.pendingDrachma)}</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Termina</span><span style={{fontFamily:'monospace'}}>{new Date(wldMiner.endTime*1000).toLocaleDateString()}</span></div>
+              <button onClick={claimWldMinerAction} disabled={claimingWldMiner||(wldMiner.pendingHachi<=0&&wldMiner.pendingDrachma<=0)} style={{...btnG,width:'100%',marginTop:8,opacity:(wldMiner.pendingHachi>0||wldMiner.pendingDrachma>0)?1:0.4}}>{claimingWldMiner?'Reclamando...':'Reclamar'}</button>
+            </div>}
+          </>}
         </div>}
 
         {tab==='refs'&&<div>

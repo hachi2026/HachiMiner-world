@@ -1549,9 +1549,9 @@ export default function HachiMiner() {
               {icon:'📜',label:'Licencias',tab:'lics' as Tab,delay:0.3},
               {icon:'🛒',label:'Comprar Licencia',tab:'lics' as Tab,delay:0.6,openBuy:true},
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
-              {icon:'🪙',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7,isNew:true,iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
-              {icon:'📅',label:'Bono Semanal',tab:'weeklybonus' as Tab,delay:3.0,isNew:true},
-              {icon:'🗳️',label:'Votación',tab:'voting' as Tab,delay:3.3,isNew:true},
+              {icon:'🪙',label:'Drachma Miner',tab:'drachmaminer' as Tab,delay:2.7,iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
+              {icon:'📅',label:'Bono Semanal',tab:'weeklybonus' as Tab,delay:3.0},
+              {icon:'🗳️',label:'Votación',tab:'voting' as Tab,delay:3.3},
               {icon:'⛏️',label:'WLD Miner',tab:'wldminer' as Tab,delay:3.6,isNew:true},
               {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:1.2},
               {icon:'🌊',label:'Pools',tab:'pools' as Tab,delay:1.5},
@@ -2029,6 +2029,7 @@ export default function HachiMiner() {
           {wldMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
             <div style={card}>
               <div style={{fontSize:12,color:'#8b949e',marginBottom:8}}>Tu tope máximo: <strong style={{color:'#fbbf24'}}>{fmtPrecise(wldMiner.cap)} WLD</strong></div>
+              <div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:'8px 10px',marginBottom:10,fontSize:11,color:'#f87171',fontWeight:600,textAlign:'center'}}>⚠️ Solo podés tener 1 minería activa a la vez</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:10}}>
                 {[['7 días','10%'],['15 días','15%'],['30 días','30%']].map(([d,r],i)=>
                   <div key={i} onClick={()=>{setSelWldVariant(i); previewWldMine()}} style={{...lCard,padding:8,border:`1px solid ${selWldVariant===i?'#fbbf24':'#5b21b6'}`,background:selWldVariant===i?'rgba(251,191,36,.08)':'#1e0840',cursor:'pointer'}}>

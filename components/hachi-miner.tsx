@@ -2006,7 +2006,7 @@ export default function HachiMiner() {
               </div>
             })()}
             <div style={{background:'rgba(124,58,237,.08)',border:'1px solid #5b21b6',borderRadius:8,padding:14,marginBottom:14,fontSize:13,color:'#c4b5fd',lineHeight:1.6}}>
-              🎁 <strong>Recibís 10,000 SUSHI</strong> por tu voto, y además participás de un <strong>sorteo aleatorio</strong>. Solo tenés que compartir la captura de tu voto en la comunidad.
+              🎁 <strong>5,000 SUSHI + 2,000 Drachma</strong> a repartir entre todos los participantes (sin sorteo). Solo tenés que compartir la captura de tu voto en el grupo DEX de la comunidad.
             </div>
             <div style={{fontSize:12,color:'#8b949e',marginBottom:14,lineHeight:1.6}}>
               La votación se abre todas las semanas, de <strong>jueves 20:00</strong> a <strong>domingo 19:59</strong> (hora de Chile / GMT-4). El enlace funciona siempre — cuando entrás fuera de ese horario, vas a ver la página del partido pero sin el botón de votar habilitado todavía.

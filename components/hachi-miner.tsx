@@ -1805,6 +1805,16 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='swap'&&<div>
+          <div style={{borderRadius:10,overflow:'hidden',marginBottom:12,border:'1px solid #3b0764',height:300}}>
+            <iframe
+              src="https://www.geckoterminal.com/world-chain/pools/0xfB461C1EcE675568a1561df75a18d65DDBdc5481?embed=1&info=0&swaps=0&light_chart=0&chart_type=price&resolution=30m"
+              title="Gráfico HACHI/WLD"
+              frameBorder="0"
+              allow="clipboard-write"
+              allowFullScreen
+              style={{width:'100%',height:'100%'}}
+            />
+          </div>
           <button onClick={()=>setShowInfoSwap(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona el Swap?</button>
           {showInfoSwap&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
             El Swap te permite intercambiar HACHI y WLD directo en la app, usando la liquidez real del pool de Uniswap (no un precio inventado).

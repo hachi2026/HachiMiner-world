@@ -1098,7 +1098,7 @@ export default function HachiMiner() {
       let mineInfo = {active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0}
       if (Number(activeId) > 0) {
         const [m, pending] = await Promise.all([dm.mines(activeId), dm.pendingDrachma(activeId)])
-        mineInfo = {active: m[8], drachmaTotal: fe(m[3]), drachmaClaimed: fe(m[4]), pending: fe(pending), endTime: Number(m[6])}
+        mineInfo = {active: m[9], drachmaTotal: fe(m[3]), drachmaClaimed: fe(m[4]), pending: fe(pending), endTime: Number(m[7])}
       }
 
       const [dPool, dCommitted]: [bigint, bigint] = await Promise.all([dm.drachmaPool(), dm.drachmaCommitted()])

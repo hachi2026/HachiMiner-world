@@ -1644,7 +1644,11 @@ export default function HachiMiner() {
           {licTab==='wld'&&<div>
             <button onClick={()=>setShowInfoLics(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funcionan las licencias?</button>
             {showInfoLics&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
-              <strong>Licencias WLD:</strong> pagás WLD una vez y recibís HACHI de forma lineal durante 3 meses (30% de retorno total, 35% en Elite). Además desbloquean acceso a comprar Bocado de nivel más alto. Podés tener hasta <strong>5 licencias WLD nuevas por mes</strong>.
+              <strong>¿Quién puede participar?</strong> Cualquier usuario verificado con World ID. Comprar tu primera licencia WLD es el punto de entrada a todo el sistema de minería de Hachi.
+              <br/><br/>
+              <strong>Licencias WLD:</strong> pagás WLD una vez y recibís HACHI de forma lineal durante 3 meses (30% de retorno total, 35% en Elite). Podés tener hasta <strong>5 licencias WLD nuevas por mes</strong>.
+              <br/><br/>
+              <strong>Tu licencia te convierte en minero:</strong> según tu nivel (Básica/Estándar/Premium/Elite), tenés acceso a distintos mineros más avanzados dentro de la app — Drachma Miner y WLD Miner — cada uno con un tope de inversión que crece con tu nivel. Cuanto más alto tu nivel, a más minerías y mayores montos podés acceder.
               <br/><br/>
               <strong>Cuántos Bocados Básicos podés comprar por día</strong> (según tu licencia WLD activa más alta):
               <br/>• Sin licencia WLD: no disponible
@@ -1654,6 +1658,8 @@ export default function HachiMiner() {
               <br/>• Elite: 4 por día
               <br/><br/>
               <strong>Licencias Bocado:</strong> pagás HACHI y recibís SUSHI al instante (el monto base + 25% de bonus), sin esperar.
+              <br/><br/>
+              <strong>Sistema limitado y sostenible:</strong> todos los topes de inversión están pensados según tu nivel, para que el sistema crezca de forma controlada. El equipo de Hachi reinvierte parte de lo recaudado y distribuye recursos entre los distintos pools para mantener todo funcionando — podés ver el detalle real en la página de <strong>Transparencia</strong> (junto a los enlaces de comunidad).
             </div>}
             <div style={sLabel}>Mis licencias WLD</div>
             {wldLics.length===0?<div style={empty}><div style={{fontSize:28}}>💠</div><div>{t('no_lics')}</div></div>:<div style={card}>
@@ -2142,7 +2148,7 @@ export default function HachiMiner() {
           <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8,marginBottom:12}}>
             {[
               {icon:'📜',label:'Licencias WLD',action:()=>{setLicTab('wld'); loadTab('lics')}},
-              {icon:'🍡',label:'Bocado',action:()=>{setLicTab('sushi'); loadTab('lics')}},
+              {icon:'🍡',label:'Bocado',action:()=>{setLicTab('sushi'); loadTab('lics')},iconImg:'/hachi-cat-savings.png'},
               {icon:'🪙',label:'Drachma Miner',action:()=>loadTab('drachmaminer'),iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
               {icon:'⛏️',label:'WLD Miner',action:()=>loadTab('wldminer')},
               {icon:'📅',label:'Bono Semanal',action:()=>loadTab('weeklybonus')},

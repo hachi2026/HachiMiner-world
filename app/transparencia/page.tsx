@@ -27,6 +27,7 @@ const POOL_WLD_DRACHMA = '0xaaEF72194E42aF8f641e90c3e48a7F01e9547097'
 const DRACHMA_MINER = '0x19d23871C64F29e22F31AcC094A255e5B1aAD577'
 const WLD_MINER = '0x35C82EC1C5414b228eF39b65fAC545409fc92d75'
 const CORE = '0xE1892183A27389c6a4CACc091F62F9412B7EA6b9'
+const WLD_MINER_DEPLOY_BLOCK = 32678677
 
 const Q96 = BigInt('79228162514264337593543950336')
 
@@ -116,9 +117,32 @@ export default function Transparencia() {
         const drachmaWldEquiv = drachmaTotal / drachmaPerWldNum
         const sushiWldEquiv = sushiTotal / sushiPerWldNum
 
+        const wmMinedC = new ethers.Contract(WLD_MINER, [
+          'event Mined(address indexed user, uint8 variant, uint256 wldIn, uint256 hachiTotal, uint256 drachmaTotal, uint256 indexed id)',
+        ], provider)
+        const coreC = new ethers.Contract(CORE, [
+          'function totalWldToOwner() view returns (uint256)',
+        ], provider)
+
+        const [minedEvents, wldLicencias] = await Promise.all([
+          scanEvents(wmMinedC, wmMinedC.filters.Mined(), WLD_MINER_DEPLOY_BLOCK, currentBlock),
+          coreC.totalWldToOwner(),
+        ])
+
+        let wldViaMiner = 0
+        for (const e of minedEvents as any[]) wldViaMiner += fe(e.args.wldIn)
+
+        const wldLicenciasNum = fe(wldLicencias)
+        const totalRecaudado = wldLicenciasNum + wldViaMiner
+
         const totalInvertido = INVERTIDO_HACHI_WLD + INVERTIDO_DRACHMA_WLD + INVERTIDO_SUSHI_WLD
+        const reserva = totalRecaudado - totalInvertido
 
         setData({
+          wldLicenciasNum,
+          wldViaMiner,
+          totalRecaudado,
+          reserva,
           totalInvertido,
           drachmaTotal,
           sushiTotal,
@@ -144,6 +168,29 @@ export default function Transparencia() {
         {loading && <div style={{ textAlign: 'center', padding: 40, color: '#8b949e' }}>{progress}</div>}
 
         {!loading && data && <>
+          {/* SECCIÓN 0: Recaudado y Reserva (lo más importante) */}
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#e6edf3', marginBottom: 10 }}>🏦 Recaudado y Reserva</div>
+          <div style={{ background: '#240a45', border: '1px solid #5b21b6', borderRadius: 12, padding: 16, marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+              <span style={{ color: '#8b949e' }}>📜 Licencias WLD</span>
+              <span style={{ fontFamily: 'monospace', color: '#fbbf24' }}>{fmt(data.wldLicenciasNum)} WLD</span>
+            </div>
+          </div>
+          <div style={{ background: '#240a45', border: '1px solid #5b21b6', borderRadius: 12, padding: 16, marginBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+              <span style={{ color: '#8b949e' }}>⛏️ WLD Miner</span>
+              <span style={{ fontFamily: 'monospace', color: '#fbbf24' }}>{fmt(data.wldViaMiner)} WLD</span>
+            </div>
+          </div>
+          <div style={{ background: '#240a45', border: '1px solid #5b21b6', borderRadius: 12, padding: 20, marginBottom: 12, textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: '#8b949e', marginBottom: 4 }}>Total recaudado</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#fbbf24' }}>{fmt(data.totalRecaudado)} WLD</div>
+          </div>
+          <div style={{ background: 'linear-gradient(135deg,#7c3aed,#a78bfa)', borderRadius: 12, padding: 20, marginBottom: 24, textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: '#f3e8ff', marginBottom: 4 }}>Reserva (recaudado − invertido)</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#fff' }}>{fmt(data.reserva)} WLD</div>
+          </div>
+
           {/* SECCIÓN 1: Invertido */}
           <div style={{ fontSize: 14, fontWeight: 700, color: '#e6edf3', marginBottom: 10 }}>💰 Invertido (WLD gastado)</div>
           <div style={{ background: '#240a45', border: '1px solid #5b21b6', borderRadius: 12, padding: 16, marginBottom: 10 }}>

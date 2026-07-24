@@ -1637,10 +1637,6 @@ export default function HachiMiner() {
         </div>}
 
         {tab==='lics'&&<div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
-            <button onClick={()=>setLicTab('wld')} style={licTab==='wld'?btnP:btnGh}>💠 WLD</button>
-            <button onClick={()=>setLicTab('sushi')} style={{...(licTab==='sushi'?{...btnG,background:'transparent'}:btnGh),display:'flex',alignItems:'center',gap:6,justifyContent:'center'}}><img src="/hachi-cat-savings.png" width={20} height={20} style={{borderRadius:4,objectFit:'cover',flexShrink:0}} />Bocado</button>
-          </div>
           {licTab==='wld'&&<div>
             <button onClick={()=>setShowInfoLics(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funcionan las licencias?</button>
             {showInfoLics&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
@@ -2147,7 +2143,7 @@ export default function HachiMiner() {
           <div style={sLabel}>⛏️ Minería</div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8,marginBottom:12}}>
             {[
-              {icon:'📜',label:'Licencias WLD',action:()=>{setLicTab('wld'); loadTab('lics')}},
+              {icon:'📜',label:'Hachi Miner',action:()=>{setLicTab('wld'); loadTab('lics')},iconImg:'/hachi-logo.png'},
               {icon:'🍡',label:'Bocado',action:()=>{setLicTab('sushi'); loadTab('lics')},iconImg:'/hachi-cat-savings.png'},
               {icon:'🪙',label:'Drachma Miner',action:()=>loadTab('drachmaminer'),iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
               {icon:'⛏️',label:'WLD Miner',action:()=>loadTab('wldminer')},

@@ -76,6 +76,7 @@ contract HachiVipHolders is ReentrancyGuard {
     address public poolWLD;
 
     address public owner;
+    uint256 public immutable DEPLOY_TIME;
 
     // Umbral minimo y bono por nivel (0=250k,1=500k,2=750k,3=1M)
     uint256[4] public tierMinAmount = [
@@ -111,6 +112,7 @@ contract HachiVipHolders is ReentrancyGuard {
         priceOracle = _priceOracle;
         poolWLDDrachma = _poolWLDDrachma;
         poolWLD = _poolWLD;
+        DEPLOY_TIME = block.timestamp;
     }
 
     // --- CONFIG ---------------------------------------------------
@@ -151,7 +153,7 @@ contract HachiVipHolders is ReentrancyGuard {
         (, uint256 apyPerSec,,,,, , bool active) = IHachiLockView(lockContract).positions(user);
         if (!active) return 0;
         uint256 last = lastActionTime[user];
-        uint256 effectiveLast = last == 0 ? block.timestamp - CAP_SECONDS : last;
+        uint256 effectiveLast = last == 0 ? DEPLOY_TIME : last;
         uint256 elapsed = block.timestamp - effectiveLast;
         uint256 capped = elapsed > CAP_SECONDS ? CAP_SECONDS : elapsed;
         return apyPerSec * capped;

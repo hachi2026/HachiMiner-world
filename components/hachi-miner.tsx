@@ -100,6 +100,7 @@ const DRACHMA_MINER_ABI = [
   'function pendingDrachma(uint256) view returns (uint256)',
   'function drachmaPool() view returns (uint256)',
   'function drachmaCommitted() view returns (uint256)',
+  'function mineDuration() view returns (uint256)',
 ]
 const WEEKLY_BONUS_ADDR = '0x67ECFC02B852FDd9D55D0cBF8866cE6ff74126dF'
 const WEEKLY_BONUS_ABI = [
@@ -324,7 +325,7 @@ export default function HachiMiner() {
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [showBuyWLD, setShowBuyWLD] = useState(false)
-  const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0})
+  const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0, durationDays:15})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
   const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0})
   const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0})
@@ -1091,7 +1092,7 @@ export default function HachiMiner() {
   const loadDrachmaMiner = async (p: ethers.JsonRpcProvider) => {
     try {
       const dm = new ethers.Contract(DRACHMA_MINER_ADDR, DRACHMA_MINER_ABI, p)
-      const [tier, activeId] = await Promise.all([dm.getUserTier(addr), dm.activeMineId(addr)])
+      const [tier, activeId, durationSecs] = await Promise.all([dm.getUserTier(addr), dm.activeMineId(addr), dm.mineDuration()])
       const amounts = await Promise.all([0,1,2,3].map(i => dm.tierDrachmaAmounts(i)))
       const costs = await Promise.all([0,1,2,3].map(i => dm.costInHachi(i).catch(() => BigInt(0))))
 
@@ -1108,6 +1109,7 @@ export default function HachiMiner() {
         costs: costs.map(fe),
         activeMineId: Number(activeId),
         poolFree: fe(dPool - dCommitted),
+        durationDays: Math.round(Number(durationSecs) / 86400),
         ...mineInfo,
       })
     } catch(e:any) { log('drachma miner err: '+(e?.message||'').slice(0,80)) }
@@ -1259,7 +1261,7 @@ export default function HachiMiner() {
         ...buildPermit2Approvals(C.hachi, DRACHMA_MINER_ADDR, costWei),
         { to: DRACHMA_MINER_ADDR, abi: DRACHMA_MINER_ABI, fnName: 'mineDrachma', args: [selDrachmaTier, costWei] },
       ])
-      toast_('✓ Drachma en generación (15 días)', '#3fb950')
+      toast_(`✓ Drachma en generación (${drachmaMiner.durationDays} días)`, '#3fb950')
       loadDrachmaMiner(rpc())
     } catch(e: any) {
       log('drachma mine err: ' + JSON.stringify(e).slice(0,900))
@@ -2017,7 +2019,7 @@ export default function HachiMiner() {
           {showInfoDrachma&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
             Con una licencia WLD activa o un Lock de al menos 50,000 HACHI, podés "minar" Drachma: elegís un nivel (según tu tier más alto) y pagás HACHI por un monto fijo de Drachma, con un descuento sobre el precio real de mercado.
             <br/><br/>
-            El Drachma no llega de golpe — se genera de a poco durante 15 días, y lo vas reclamando cuando quieras con el botón "Reclamar Drachma".
+            El Drachma no llega de golpe — se genera de a poco durante {drachmaMiner.durationDays} días, y lo vas reclamando cuando quieras con el botón "Reclamar Drachma".
             <br/><br/>
             Solo podés tener <strong>1 minería activa a la vez</strong> — cuando termine de generarse del todo, podés arrancar una nueva.
           </div>}

@@ -75,7 +75,7 @@ const SHOW_LANG_BUTTONS = false // poner en true cuando estén traducidas todas 
 const HACHI_SWAP_ADDR = '0x1EfCb70A4AE0dfa7D2242a43573A6B103776DC73'
 const DRACHMA_MINER_ADDR = '0x19d23871C64F29e22F31AcC094A255e5B1aAD577'
 const WLD_MINER_ADDR = '0x35C82EC1C5414b228eF39b65fAC545409fc92d75'
-const VIP_HOLDERS_ADDR = '0xC6fA70A461001C75DE81cC1cEc06c7078b6075c5'
+const VIP_HOLDERS_ADDR = '0x75eD38D459c30656128dF6c9825edfB1A50623af'
 const VIP_HOLDERS_ABI = [
   'function getVipLevel(address) view returns (uint8)',
   'function pendingHachi(address) view returns (uint256)',

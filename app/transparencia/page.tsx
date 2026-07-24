@@ -18,6 +18,7 @@ const INVERTIDO_SUSHI_WLD = 120
 // --- Entrado al sistema: tokens en circulación, hasta hoy (manual) ---
 const MANUAL_DRACHMA_TOTAL = 31_000
 const MANUAL_SUSHI_TOTAL = 3_000_000
+const MANUAL_WLD_VIA_MINER = 120
 
 const WLD = '0x2cfc85d8e48f8eab294be644d9e25c3030863003'
 
@@ -117,14 +118,9 @@ export default function Transparencia() {
         const drachmaWldEquiv = drachmaTotal / drachmaPerWldNum
         const sushiWldEquiv = sushiTotal / sushiPerWldNum
 
-        const wmMinedC = new ethers.Contract(WLD_MINER, [
-          'event Mined(address indexed user, uint8 variant, uint256 wldIn, uint256 hachiTotal, uint256 drachmaTotal, uint256 indexed id)',
-        ], provider)
         const coreC = new ethers.Contract(CORE, [
           'function totalWldToOwner() view returns (uint256)',
         ], provider)
-
-        const minedEvents = await scanEvents(wmMinedC, wmMinedC.filters.Mined(), WLD_MINER_DEPLOY_BLOCK, currentBlock)
 
         setProgress('Leyendo WLD recaudado...')
         let wldLicencias: bigint = BigInt(0)
@@ -133,8 +129,7 @@ export default function Transparencia() {
           catch (e) { if (intento === 2) throw e; await new Promise(r => setTimeout(r, 800)) }
         }
 
-        let wldViaMiner = 0
-        for (const e of minedEvents as any[]) wldViaMiner += fe(e.args.wldIn)
+        const wldViaMiner = MANUAL_WLD_VIA_MINER
 
         const wldLicenciasNum = fe(wldLicencias)
         const totalRecaudado = wldLicenciasNum + wldViaMiner
@@ -237,6 +232,9 @@ export default function Transparencia() {
             <div style={{ textAlign: 'right', fontSize: 11, color: '#8b949e', marginTop: 2 }}>≈ {fmt(data.sushiWldEquiv)} WLD</div>
           </div>
 
+          <div style={{ background: 'rgba(251,191,36,.1)', border: '1px solid rgba(251,191,36,.4)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 12, color: '#fbbf24', textAlign: 'center', lineHeight: 1.6 }}>
+            ⚠️ Algunos valores son aproximados. Estamos trabajando en mejorar el sistema para que cargue más rápido y sea 100% preciso.
+          </div>
           <p style={{ fontSize: 11, color: '#8b949e', textAlign: 'center', lineHeight: 1.6 }}>
             "Entrado al sistema" incluye una base cargada a mano (hasta hoy) + todo lo escaneado en vivo desde el bloque {CUTOFF_BLOCK.toLocaleString()} en adelante. El HACHI del propio wallet se sumará en una próxima mejora.
           </p>

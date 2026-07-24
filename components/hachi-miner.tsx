@@ -374,6 +374,8 @@ export default function HachiMiner() {
   const [vipData, setVipData] = useState({level:255, pendingHachi:0, drachmaOut:0, sushiOut:0, drachmaPoolFree:0, sushiPoolFree:0})
   const [vipPreferredToken, setVipPreferredToken] = useState(0)
   const [showInfoVip, setShowInfoVip] = useState(false)
+  const [showDeposits, setShowDeposits] = useState(false)
+  const [showInfoTiers, setShowInfoTiers] = useState(false)
   const [exchangingVip, setExchangingVip] = useState(false)
   const [lockBatches, setLockBatches] = useState<any[]>([])
   const [platformStats, setPlatformStats] = useState({totalLocked:'—',totalUsers:'—'})
@@ -1809,31 +1811,38 @@ export default function HachiMiner() {
           <input value={depositAmt} onChange={e=>setDepositAmt(e.target.value)} type="number" placeholder="Cantidad de HACHI" style={{background:'#12022a',border:'1px solid #5b21b6',borderRadius:8,padding:'10px 12px',fontSize:14,color:'#e6edf3',width:'100%',marginBottom:8,fontFamily:'monospace'}} />
           <div style={{fontSize:11,color:'#d29922',marginBottom:8,lineHeight:1.4}}>⚠ Depositar reinicia el cooldown de 24h para cobrar APY</div>
           <button onClick={doDeposit} style={btnP}>Depositar</button>
-          <div style={card}><div style={cTitle}>🌍 Total de la comunidad</div>
-            {[['HACHI bloqueado',platformStats.totalLocked],['Usuarios activos',platformStats.totalUsers]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
-          </div>
-          <div style={sLabel}>Mis depósitos</div>
-          {lockBatches.length===0?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Sin depósitos aún</div></div>:lockBatches.map((b,i)=><div key={i} style={{...card,marginBottom:8}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontFamily:'monospace',fontSize:16,fontWeight:700,color:'#e6edf3'}}>{b.amount.toLocaleString(undefined,{maximumFractionDigits:4})} HACHI</span>
-              {b.ready
-                ? <span style={{color:'#3fb950',fontWeight:700,fontSize:13}}>✓ Disponible</span>
-                : <span style={{color:'#fbbf24',fontWeight:700,fontSize:13}}>⏳ Liberando</span>
-              }
-            </div>
-            {!b.ready&&<div style={{fontSize:12,color:'#8b949e',marginTop:6}}>Se libera el {b.unlocks.toLocaleDateString()} a las {b.unlocks.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>}
-          </div>)}
-          <div style={{...card,marginTop:12}}><div style={cTitle}>Niveles del Lock</div>
-            <div style={{fontSize:11,color:'#8b949e',marginBottom:10,lineHeight:1.5}}>Con menos de 50,000 HACHI bloqueados (Sin tier) accedés a las licencias Bocado Básicas, pero no generás APY. Desde 50,000 HACHI (Tier 1 — Akira) empezás a ganar rendimiento.</div>
-            {[{name:'Akira',min:'50,000',apy:'10%'},{name:'Zen',min:'200,000',apy:'20%'},{name:'Koban',min:'500,000',apy:'30%'},{name:'Tayko',min:'750,000',apy:'40%'},{name:'Hachi',min:'1,000,000',apy:'50%'}].map(({name,min,apy})=>{
+          <button onClick={()=>setShowDeposits(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'8px 12px',cursor:'pointer',margin:'8px 0',width:'100%',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span>📦 Mis depósitos ({lockBatches.length})</span>
+            <span>{showDeposits?'▲':'▼'}</span>
+          </button>
+          {showDeposits&&<>
+            {lockBatches.length===0?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Sin depósitos aún</div></div>:lockBatches.map((b,i)=><div key={i} style={{...card,marginBottom:8}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontFamily:'monospace',fontSize:16,fontWeight:700,color:'#e6edf3'}}>{b.amount.toLocaleString(undefined,{maximumFractionDigits:4})} HACHI</span>
+                {b.ready
+                  ? <span style={{color:'#3fb950',fontWeight:700,fontSize:13}}>✓ Disponible</span>
+                  : <span style={{color:'#fbbf24',fontWeight:700,fontSize:13}}>⏳ Liberando</span>
+                }
+              </div>
+              {!b.ready&&<div style={{fontSize:12,color:'#8b949e',marginTop:6}}>Se libera el {b.unlocks.toLocaleDateString()} a las {b.unlocks.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>}
+            </div>)}
+          </>}
+          <button onClick={()=>setShowInfoTiers(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'8px 12px',cursor:'pointer',margin:'8px 0',width:'100%'}}>ℹ️ Niveles del Lock — Saber más</button>
+          {showInfoTiers&&<div style={{...card,marginTop:0}}>
+            <div style={{fontSize:11,color:'#8b949e',marginBottom:10,lineHeight:1.5}}>Con menos de 50,000 HACHI bloqueados (Sin tier) accedés a las licencias Bocado Básicas, pero no generás APY. Desde 50,000 HACHI (Tier 1 — Akira) empezás a ganar rendimiento. Desde 250,000 HACHI además accedés a la Reinversión VIP.</div>
+            {[{name:'Akira',min:'50,000',apy:'10%',vip:null},{name:'Zen',min:'200,000',apy:'20%',vip:null},{name:'Koban',min:'500,000',apy:'30%',vip:'8%'},{name:'Tayko',min:'750,000',apy:'40%',vip:'10%'},{name:'Hachi',min:'1,000,000',apy:'50%',vip:'12%'}].map(({name,min,apy,vip})=>{
               const isCurrent = lockData.tier === name
-              return <div key={name} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'7px 6px',borderRadius:6,marginBottom:2,background:isCurrent?'rgba(52,211,153,.08)':'transparent',border:isCurrent?'1px solid rgba(52,211,153,.3)':'1px solid transparent'}}>
-                <span style={{fontSize:13,fontWeight:isCurrent?700:400,color:isCurrent?'#34d399':'#8b949e'}}>{isCurrent?'→ ':''}{name}</span>
-                <span style={{fontFamily:'monospace',fontSize:11,color:'#8b949e'}}>{min} HACHI</span>
-                <span style={{fontFamily:'monospace',fontSize:12,fontWeight:600,color:isCurrent?'#fbbf24':'#6b7280'}}>{apy}</span>
+              return <div key={name} style={{padding:'7px 6px',borderRadius:6,marginBottom:2,background:isCurrent?'rgba(52,211,153,.08)':'transparent',border:isCurrent?'1px solid rgba(52,211,153,.3)':'1px solid transparent'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <span style={{fontSize:13,fontWeight:isCurrent?700:400,color:isCurrent?'#34d399':'#8b949e'}}>{isCurrent?'→ ':''}{name}</span>
+                  <span style={{fontFamily:'monospace',fontSize:11,color:'#8b949e'}}>{min} HACHI</span>
+                  <span style={{fontFamily:'monospace',fontSize:12,fontWeight:600,color:isCurrent?'#fbbf24':'#6b7280'}}>{apy} APY</span>
+                </div>
+                {vip&&<div style={{fontSize:10,color:'#fbbf24',marginTop:2,textAlign:'right'}}>💎 +{vip} bono en Reinversión VIP</div>}
+                {name==='Zen'&&<div style={{fontSize:10,color:'#8b949e',marginTop:2,textAlign:'right'}}>Con 250,000+ (dentro de este nivel): 5% bono en Reinversión VIP</div>}
               </div>
             })}
-          </div>
+          </div>}
 
           <div style={{...card,marginTop:12,border:'1px solid #fbbf24',boxShadow:'0 0 16px rgba(251,191,36,.2)'}}>
             <div style={{...cTitle,display:'flex',alignItems:'center',gap:6}}>💎 Reinversión VIP</div>

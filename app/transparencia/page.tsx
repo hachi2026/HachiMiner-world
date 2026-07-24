@@ -34,7 +34,7 @@ const Q96 = BigInt('79228162514264337593543950336')
 
 async function scanEvents(contract: ethers.Contract, filter: any, fromBlock: number, toBlock: number) {
   if (toBlock < fromBlock) return []
-  const CHUNK = 100, BATCH = 15
+  const CHUNK = 100, BATCH = 5
   let events: any[] = []
   let to = toBlock
   while (to >= fromBlock) {
@@ -124,9 +124,9 @@ export default function Transparencia() {
 
         setProgress('Leyendo WLD recaudado...')
         let wldLicencias: bigint = BigInt(0)
-        for (let intento = 0; intento < 3; intento++) {
+        for (let intento = 0; intento < 6; intento++) {
           try { wldLicencias = await coreC.totalWldToOwner(); break }
-          catch (e) { if (intento === 2) throw e; await new Promise(r => setTimeout(r, 800)) }
+          catch (e) { if (intento === 5) throw e; await new Promise(r => setTimeout(r, 1000 * (intento + 1))) }
         }
 
         const wldViaMiner = MANUAL_WLD_VIA_MINER

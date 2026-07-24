@@ -124,10 +124,14 @@ export default function Transparencia() {
           'function totalWldToOwner() view returns (uint256)',
         ], provider)
 
-        const [minedEvents, wldLicencias] = await Promise.all([
-          scanEvents(wmMinedC, wmMinedC.filters.Mined(), WLD_MINER_DEPLOY_BLOCK, currentBlock),
-          coreC.totalWldToOwner(),
-        ])
+        const minedEvents = await scanEvents(wmMinedC, wmMinedC.filters.Mined(), WLD_MINER_DEPLOY_BLOCK, currentBlock)
+
+        setProgress('Leyendo WLD recaudado...')
+        let wldLicencias: bigint = BigInt(0)
+        for (let intento = 0; intento < 3; intento++) {
+          try { wldLicencias = await coreC.totalWldToOwner(); break }
+          catch (e) { if (intento === 2) throw e; await new Promise(r => setTimeout(r, 800)) }
+        }
 
         let wldViaMiner = 0
         for (const e of minedEvents as any[]) wldViaMiner += fe(e.args.wldIn)

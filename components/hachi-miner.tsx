@@ -1904,13 +1904,15 @@ export default function HachiMiner() {
           }
           {lastWinners.length>0&&<div style={card}>
             <div style={cTitle}>🏆 Último reparto ({lastWinners.length} participantes)</div>
-            {lastWinners.map(({addr,amount,rank})=>(
-              <div key={rank} style={{display:'flex',alignItems:'center',gap:10,padding:'7px 0',borderBottom:'1px solid #3b0764'}}>
-                <span style={{fontFamily:'monospace',fontWeight:700,width:28,color:'#fbbf24'}}>{rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`#${rank}`}</span>
-                <span style={{fontFamily:'monospace',fontSize:12,flex:1,color:'#c9d1d9'}}>{nameFor(addr)}</span>
-                <span style={{fontFamily:'monospace',fontSize:12,fontWeight:600,color:'#34d399'}}>{fmt(amount)} HACHI</span>
-              </div>
-            ))}
+            <div style={{maxHeight:440,overflowY:'auto',WebkitOverflowScrolling:'touch',paddingRight:2}}>
+              {lastWinners.map(({addr,amount,rank})=>(
+                <div key={rank} style={{display:'flex',alignItems:'center',gap:10,padding:'7px 0',borderBottom:'1px solid #3b0764'}}>
+                  <span style={{fontFamily:'monospace',fontWeight:700,width:28,color:'#fbbf24'}}>{rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`#${rank}`}</span>
+                  <span style={{fontFamily:'monospace',fontSize:12,flex:1,color:'#c9d1d9'}}>{nameFor(addr)}</span>
+                  <span style={{fontFamily:'monospace',fontSize:12,fontWeight:600,color:'#34d399'}}>{fmt(amount)} HACHI</span>
+                </div>
+              ))}
+            </div>
           </div>}
           <div style={card}>
             <div style={cTitle}>¿Cómo se suman puntos?</div>

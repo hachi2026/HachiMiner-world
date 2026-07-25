@@ -122,7 +122,7 @@ const WEEKLY_BONUS_ABI = [
   'function sushiPool() view returns (uint256)',
 ]
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
-const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'function streakSushiPool() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)']
+const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'function streakSushiPool() view returns (uint256)', 'function lastRankingExecutedAt() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)', 'event SwapRankingPrizePaid(address indexed user, uint256 amount, uint256 rank)']
 const PAIR_ABI = ['function getReserves() view returns (uint112,uint112,uint32)']
 const HACHISWAP_ABI = ['function swap(address,address,uint256,uint256,uint256) returns (uint256)', 'event Swapped(address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount)']
 // Permit2 (AllowanceTransfer): approve da permiso a un "spender" (nuestro contrato) para mover el token vía Permit2
@@ -333,6 +333,8 @@ export default function HachiMiner() {
   const [claimingStreak, setClaimingStreak] = useState(false)
   const [swapRanking, setSwapRanking] = useState<{addr:string, amount:number}[]>([])
   const [swapRankingNextIn, setSwapRankingNextIn] = useState(0)
+  const [swapLastWinners, setSwapLastWinners] = useState<{addr:string,amount:number,rank:number}[]>([])
+  const [swapLastExecDate, setSwapLastExecDate] = useState('')
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [showBuyWLD, setShowBuyWLD] = useState(false)
@@ -788,6 +790,23 @@ export default function HachiMiner() {
       resolveUsernames(list.map((r:any) => r.addr))
       const nextIn = await streak.timeUntilNextRanking()
       setSwapRankingNextIn(Number(nextIn))
+      const lastExecTs = Number(await streak.lastRankingExecutedAt())
+      if (lastExecTs > 0) {
+        try {
+          const currentBlock = await p.getBlockNumber()
+          const blocksAgo = Math.ceil((Date.now()/1000 - lastExecTs) / 2)
+          const est = currentBlock - blocksAgo
+          const fromBlock = Math.max(0, est - 40)
+          const toBlock = est + 40
+          const logs = await streak.queryFilter('SwapRankingPrizePaid', fromBlock, toBlock)
+          const winners = (logs as any[])
+            .map(l => ({addr: l.args[0], amount: fe(l.args[1]), rank: Number(l.args[2])}))
+            .sort((a,b) => a.rank - b.rank)
+          setSwapLastWinners(winners)
+          setSwapLastExecDate(new Date(lastExecTs*1000).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'}))
+          resolveUsernames(winners.map(w => w.addr))
+        } catch(e) {}
+      }
     } catch(e) {}
   }
 
@@ -2050,18 +2069,21 @@ export default function HachiMiner() {
               </div>
             </a>)}
           </div>}
-          <div style={sLabel}>Ranking · Top 20 compradores de HACHI (reparto cada 15 días)</div>
-          {swapRankingNextIn>0&&<div style={{fontSize:11,color:'#8b949e',marginBottom:8}}>Próximo reparto en {Math.ceil(swapRankingNextIn/86400)} días</div>}
-          {swapRanking.length===0?<div style={empty}><div style={{fontSize:28}}>🏆</div><div>Sin participantes todavía</div></div>:<div style={{maxHeight:320,overflowY:'auto',WebkitOverflowScrolling:'touch',marginBottom:12}}>
-            {swapRanking.map((r,i)=>{
-              const isMe = r.addr.toLowerCase()===addr.toLowerCase()
-              const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`
-              return <div key={r.addr} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',borderRadius:8,marginBottom:4,background:'#1e0840',border:`1px solid ${isMe?'#34d399':'#5b21b6'}`}}>
-                <div style={{fontFamily:'monospace',fontSize:13,fontWeight:700,width:28}}>{medal}</div>
-                <div style={{fontFamily:'monospace',fontSize:12,flex:1}}>{nameFor(r.addr)}{isMe&&<span style={{color:'#34d399'}}> (tú)</span>}</div>
-                <div style={{fontFamily:'monospace',fontSize:12,fontWeight:700,color:'#fbbf24'}}>{fmtPrecise(r.amount)} HACHI</div>
-              </div>
-            })}
+          <div style={{background:'linear-gradient(90deg,#f59e0b,#d97706)',borderRadius:8,padding:'10px 14px',marginBottom:12,textAlign:'center',boxShadow:'0 0 14px rgba(245,158,11,.4)'}}>
+            <div style={{fontSize:13,fontWeight:800,color:'#451a03'}}>🏁 Campaña de ranking finalizada — ¡gracias a todos los que participaron! El bono diario de racha sigue activo hasta que se agoten los fondos del pool.</div>
+          </div>
+          {swapLastWinners.length>0&&<div style={card}>
+            <div style={cTitle}>🏆 Último reparto ({swapLastExecDate}) — {swapLastWinners.length} participantes</div>
+            <div style={{maxHeight:320,overflowY:'auto',WebkitOverflowScrolling:'touch',paddingRight:2}}>
+              {swapLastWinners.map(({addr:wa,amount,rank})=>{
+                const isMe = wa.toLowerCase()===addr.toLowerCase()
+                return <div key={rank} style={{display:'flex',alignItems:'center',gap:10,padding:'7px 0',borderBottom:'1px solid #3b0764'}}>
+                  <span style={{fontFamily:'monospace',fontWeight:700,width:28,color:'#fbbf24'}}>{rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`#${rank}`}</span>
+                  <span style={{fontFamily:'monospace',fontSize:12,flex:1,color:'#c9d1d9'}}>{nameFor(wa)}{isMe&&<span style={{color:'#34d399'}}> (vos)</span>}</span>
+                  <span style={{fontFamily:'monospace',fontSize:12,fontWeight:600,color:'#34d399'}}>{fmtPrecise(amount)} HACHI</span>
+                </div>
+              })}
+            </div>
           </div>}
           <div style={sLabel}>Tu historial</div>
           {swapHistory.length===0?<div style={empty}><div style={{fontSize:28}}>🔄</div><div>Sin intercambios todavía</div></div>:(swapHistoryExpanded?swapHistory:swapHistory.slice(0,5)).map((h,i)=>{

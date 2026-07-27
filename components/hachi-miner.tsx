@@ -950,7 +950,11 @@ export default function HachiMiner() {
       ])
       toast_('✓ Bocado comprado', '#3fb950')
       await loadAll(addr)
-    } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
+    } catch(e: any) {
+      const msg = (e.reason||e.message||'').toLowerCase()
+      if (msg.includes('pool a insufficient')) toast_('⏳ Sin fondos en el pool ahora mismo — probá más tarde', '#f85149')
+      else toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149')
+    }
   }
 
   const withdrawDaily = async () => {

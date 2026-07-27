@@ -338,10 +338,10 @@ export default function HachiMiner() {
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [showBuyWLD, setShowBuyWLD] = useState(false)
-  const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0, durationDays:15})
+  const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0, durationDays:15, loaded:false})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
   const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0})
-  const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0})
+  const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0, loaded:false})
   const [selWldAmount, setSelWldAmount] = useState('')
   const [selWldVariant, setSelWldVariant] = useState(0)
   const [wldMinerPreview, setWldMinerPreview] = useState({hachi:0, drachma:0})
@@ -373,7 +373,7 @@ export default function HachiMiner() {
   const [sushiLics] = useState<any[]>([])
   const [myStatus, setMyStatus] = useState({bocadoCount:0, specialAvail:true, lastSpecial:0, loading:false})
   const [lockData, setLockData] = useState({total:'0',tier:'Sin tier',apy:'0%',pending:'0',unstake:'0',unstakeRaw:BigInt(0),nextClaimIn:'—',nextDepositIn:'—',nextDepositSecs:0})
-  const [vipData, setVipData] = useState({level:255, pendingHachi:0, drachmaOut:0, sushiOut:0, drachmaPoolFree:0, sushiPoolFree:0})
+  const [vipData, setVipData] = useState({level:255, pendingHachi:0, drachmaOut:0, sushiOut:0, drachmaPoolFree:0, sushiPoolFree:0, loaded:false})
   const [vipPreferredToken, setVipPreferredToken] = useState(0)
   const [showInfoVip, setShowInfoVip] = useState(false)
   const [showDeposits, setShowDeposits] = useState(false)
@@ -1157,6 +1157,7 @@ export default function HachiMiner() {
           activeMineId: Number(activeId),
           poolFree: fe(dPool - dCommitted),
           durationDays: Math.round(Number(durationSecs) / 86400),
+          loaded: true,
           ...mineInfo,
         })
       })
@@ -1185,6 +1186,7 @@ export default function HachiMiner() {
         setWldMiner({
           tier: Number(tier), cap: fe(cap), activeMineId: Number(activeId),
           poolFreeHachi: fe(hPool - hCommitted), poolFreeDrachma: fe(dPool - dCommitted),
+          loaded: true,
           ...mineInfo,
         })
       })
@@ -1205,6 +1207,7 @@ export default function HachiMiner() {
           sushiOut: fe(preview[2]),
           drachmaPoolFree: fe(dPool),
           sushiPoolFree: fe(sPool),
+          loaded: true,
         })
       })
     } catch(e:any) { log('vip holders err: '+(e?.message||'').slice(0,80)) }
@@ -1896,7 +1899,7 @@ export default function HachiMiner() {
               <br/><br/>
               Elegís si preferís recibir Drachma o SUSHI; si ese pool no tiene fondos en ese momento, usa el otro automáticamente. El HACHI que aportás ayuda a financiar licencias WLD para el resto de la comunidad — así tu ganancia sigue generando valor para el sistema, en vez de salir a la venta.
             </div>}
-            {vipData.level===255?<div style={{textAlign:'center',padding:'12px 8px',color:'#8b949e',fontSize:13}}>🔒 Necesitás al menos 250,000 HACHI lockeados para acceder</div>:<>
+            {!vipData.loaded?<div style={{textAlign:'center',padding:'12px 8px',color:'#8b949e',fontSize:13}}>⏳ Consultando tu Lock...</div>:vipData.level===255?<div style={{textAlign:'center',padding:'12px 8px',color:'#8b949e',fontSize:13}}>🔒 Necesitás al menos 250,000 HACHI lockeados para acceder</div>:<>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Tu nivel</span><span style={{fontFamily:'monospace',fontWeight:700,color:'#fbbf24'}}>{['5% bono','8% bono','10% bono','12% bono'][vipData.level]}</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI acumulado</span><span style={{fontFamily:'monospace'}}>{vipData.pendingHachi.toFixed(4)}</span></div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,margin:'10px 0'}}>
@@ -2157,7 +2160,7 @@ export default function HachiMiner() {
             <br/><br/>
             Solo podés tener <strong>1 minería activa a la vez</strong> — cuando termine de generarse del todo, podés arrancar una nueva.
           </div>}
-          {drachmaMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
+          {!drachmaMiner.loaded?<div style={empty}><div style={{fontSize:28}}>⏳</div><div>Consultando tu licencia y Lock...</div></div>:drachmaMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
             <div style={card}>
               <div style={cTitle}>Tu tier: {['Básica','Estándar','Premium','Elite'][drachmaMiner.tier]}</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12,marginTop:8}}>
@@ -2241,7 +2244,7 @@ export default function HachiMiner() {
             <br/><br/>
             El tope de WLD que podés invertir depende de tu licencia WLD o Lock (el que sea más alto). Solo podés tener <strong>1 minería activa a la vez</strong>.
           </div>}
-          {wldMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
+          {!wldMiner.loaded?<div style={empty}><div style={{fontSize:28}}>⏳</div><div>Consultando tu licencia y Lock...</div></div>:wldMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
             <div style={card}>
               <div style={{fontSize:12,color:'#8b949e',marginBottom:8}}>Tu tope máximo: <strong style={{color:'#fbbf24'}}>{fmtPrecise(wldMiner.cap)} WLD</strong></div>
               <div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:'8px 10px',marginBottom:10,fontSize:11,color:'#f87171',fontWeight:600,textAlign:'center'}}>⚠️ Solo podés tener 1 minería activa a la vez</div>

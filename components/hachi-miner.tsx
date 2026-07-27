@@ -1126,71 +1126,86 @@ export default function HachiMiner() {
     }
   }
 
+  const withRetry = async <T,>(fn: () => Promise<T>, retries = 3, delayMs = 700): Promise<T> => {
+    let lastErr: any
+    for (let i = 0; i < retries; i++) {
+      try { return await fn() }
+      catch (e) { lastErr = e; if (i < retries - 1) await new Promise(r => setTimeout(r, delayMs * (i + 1))) }
+    }
+    throw lastErr
+  }
+
   const loadDrachmaMiner = async (p: ethers.JsonRpcProvider) => {
     try {
-      const dm = new ethers.Contract(DRACHMA_MINER_ADDR, DRACHMA_MINER_ABI, p)
-      const [tier, activeId, durationSecs] = await Promise.all([dm.getUserTier(addr), dm.activeMineId(addr), dm.mineDuration()])
-      const amounts = await Promise.all([0,1,2,3].map(i => dm.tierDrachmaAmounts(i)))
-      const costs = await Promise.all([0,1,2,3].map(i => dm.costInHachi(i).catch(() => BigInt(0))))
+      await withRetry(async () => {
+        const dm = new ethers.Contract(DRACHMA_MINER_ADDR, DRACHMA_MINER_ABI, p)
+        const [tier, activeId, durationSecs] = await Promise.all([dm.getUserTier(addr), dm.activeMineId(addr), dm.mineDuration()])
+        const amounts = await Promise.all([0,1,2,3].map(i => dm.tierDrachmaAmounts(i)))
+        const costs = await Promise.all([0,1,2,3].map(i => dm.costInHachi(i).catch(() => BigInt(0))))
 
-      let mineInfo = {active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0}
-      if (Number(activeId) > 0) {
-        const [m, pending] = await Promise.all([dm.mines(activeId), dm.pendingDrachma(activeId)])
-        mineInfo = {active: m[9], drachmaTotal: fe(m[3]), drachmaClaimed: fe(m[4]), pending: fe(pending), endTime: Number(m[7])}
-      }
+        let mineInfo = {active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0}
+        if (Number(activeId) > 0) {
+          const [m, pending] = await Promise.all([dm.mines(activeId), dm.pendingDrachma(activeId)])
+          mineInfo = {active: m[9], drachmaTotal: fe(m[3]), drachmaClaimed: fe(m[4]), pending: fe(pending), endTime: Number(m[7])}
+        }
 
-      const [dPool, dCommitted]: [bigint, bigint] = await Promise.all([dm.drachmaPool(), dm.drachmaCommitted()])
-      setDrachmaMiner({
-        tier: Number(tier),
-        amounts: amounts.map(fe),
-        costs: costs.map(fe),
-        activeMineId: Number(activeId),
-        poolFree: fe(dPool - dCommitted),
-        durationDays: Math.round(Number(durationSecs) / 86400),
-        ...mineInfo,
+        const [dPool, dCommitted]: [bigint, bigint] = await Promise.all([dm.drachmaPool(), dm.drachmaCommitted()])
+        setDrachmaMiner({
+          tier: Number(tier),
+          amounts: amounts.map(fe),
+          costs: costs.map(fe),
+          activeMineId: Number(activeId),
+          poolFree: fe(dPool - dCommitted),
+          durationDays: Math.round(Number(durationSecs) / 86400),
+          ...mineInfo,
+        })
       })
     } catch(e:any) { log('drachma miner err: '+(e?.message||'').slice(0,80)) }
   }
 
   const loadWldMiner = async (p: ethers.JsonRpcProvider) => {
     try {
-      const wm = new ethers.Contract(WLD_MINER_ADDR, WLD_MINER_ABI, p)
-      const [tier, cap, activeId, hPool, hCommitted, dPool, dCommitted]: [bigint, bigint, bigint, bigint, bigint, bigint, bigint] = await Promise.all([
-        wm.getUserTier(addr), wm.maxInvestableWld(addr), wm.activeMineId(addr),
-        wm.hachiPool(), wm.hachiCommitted(), wm.drachmaPool(), wm.drachmaCommitted(),
-      ])
-      let mineInfo = {active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0}
-      if (Number(activeId) > 0) {
-        const [m, pending] = await Promise.all([wm.mines(activeId), wm.pendingRewards(activeId)])
-        mineInfo = {
-          active: m[10], variant: Number(m[1]),
-          hachiTotal: fe(m[3]), hachiClaimed: fe(m[4]),
-          drachmaTotal: fe(m[5]), drachmaClaimed: fe(m[6]),
-          pendingHachi: fe(pending[0]), pendingDrachma: fe(pending[1]),
-          endTime: Number(m[8]),
+      await withRetry(async () => {
+        const wm = new ethers.Contract(WLD_MINER_ADDR, WLD_MINER_ABI, p)
+        const [tier, cap, activeId, hPool, hCommitted, dPool, dCommitted]: [bigint, bigint, bigint, bigint, bigint, bigint, bigint] = await Promise.all([
+          wm.getUserTier(addr), wm.maxInvestableWld(addr), wm.activeMineId(addr),
+          wm.hachiPool(), wm.hachiCommitted(), wm.drachmaPool(), wm.drachmaCommitted(),
+        ])
+        let mineInfo = {active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0}
+        if (Number(activeId) > 0) {
+          const [m, pending] = await Promise.all([wm.mines(activeId), wm.pendingRewards(activeId)])
+          mineInfo = {
+            active: m[10], variant: Number(m[1]),
+            hachiTotal: fe(m[3]), hachiClaimed: fe(m[4]),
+            drachmaTotal: fe(m[5]), drachmaClaimed: fe(m[6]),
+            pendingHachi: fe(pending[0]), pendingDrachma: fe(pending[1]),
+            endTime: Number(m[8]),
+          }
         }
-      }
-      setWldMiner({
-        tier: Number(tier), cap: fe(cap), activeMineId: Number(activeId),
-        poolFreeHachi: fe(hPool - hCommitted), poolFreeDrachma: fe(dPool - dCommitted),
-        ...mineInfo,
+        setWldMiner({
+          tier: Number(tier), cap: fe(cap), activeMineId: Number(activeId),
+          poolFreeHachi: fe(hPool - hCommitted), poolFreeDrachma: fe(dPool - dCommitted),
+          ...mineInfo,
+        })
       })
     } catch(e:any) { log('wld miner err: '+(e?.message||'').slice(0,80)) }
   }
 
   const loadVipHolders = async (p: ethers.JsonRpcProvider) => {
     try {
-      const vh = new ethers.Contract(VIP_HOLDERS_ADDR, VIP_HOLDERS_ABI, p)
-      const [level, preview, dPool, sPool] = await Promise.all([
-        vh.getVipLevel(addr), vh.previewExchange(addr), vh.drachmaPool(), vh.sushiPool(),
-      ])
-      setVipData({
-        level: Number(level),
-        pendingHachi: fe(preview[0]),
-        drachmaOut: fe(preview[1]),
-        sushiOut: fe(preview[2]),
-        drachmaPoolFree: fe(dPool),
-        sushiPoolFree: fe(sPool),
+      await withRetry(async () => {
+        const vh = new ethers.Contract(VIP_HOLDERS_ADDR, VIP_HOLDERS_ABI, p)
+        const [level, preview, dPool, sPool] = await Promise.all([
+          vh.getVipLevel(addr), vh.previewExchange(addr), vh.drachmaPool(), vh.sushiPool(),
+        ])
+        setVipData({
+          level: Number(level),
+          pendingHachi: fe(preview[0]),
+          drachmaOut: fe(preview[1]),
+          sushiOut: fe(preview[2]),
+          drachmaPoolFree: fe(dPool),
+          sushiPoolFree: fe(sPool),
+        })
       })
     } catch(e:any) { log('vip holders err: '+(e?.message||'').slice(0,80)) }
   }

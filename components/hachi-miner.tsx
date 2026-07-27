@@ -120,6 +120,7 @@ const WEEKLY_BONUS_ABI = [
   'function claimBonus()',
   'function lastActionTime(address) view returns (uint256)',
   'function sushiPool() view returns (uint256)',
+  'function cycleDuration() view returns (uint256)',
 ]
 const STREAK_ADDR = '0x92c6E4fF2A3D667e3dAf311af594c6246Ce6E807'
 const STREAK_ABI = ['function getTodayProgress(address) view returns (uint256,uint256,bool,uint8,uint256,bool)', 'function claimStreakBonus()', 'function getRanking() view returns (address[],uint256[])', 'function timeUntilNextRanking() view returns (uint256)', 'function lastCreditedAt(address) view returns (uint256)', 'function streakSushiPool() view returns (uint256)', 'function lastRankingExecutedAt() view returns (uint256)', 'event DayCredited(address indexed user, uint8 day, uint256 amount)', 'event CycleCompleted(address indexed user)', 'event SwapRankingPrizePaid(address indexed user, uint256 amount, uint256 rank)']
@@ -348,7 +349,7 @@ export default function HachiMiner() {
   const [showInfoWldMiner, setShowInfoWldMiner] = useState(false)
   const [miningWld, setMiningWld] = useState(false)
   const [claimingWldMiner, setClaimingWldMiner] = useState(false)
-  const [weeklyBonus, setWeeklyBonus] = useState({dailyRate:0, pending:0, everClaimed:false, poolFree:0})
+  const [weeklyBonus, setWeeklyBonus] = useState({dailyRate:0, pending:0, everClaimed:false, poolFree:0, secondsUntilNext:0})
   const [claimingWeekly, setClaimingWeekly] = useState(false)
   const [showInfoDrachma, setShowInfoDrachma] = useState(false)
   const [showInfoWeekly, setShowInfoWeekly] = useState(false)
@@ -357,6 +358,7 @@ export default function HachiMiner() {
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
   const [wldLics, setWldLics] = useState<any[]>([])
   const [wldLicsLoadedAt, setWldLicsLoadedAt] = useState(Date.now())
+  const [wldLicsLoaded, setWldLicsLoaded] = useState(false)
   const [liveTick, setLiveTick] = useState(Date.now())
   const [selSUSHI, setSelSUSHI] = useState(0)
   const [sushiPrev, setSushiPrev] = useState({base:'—',d1:'—',d2:'—',total:'—',dailyLeft:'—'})
@@ -365,6 +367,7 @@ export default function HachiMiner() {
   const [lastSettle, setLastSettle] = useState(0)
   const [debugMode] = useState(() => typeof window !== 'undefined' && window.location.search.includes('debug=1'))
   const [wldTierActive, setWldTierActive] = useState<number>(255)
+  const [wldTierLoaded, setWldTierLoaded] = useState(false)
   const [specialAvail, setSpecialAvail] = useState(false)
   const [lastSpecialTs, setLastSpecialTs] = useState(0)
   const [basicBoughtToday, setBasicBoughtToday] = useState(0)
@@ -658,6 +661,7 @@ export default function HachiMiner() {
       setSpecialAvail(Boolean(specAvail))
       setBasicBoughtToday(Number(bought))
       setLastSpecialTs(Number(lastSpec))
+      setWldTierLoaded(true)
     } catch(e: any) { log('checkDaily core err: '+(e?.message||'').slice(0,80)) }
     try {
       const ok = await new ethers.Contract(C.lock, LOCK, p).canMine(a)
@@ -1042,6 +1046,7 @@ export default function HachiMiner() {
       const lics = await Promise.all(ids.map(async(id:bigint) => ({id, l:await core.wldLics(id), pend:await core.pendingWLDHachi(id)})))
       setWldLics(lics.filter((x:any) => x.l[10]||x.l[11]))
       setWldLicsLoadedAt(Date.now())
+      setWldLicsLoaded(true)
     } catch(e) {}
   }
 
@@ -1323,10 +1328,12 @@ export default function HachiMiner() {
   const loadWeeklyBonus = async (p: ethers.JsonRpcProvider) => {
     try {
       const wb = new ethers.Contract(WEEKLY_BONUS_ADDR, WEEKLY_BONUS_ABI, p)
-      const [dailyRate, pending, lastAction, pool] = await Promise.all([
-        wb.getDailyRate(addr), wb.previewClaim(addr), wb.lastActionTime(addr), wb.sushiPool(),
+      const [dailyRate, pending, lastAction, pool, duration] = await Promise.all([
+        wb.getDailyRate(addr), wb.previewClaim(addr), wb.lastActionTime(addr), wb.sushiPool(), wb.cycleDuration(),
       ])
-      setWeeklyBonus({dailyRate: fe(dailyRate), pending: fe(pending), everClaimed: Number(lastAction) > 0, poolFree: fe(pool)})
+      const nowSecs = Math.floor(Date.now()/1000)
+      const secondsUntilNext = Math.max(0, Number(lastAction) + Number(duration) - nowSecs)
+      setWeeklyBonus({dailyRate: fe(dailyRate), pending: fe(pending), everClaimed: Number(lastAction) > 0, poolFree: fe(pool), secondsUntilNext})
     } catch(e) {}
   }
 
@@ -1751,7 +1758,7 @@ export default function HachiMiner() {
               <strong>Sistema limitado y sostenible:</strong> todos los topes de inversión están pensados según tu nivel, para que el sistema crezca de forma controlada. El equipo de Hachi reinvierte parte de lo recaudado y distribuye recursos entre los distintos pools para mantener todo funcionando — podés ver el detalle real en la página de <strong>Transparencia</strong> (junto a los enlaces de comunidad).
             </div>}
             <div style={sLabel}>Mis licencias WLD</div>
-            {wldLics.length===0?<div style={empty}><div style={{fontSize:28}}>💠</div><div>{t('no_lics')}</div></div>:<div style={card}>
+            {!wldLicsLoaded?<div style={empty}><div style={{fontSize:28}}>⏳</div><div>Consultando tus licencias...</div></div>:wldLics.length===0?<div style={empty}><div style={{fontSize:28}}>💠</div><div>{t('no_lics')}</div></div>:<div style={card}>
               {wldLics.map(({id,l,pend})=>{
                 const dailyHachi = fe(BigInt(l[4]) * BigInt(86400))
                 const dailyDrachma = fe(l[2]) * 0.5
@@ -2211,7 +2218,7 @@ export default function HachiMiner() {
             {weeklyBonus.dailyRate<=0&&<div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:10,marginTop:10,marginBottom:4,fontSize:12,color:'#f87171',lineHeight:1.5}}>
               No tenés licencia WLD activa ni una minería de Drachma activa — por eso tu tasa es 0. Comprá una licencia WLD o empezá una minería de Drachma para activar este bono.
             </div>}
-            <button onClick={claimWeeklyBonus} disabled={claimingWeekly||(weeklyBonus.everClaimed&&weeklyBonus.pending<=0)} style={{...btnP,width:'100%',marginTop:8,opacity:(claimingWeekly||(weeklyBonus.everClaimed&&weeklyBonus.pending<=0))?0.4:1}}>{claimingWeekly?'Reclamando...':!weeklyBonus.everClaimed?'Activar y reclamar mi bono':weeklyBonus.pending>0?`Reclamar ${weeklyBonus.pending.toFixed(2)} SUSHI`:'Todavía no disponible'}</button>
+            <button onClick={claimWeeklyBonus} disabled={claimingWeekly||(weeklyBonus.everClaimed&&weeklyBonus.pending<=0)} style={{...btnP,width:'100%',marginTop:8,opacity:(claimingWeekly||(weeklyBonus.everClaimed&&weeklyBonus.pending<=0))?0.4:1}}>{claimingWeekly?'Reclamando...':!weeklyBonus.everClaimed?'Activar y reclamar mi bono':weeklyBonus.pending>0?`Reclamar ${weeklyBonus.pending.toFixed(2)} SUSHI`:weeklyBonus.secondsUntilNext>0?`Disponible en ${Math.floor(weeklyBonus.secondsUntilNext/86400)}d ${Math.floor((weeklyBonus.secondsUntilNext%86400)/3600)}h`:'Todavía no disponible'}</button>
           </div>
         </div>}
 

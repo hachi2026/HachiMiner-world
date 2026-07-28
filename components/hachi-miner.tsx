@@ -1933,8 +1933,12 @@ export default function HachiMiner() {
 
           <div style={{...card,marginTop:12,border:'1px solid #fbbf24',boxShadow:'0 0 16px rgba(251,191,36,.2)'}}>
             <div style={{...cTitle,display:'flex',alignItems:'center',gap:6}}>💎 Reinversión VIP</div>
-            <div style={{background:'rgba(96,165,250,.1)',border:'1px solid rgba(96,165,250,.4)',borderRadius:8,padding:12,marginTop:8,marginBottom:4,fontSize:12,color:'#93c5fd',lineHeight:1.5,textAlign:'center'}}>
-              🔜 <strong>Próximamente:</strong> cambiá tus ganancias acumuladas por SUSHI o Drachma, con un pequeño interés extra. Los pools se fondean el día 30 — mientras tanto, seguís acumulando ganancias normalmente, sin perder nada.
+            <div style={{background:'rgba(52,211,153,.1)',border:'1px solid rgba(52,211,153,.4)',borderRadius:8,padding:12,marginTop:8,marginBottom:4,fontSize:12,color:'#6ee7b7',lineHeight:1.5,textAlign:'center'}}>
+              ✅ <strong>¡Ya disponible!</strong> Por ahora solo podés cambiar tus ganancias por SUSHI (el pool de Drachma todavía no se cargó).
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#8b949e',marginBottom:8,padding:'0 2px'}}>
+              <span>Pool Drachma: <strong style={{color:'#60a5fa'}}>{vipData.drachmaPoolFree.toFixed(0)}</strong></span>
+              <span>Pool SUSHI: <strong style={{color:'#a78bfa'}}>{vipData.sushiPoolFree.toFixed(0)}</strong></span>
             </div>
             <button onClick={()=>setShowInfoVip(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',margin:'8px 0',width:'100%'}}>ℹ️ ¿Qué es y cómo funciona?</button>
             {showInfoVip&&<div style={{background:'rgba(251,191,36,.08)',border:'1px solid rgba(251,191,36,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#fde68a',lineHeight:1.6}}>

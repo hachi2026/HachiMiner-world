@@ -394,6 +394,7 @@ export default function HachiMiner() {
   const [poolsData, setPoolsData] = useState<any>({})
   const [logs, setLogs] = useState<string[]>([])
   const [showVerify, setShowVerify] = useState(false)
+  const [verifyingBackend, setVerifyingBackend] = useState(false)
   const [rpContext, setRpContext] = useState<RpContext | null>(null)
   const [rpLoading, setRpLoading] = useState(false)
   const justVerifiedRef = useRef(false)
@@ -1584,17 +1585,22 @@ export default function HachiMiner() {
             open={showVerify}
             onOpenChange={(open) => setShowVerify(open)}
             handleVerify={async (result) => {
-              const res = await fetch('/api/verify-proof', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rp_id: 'rp_ef869d909ad99c43', idkitResponse: result, address: addr }),
-                keepalive: true,
-              })
-              if (!res.ok) {
-                const { error } = await res.json().catch(() => ({ error: 'Error desconocido' }))
-                log('verify-proof falló: ' + String(error).slice(0,80))
-                toast_('Verify falló: ' + String(error).slice(0,60), '#f85149')
-                throw new Error(error)
+              setVerifyingBackend(true)
+              try {
+                const res = await fetch('/api/verify-proof', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ rp_id: 'rp_ef869d909ad99c43', idkitResponse: result, address: addr }),
+                  keepalive: true,
+                })
+                if (!res.ok) {
+                  const { error } = await res.json().catch(() => ({ error: 'Error desconocido' }))
+                  log('verify-proof falló: ' + String(error).slice(0,80))
+                  toast_('Verify falló: ' + String(error).slice(0,60), '#f85149')
+                  throw new Error(error)
+                }
+              } finally {
+                setVerifyingBackend(false)
               }
             }}
             onSuccess={() => { justVerifiedRef.current = true; setVerified(true); setShowVerify(false); toast_('✓ Verificado con World ID', '#3fb950') }}
@@ -1618,6 +1624,15 @@ export default function HachiMiner() {
     <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#2a1f63 0%,#1d1a52 55%,#2b2c78 100%)',color:'#e6edf3',fontFamily:'Georgia,serif'}}>
       {toast&&<div style={{position:'fixed',top:16,right:16,zIndex:999,padding:'10px 16px',borderRadius:8,background:'#161b22',border:`1px solid ${toast.color}`,color:toast.color,fontSize:13,maxWidth:320}}>{toast.msg}</div>}
 
+      {verifyingBackend&&<div style={{position:'fixed',inset:0,zIndex:1000,background:'rgba(20,10,45,.92)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
+        <style>{`
+          @keyframes catJump { 0%,100%{transform:translateY(0) rotate(0deg);} 25%{transform:translateY(-22px) rotate(-8deg);} 50%{transform:translateY(0) rotate(0deg);} 75%{transform:translateY(-10px) rotate(6deg);} }
+        `}</style>
+        <div style={{fontSize:64,animation:'catJump 0.9s ease-in-out infinite'}}>🐱</div>
+        <div style={{fontSize:16,fontWeight:700,color:'#e879f9',textAlign:'center',padding:'0 24px'}}>Tu sistema se está cargando...</div>
+        <div style={{fontSize:13,color:'#c4b5fd',textAlign:'center',padding:'0 32px',lineHeight:1.5}}>Estamos confirmando tu verificación en la blockchain. Esto puede tardar hasta 10 segundos.</div>
+      </div>}
+
       {/* VERIFICACION WORLD ID 4.0 — IDKit gestiona su propio modal */}
       {rpContext&&(
         <IDKitRequestWidget
@@ -1629,17 +1644,22 @@ export default function HachiMiner() {
           open={showVerify}
           onOpenChange={(open) => setShowVerify(open)}
           handleVerify={async (result) => {
-            const res = await fetch('/api/verify-proof', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ rp_id: 'rp_ef869d909ad99c43', idkitResponse: result, address: addr }),
-              keepalive: true,
-            })
-            if (!res.ok) {
-              const { error } = await res.json().catch(() => ({ error: 'Error desconocido' }))
-              log('verify-proof falló: ' + String(error).slice(0,80))
-              toast_('Verify falló: ' + String(error).slice(0,60), '#f85149')
-              throw new Error(error)
+            setVerifyingBackend(true)
+            try {
+              const res = await fetch('/api/verify-proof', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rp_id: 'rp_ef869d909ad99c43', idkitResponse: result, address: addr }),
+                keepalive: true,
+              })
+              if (!res.ok) {
+                const { error } = await res.json().catch(() => ({ error: 'Error desconocido' }))
+                log('verify-proof falló: ' + String(error).slice(0,80))
+                toast_('Verify falló: ' + String(error).slice(0,60), '#f85149')
+                throw new Error(error)
+              }
+            } finally {
+              setVerifyingBackend(false)
             }
           }}
           onSuccess={() => { justVerifiedRef.current = true; setVerified(true); setShowVerify(false); toast_('✓ Verificado con World ID', '#3fb950') }}

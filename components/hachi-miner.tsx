@@ -99,6 +99,7 @@ const WLD_MINER_ABI = [
   'function drachmaPool() view returns (uint256)',
   'function hachiCommitted() view returns (uint256)',
   'function drachmaCommitted() view returns (uint256)',
+  'function variants(uint256) view returns (uint256 duration, uint256 returnBps)',
 ]
 const DRACHMA_MINER_ABI = [
   'function getUserTier(address) view returns (uint8)',
@@ -343,6 +344,7 @@ export default function HachiMiner() {
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
   const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0})
   const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0, loaded:false})
+  const [wldMinerVariants, setWldMinerVariants] = useState([{days:7,pct:10},{days:15,pct:15},{days:30,pct:30}])
   const [selWldAmount, setSelWldAmount] = useState('')
   const [selWldVariant, setSelWldVariant] = useState(0)
   const [wldMinerPreview, setWldMinerPreview] = useState({hachi:0, drachma:0})
@@ -1183,6 +1185,8 @@ export default function HachiMiner() {
     try {
       await withRetry(async () => {
         const wm = new ethers.Contract(WLD_MINER_ADDR, WLD_MINER_ABI, p)
+        const variantsData = await Promise.all([0,1,2].map(i => wm.variants(i)))
+        setWldMinerVariants(variantsData.map((v: any) => ({ days: Math.round(Number(v[0])/86400), pct: Number(v[1])/100 })))
         const [tier, cap, activeId, hPool, hCommitted, dPool, dCommitted]: [bigint, bigint, bigint, bigint, bigint, bigint, bigint] = await Promise.all([
           wm.getUserTier(addr), wm.maxInvestableWld(addr), wm.activeMineId(addr),
           wm.hachiPool(), wm.hachiCommitted(), wm.drachmaPool(), wm.drachmaCommitted(),
@@ -2302,7 +2306,7 @@ export default function HachiMiner() {
               <div style={{fontSize:12,color:'#8b949e',marginBottom:8}}>Tu tope máximo: <strong style={{color:'#fbbf24'}}>{fmtPrecise(wldMiner.cap)} WLD</strong></div>
               <div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:'8px 10px',marginBottom:10,fontSize:11,color:'#f87171',fontWeight:600,textAlign:'center'}}>⚠️ Solo podés tener 1 minería activa a la vez</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:10}}>
-                {[['7 días','10%'],['15 días','15%'],['30 días','30%']].map(([d,r],i)=>
+                {wldMinerVariants.map(({days,pct},i)=>[`${days} días`, `${pct}%`]).map(([d,r],i)=>
                   <div key={i} onClick={()=>{setSelWldVariant(i); previewWldMine()}} style={{...lCard,padding:8,border:`1px solid ${selWldVariant===i?'#fbbf24':'#5b21b6'}`,background:selWldVariant===i?'rgba(251,191,36,.08)':'#1e0840',cursor:'pointer'}}>
                     <div style={{fontSize:11,fontWeight:700}}>{d}</div>
                     <div style={{fontSize:14,fontWeight:700,color:'#34d399'}}>{r}</div>

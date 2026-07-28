@@ -624,10 +624,13 @@ export default function HachiMiner() {
   }
 
   const checkVerif = async (a: string, p: ethers.JsonRpcProvider) => {
+    // A propósito: NO seteamos verified=true acá aunque el backend diga que
+    // esta wallet ya se verificó antes. Se pide la verificación de World ID
+    // SIEMPRE que alguien reingresa a la app, sin excepción, aunque genere
+    // fricción — decisión de producto explícita, no un bug.
     try {
       const res = await fetch('/api/verify-status?address=' + a)
       const data = await res.json()
-      setVerified(Boolean(data.verified))
       if (data.verified) {
         fetch('/api/resync-verification?address=' + a).catch(() => {})
       }

@@ -1234,10 +1234,14 @@ export default function HachiMiner() {
     try {
       toast_('Cambiando...', '#d29922')
       const vh = new ethers.Contract(VIP_HOLDERS_ADDR, VIP_HOLDERS_ABI, rpc())
-      const [, drachmaOut, sushiOut] = await vh.previewExchange(addr)
+      const [hachiAmount, drachmaOut, sushiOut] = await vh.previewExchange(addr)
       const expectedOut = vipPreferredToken === 0 ? drachmaOut : sushiOut
       const minOut = (expectedOut * BigInt(95)) / BigInt(100)
-      await sendTx(VIP_HOLDERS_ADDR, VIP_HOLDERS_ABI, 'exchange', [vipPreferredToken, minOut])
+      const hachiWithBuffer = (hachiAmount * BigInt(102)) / BigInt(100)
+      await sendTxMulti([
+        ...buildPermit2Approvals(C.hachi, VIP_HOLDERS_ADDR, hachiWithBuffer),
+        { to: VIP_HOLDERS_ADDR, abi: VIP_HOLDERS_ABI, fnName: 'exchange', args: [vipPreferredToken, minOut] },
+      ])
       toast_('✓ Cambio realizado', '#3fb950')
       loadVipHolders(rpc())
       loadBal(addr, rpc())

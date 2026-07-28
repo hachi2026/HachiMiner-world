@@ -831,6 +831,7 @@ export default function HachiMiner() {
   // { address, data } para evitar que MiniKit inspeccione el nombre de la función.
   // Tras recibir el transaction_id de MiniKit, hacemos polling hasta confirmar el minado on-chain.
   const sendTx = async (contractAddr: string, abi: string[], fnName: string, args: any[]) => {
+    if (!verified) throw new Error('Necesitás verificarte con World ID antes de usar la app')
     log('tx: '+fnName+' inWA:'+inWA)
     if (MiniKit.isInstalled()) {
       const data = encodeFunctionData({ abi: parseAbi(abi), functionName: fnName as any, args })
@@ -858,6 +859,7 @@ export default function HachiMiner() {
   // ABI declarativo { to, abi, fnName, args } (funciones de nuestros contratos).
   // Incluye polling on-chain tras recibir el transaction_id de MiniKit.
   const sendTxMulti = async (calls: ({ to: string; data: `0x${string}` } | { to: string; abi: string[]; fnName: string; args: any[] })[]) => {
+    if (!verified) throw new Error('Necesitás verificarte con World ID antes de usar la app')
     if (MiniKit.isInstalled()) {
       const txs = calls.map((c) => {
         if ('data' in c) return { to: c.to, data: c.data }

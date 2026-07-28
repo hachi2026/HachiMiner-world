@@ -11,88 +11,49 @@ const HACHI_DRACHMA_MINER_ADDRESS_ENV = "HACHI_DRACHMA_MINER_ADDRESS";
 
 async function syncHumanVerifiedOnChain(userAddress: string) {
   const pk = process.env.VERIFIER_PRIVATE_KEY;
-  const referralManagerAddr = process.env.REFERRAL_MANAGER_ADDRESS;
-  const hachiRankingAddr = process.env.HACHI_RANKING_ADDRESS;
-  const dailyRewardsAddr = process.env.HACHI_DAILY_REWARDS_ADDRESS;
-  const hachiSwapAddr = process.env.HACHI_SWAP_ADDRESS;
-  const hachiSwapStreakAddr = process.env[HACHI_SWAP_STREAK_ADDRESS_ENV];
-  const hachiDrachmaMinerAddr = process.env[HACHI_DRACHMA_MINER_ADDRESS_ENV];
+  const contracts = [
+    { key: "referralManager", addr: process.env.REFERRAL_MANAGER_ADDRESS },
+    { key: "hachiRanking", addr: process.env.HACHI_RANKING_ADDRESS },
+    { key: "dailyRewards", addr: process.env.HACHI_DAILY_REWARDS_ADDRESS },
+    { key: "hachiSwap", addr: process.env.HACHI_SWAP_ADDRESS },
+    { key: "hachiSwapStreak", addr: process.env[HACHI_SWAP_STREAK_ADDRESS_ENV] },
+    { key: "hachiDrachmaMiner", addr: process.env[HACHI_DRACHMA_MINER_ADDRESS_ENV] },
+  ] as const;
+
+  const results: Record<string, boolean> = {
+    referralManager: false, hachiRanking: false, dailyRewards: false,
+    hachiSwap: false, hachiSwapStreak: false, hachiDrachmaMiner: false,
+  };
 
   if (!pk) {
     console.error("VERIFIER_PRIVATE_KEY no configurada; no se pudo sincronizar on-chain");
-    return { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false, hachiDrachmaMiner: false };
+    return results;
   }
 
   const provider = new ethers.JsonRpcProvider(RPC);
   const wallet = new ethers.Wallet(pk, provider);
 
-  const results = { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false, hachiDrachmaMiner: false };
+  // Enviamos las 6 transacciones EN PARALELO (no una por una esperando
+  // cada confirmación) asignando nonces manuales de antemano, para que
+  // no se pisen entre sí al salir todas casi al mismo tiempo desde la
+  // misma wallet. Esto baja el tiempo total de "suma de las 6" a
+  // "la más lenta de las 6".
+  const startNonce = await wallet.getNonce();
 
-  if (referralManagerAddr) {
-    try {
-      const c = new ethers.Contract(referralManagerAddr, SET_HUMAN_VERIFIED_ABI, wallet);
-      const tx = await c.setHumanVerified(userAddress);
-      await tx.wait();
-      results.referralManager = true;
-    } catch (e) {
-      console.error("Error sincronizando ReferralManager:", e);
-    }
-  }
+  const txPromises = contracts.map(({ key, addr }, i) => {
+    if (!addr) return Promise.resolve({ key, success: false });
+    const c = new ethers.Contract(addr, SET_HUMAN_VERIFIED_ABI, wallet);
+    return c.setHumanVerified(userAddress, { nonce: startNonce + i })
+      .then((tx: any) => tx.wait())
+      .then(() => ({ key, success: true }))
+      .catch((e: any) => {
+        console.error(`Error sincronizando ${key}:`, e);
+        return { key, success: false };
+      });
+  });
 
-  if (hachiRankingAddr) {
-    try {
-      const c = new ethers.Contract(hachiRankingAddr, SET_HUMAN_VERIFIED_ABI, wallet);
-      const tx = await c.setHumanVerified(userAddress);
-      await tx.wait();
-      results.hachiRanking = true;
-    } catch (e) {
-      console.error("Error sincronizando HachiRanking:", e);
-    }
-  }
-
-  if (dailyRewardsAddr) {
-    try {
-      const c = new ethers.Contract(dailyRewardsAddr, SET_HUMAN_VERIFIED_ABI, wallet);
-      const tx = await c.setHumanVerified(userAddress);
-      await tx.wait();
-      results.dailyRewards = true;
-    } catch (e) {
-      console.error("Error sincronizando HachiDailyRewards:", e);
-    }
-  }
-
-  if (hachiSwapAddr) {
-    try {
-      const c = new ethers.Contract(hachiSwapAddr, SET_HUMAN_VERIFIED_ABI, wallet);
-      const tx = await c.setHumanVerified(userAddress);
-      await tx.wait();
-      results.hachiSwap = true;
-    } catch (e) {
-      console.error("Error sincronizando HachiSwap:", e);
-    }
-  }
-
-  if (hachiSwapStreakAddr) {
-    try {
-      const c = new ethers.Contract(hachiSwapStreakAddr, SET_HUMAN_VERIFIED_ABI, wallet);
-      const tx = await c.setHumanVerified(userAddress);
-      await tx.wait();
-      results.hachiSwapStreak = true;
-    } catch (e) {
-      console.error("Error sincronizando HachiSwapStreak:", e);
-    }
-  }
-
-  if (hachiDrachmaMinerAddr) {
-    try {
-      const c = new ethers.Contract(hachiDrachmaMinerAddr, SET_HUMAN_VERIFIED_ABI, wallet);
-      const tx = await c.setHumanVerified(userAddress);
-      await tx.wait();
-      results.hachiDrachmaMiner = true;
-    } catch (e) {
-      console.error("Error sincronizando HachiDrachmaMiner:", e);
-    }
-  }
+  const txResults = await Promise.all(txPromises);
+  for (const r of txResults) results[r.key] = r.success;
 
   return results;
 }

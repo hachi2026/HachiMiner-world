@@ -1727,8 +1727,12 @@ export default function HachiMiner() {
         })}
       </div>}
       {!SHOW_TOP_NAV&&tab!=='home'&&<div style={{background:'#12022a',borderBottom:'1px solid #3b0764',padding:'8px 12px'}}>
-        <button onClick={()=>loadTab('home')} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',padding:'6px 12px',fontSize:13,cursor:'pointer'}}>← Volver a Inicio</button>
-      </div>}
+        {(()=>{
+          const MINERIA_SUBTABS = ['lics','bocado','drachmaminer','wldminer','weeklybonus']
+          const backTo = MINERIA_SUBTABS.includes(tab) ? 'mineria' : 'home'
+          const backLabel = backTo==='mineria' ? '← Volver a Minería' : '← Volver a Inicio'
+          return <button onClick={()=>loadTab(backTo as Tab)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',padding:'6px 12px',fontSize:13,cursor:'pointer'}}>{backLabel}</button>
+        })()}</div>}
 
       <div style={{maxWidth:480,margin:'0 auto',padding:16}}>
 

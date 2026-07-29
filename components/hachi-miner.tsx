@@ -2038,40 +2038,44 @@ export default function HachiMiner() {
             {[['Oracle',oracleSt],['1 WLD =',fmt(wldHachi)+' HACHI'],['1 HACHI =',hachiSushi.toFixed(4)+' SUSHI'],['Pool WLD disponible',poolFree],['Licencias WLD disponibles',licsAvail]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
           </div>
           <div style={sLabel}>Estado de pools</div>
-          <div style={card}><div style={cTitle}>💠 Pool WLD</div>
-            {[['Total',poolsData.wldTotal||'—'],['Reservado',poolsData.wldComm||'—'],['Libre',poolsData.wldFree||'—'],['Total pagado',poolsData.wldPaid||'—'],['Licencias disponibles',poolsData.licsAvail||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
-          </div>
-          <div style={card}><div style={{...cTitle,display:'flex',alignItems:'center',gap:6}}><img src="/hachi-cat-savings.png" width={20} height={20} style={{borderRadius:4,objectFit:'cover',flexShrink:0}} />Pool A — Bocado</div>
-            {[['Libre',poolsData.poolAF||'—'],['Licencias Bocado disponibles',poolsData.sushiAvail||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
-          </div>
-          <div style={card}><div style={cTitle}>📊 Estadísticas</div>
-            {[['Licencias WLD vendidas',poolsData.wldLics||'—'],['Licencias Bocado vendidas',poolsData.sushiLics||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>🔥 HACHI quemados</span><span style={{fontFamily:'monospace',color:'#f87171',fontWeight:600}}>{poolsData.burned||'—'}</span></div>
-          </div>
           <div style={card}><div style={cTitle}>🔒 Lock & APY</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>APY Pool</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.apyPool)} HACHI</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Total lockeado</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.totalLocked)} HACHI</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Usuarios</span><span style={{fontFamily:'monospace'}}>{poolsExtra.lockUsers}</span></div>
           </div>
-          <div style={card}><div style={cTitle}>🎁 Reclamo diario</div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool HACHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.dailyHachiPool)} HACHI</span></div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool Drachma</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.dailyBonusPool)} Drachma</span></div>
-          </div>
-          <div style={card}><div style={cTitle}>🔥 Racha de swaps</div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.streakPool)} SUSHI</span></div>
-          </div>
-          <div style={card}><div style={cTitle}>🏆 Ranking (premios cada 15 días)</div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Period pool</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.rankingPeriodPool)} HACHI</span></div>
+          <div style={card}><div style={cTitle}>💠 Hachi Miner</div>
+            {[['Total',poolsData.wldTotal||'—'],['Reservado',poolsData.wldComm||'—'],['Libre',poolsData.wldFree||'—'],['Total pagado',poolsData.wldPaid||'—'],['Licencias disponibles',poolsData.licsAvail||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
           </div>
           <div style={card}><div style={cTitle}>🪙 Drachma Miner</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.drachmaMinerFree)} Drachma</span></div>
           </div>
-          <div style={card}><div style={cTitle}>📅 Bono Semanal</div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.weeklyBonusPool)} SUSHI</span></div>
-          </div>
           <div style={card}><div style={cTitle}>⛏️ WLD Miner</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.wldMinerHachiFree)} HACHI</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Drachma libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.wldMinerDrachmaFree)} Drachma</span></div>
+          </div>
+          <div style={card}><div style={{...cTitle,display:'flex',alignItems:'center',gap:6}}><img src="/hachi-cat-savings.png" width={20} height={20} style={{borderRadius:4,objectFit:'cover',flexShrink:0}} />Pool A — Bocado</div>
+            {[['Libre',poolsData.poolAF||'—'],['Licencias Bocado disponibles',poolsData.sushiAvail||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
+          </div>
+          <div style={card}><div style={cTitle}>📅 Bono Semanal</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.weeklyBonusPool)} SUSHI</span></div>
+          </div>
+          <div style={card}><div style={cTitle}>💎 Reinversión VIP</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool Drachma</span><span style={{fontFamily:'monospace'}}>{vipData.drachmaPoolFree.toFixed(0)}</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{vipData.sushiPoolFree.toFixed(0)}</span></div>
+          </div>
+          <div style={card}><div style={cTitle}>🎁 Reclamo diario</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool HACHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.dailyHachiPool)} HACHI</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool Drachma</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.dailyBonusPool)} Drachma</span></div>
+          </div>
+          <div style={card}><div style={cTitle}>🏆 Ranking (premios cada 15 días)</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Period pool</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.rankingPeriodPool)} HACHI</span></div>
+          </div>
+          <div style={card}><div style={cTitle}>📊 Estadísticas</div>
+            {[['Licencias WLD vendidas',poolsData.wldLics||'—'],['Licencias Bocado vendidas',poolsData.sushiLics||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>🔥 HACHI quemados</span><span style={{fontFamily:'monospace',color:'#f87171',fontWeight:600}}>{poolsData.burned||'—'}</span></div>
+          </div>
+          <div style={card}><div style={cTitle}>🔥 Racha de swaps</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.streakPool)} SUSHI</span></div>
           </div>
         </div>}
 

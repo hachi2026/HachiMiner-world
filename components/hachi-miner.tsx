@@ -342,7 +342,7 @@ export default function HachiMiner() {
   const [showBuyWLD, setShowBuyWLD] = useState(false)
   const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0, durationDays:15, loaded:false})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
-  const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0, weeklyBonusClaimedTotal:0, vipExchangedTotal:0})
+  const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0})
   const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0, loaded:false})
   const [wldMinerVariants, setWldMinerVariants] = useState([{days:7,pct:10},{days:15,pct:15},{days:30,pct:30}])
   const [selWldAmount, setSelWldAmount] = useState('')
@@ -1281,40 +1281,6 @@ export default function HachiMiner() {
         wmC.hachiPool(), wmC.hachiCommitted(), wmC.drachmaPool(), wmC.drachmaCommitted(),
       ])
 
-      let weeklyBonusClaimedTotal = 0
-      let vipExchangedTotal = 0
-      try {
-        const currentBlock = await p.getBlockNumber()
-        const scanChunked = async (contract: ethers.Contract, filter: any, fromBlock: number) => {
-          const CHUNK = 100, BATCH = 8
-          let events: any[] = []
-          let to = currentBlock
-          while (to >= fromBlock) {
-            const ranges: [number, number][] = []
-            let cursor = to
-            for (let j = 0; j < BATCH && cursor >= fromBlock; j++) {
-              const from = Math.max(fromBlock, cursor - CHUNK + 1)
-              ranges.push([from, cursor])
-              cursor = from - 1
-            }
-            const results = await Promise.all(ranges.map(([f, t]) => contract.queryFilter(filter, f, t).catch(() => [])))
-            for (const evs of results) events = events.concat(evs)
-            to = cursor
-          }
-          return events
-        }
-
-        const wbEventsC = new ethers.Contract(WEEKLY_BONUS_ADDR, ['event BonusClaimed(address indexed user, uint256 amount)'], p)
-        const vhEventsC = new ethers.Contract(VIP_HOLDERS_ADDR, ['event Exchanged(address indexed user, uint256 hachiPaid, uint8 tokenOut, uint256 amountOut)'], p)
-
-        const [wbEvents, vhEvents] = await Promise.all([
-          scanChunked(wbEventsC, wbEventsC.filters.BonusClaimed(), 32619158),
-          scanChunked(vhEventsC, vhEventsC.filters.Exchanged(), 32678677),
-        ])
-        for (const e of wbEvents as any[]) weeklyBonusClaimedTotal += fe(e.args.amount)
-        for (const e of vhEvents as any[]) vipExchangedTotal += fe(e.args.hachiPaid)
-      } catch(e:any) { log('pools historico err: '+(e?.message||'').slice(0,80)) }
-
       setPoolsExtra({
         apyPool: fe(apyPool), totalLocked: fe(totalLocked), lockUsers: Number(lockUsers),
         dailyHachiPool: fe(dailyHachiPool), dailyBonusPool: fe(dailyBonusPool),
@@ -1324,7 +1290,6 @@ export default function HachiMiner() {
         weeklyBonusPool: fe(wbPool),
         wldMinerHachiFree: fe(wmHachiPool - wmHachiCommitted),
         wldMinerDrachmaFree: fe(wmDrachmaPool - wmDrachmaCommitted),
-        weeklyBonusClaimedTotal, vipExchangedTotal,
       })
     } catch(e:any) { log('pools extra err: '+(e?.message||'').slice(0,80)) }
   }
@@ -2093,12 +2058,10 @@ export default function HachiMiner() {
           </div>
           <div style={card}><div style={cTitle}>📅 Bono Semanal</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.weeklyBonusPool)} SUSHI</span></div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Total repartido histórico</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(poolsExtra.weeklyBonusClaimedTotal)} SUSHI</span></div>
           </div>
           <div style={card}><div style={cTitle}>💎 Reinversión VIP</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool Drachma</span><span style={{fontFamily:'monospace'}}>{vipData.drachmaPoolFree.toFixed(0)}</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{vipData.sushiPoolFree.toFixed(0)}</span></div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Total intercambiado histórico</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(poolsExtra.vipExchangedTotal)} HACHI</span></div>
           </div>
           <div style={card}><div style={cTitle}>🎁 Reclamo diario</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool HACHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.dailyHachiPool)} HACHI</span></div>

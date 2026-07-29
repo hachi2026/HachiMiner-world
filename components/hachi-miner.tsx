@@ -1801,6 +1801,8 @@ export default function HachiMiner() {
               <br/><br/>
               <strong>Licencias Bocado:</strong> pagás HACHI y recibís SUSHI al instante (el monto base + 25% de bonus), sin esperar.
               <br/><br/>
+              <strong>Límite de licencias Elite:</strong> podés tener como máximo <strong>3 licencias Elite activas al mismo tiempo</strong>, como medida de seguridad para proteger el sistema.
+              <br/><br/>
               <strong>Sistema limitado y sostenible:</strong> todos los topes de inversión están pensados según tu nivel, para que el sistema crezca de forma controlada. El equipo de Hachi reinvierte parte de lo recaudado y distribuye recursos entre los distintos pools para mantener todo funcionando — podés ver el detalle real en la página de <strong>Transparencia</strong> (junto a los enlaces de comunidad).
             </div>}
             <div style={sLabel}>Mis licencias WLD</div>

@@ -1801,10 +1801,11 @@ export default function HachiMiner() {
               <br/><br/>
               <strong>Licencias Bocado:</strong> pagás HACHI y recibís SUSHI al instante (el monto base + 25% de bonus), sin esperar.
               <br/><br/>
-              <strong>Límite de licencias Elite:</strong> podés tener como máximo <strong>3 licencias Elite activas al mismo tiempo</strong>, como medida de seguridad para proteger el sistema.
-              <br/><br/>
               <strong>Sistema limitado y sostenible:</strong> todos los topes de inversión están pensados según tu nivel, para que el sistema crezca de forma controlada. El equipo de Hachi reinvierte parte de lo recaudado y distribuye recursos entre los distintos pools para mantener todo funcionando — podés ver el detalle real en la página de <strong>Transparencia</strong> (junto a los enlaces de comunidad).
             </div>}
+            <div style={{background:'rgba(251,191,36,.1)',border:'1px solid rgba(251,191,36,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:12,color:'#fbbf24',textAlign:'center',fontWeight:700}}>
+              🔒 Máximo 3 licencias Elite activas al mismo tiempo, por usuario
+            </div>
             <div style={sLabel}>Mis licencias WLD</div>
             {!wldLicsLoaded?<div style={empty}><div style={{fontSize:28}}>⏳</div><div>Consultando tus licencias...</div></div>:wldLics.length===0?<div style={empty}><div style={{fontSize:28}}>💠</div><div>{t('no_lics')}</div></div>:<div style={card}>
               {wldLics.map(({id,l,pend})=>{

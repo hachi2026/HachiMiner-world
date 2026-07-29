@@ -1513,6 +1513,10 @@ export default function HachiMiner() {
   if (!connected) {
     return (
       <div style={{minHeight:'100vh',background:'linear-gradient(160deg,#2a1f63 0%,#1d1a52 55%,#2b2c78 100%)',color:'#e6edf3',fontFamily:'Georgia,serif',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
+        <style>{`
+          @keyframes orbitRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          @keyframes orbitCounterRotate { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+        `}</style>
         {toast&&<div style={{position:'fixed',top:16,right:16,zIndex:999,padding:'10px 16px',borderRadius:8,background:'#161b22',border:`1px solid ${toast.color}`,color:toast.color,fontSize:13,maxWidth:320}}>{toast.msg}</div>}
 
         {/* selector de idioma arriba a la derecha */}

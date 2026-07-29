@@ -1970,16 +1970,22 @@ export default function HachiMiner() {
             {!vipData.loaded?<div style={{textAlign:'center',padding:'12px 8px',color:'#8b949e',fontSize:13}}>⏳ Consultando tu Lock...</div>:vipData.level===255?<div style={{textAlign:'center',padding:'12px 8px',color:'#8b949e',fontSize:13}}>🔒 Necesitás al menos 250,000 HACHI lockeados para acceder</div>:<>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Tu nivel</span><span style={{fontFamily:'monospace',fontWeight:700,color:'#fbbf24'}}>{['5% bono','8% bono','10% bono','12% bono'][vipData.level]}</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI acumulado</span><span style={{fontFamily:'monospace'}}>{vipData.pendingHachi.toFixed(4)}</span></div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,margin:'10px 0'}}>
-                <div onClick={()=>setVipPreferredToken(0)} style={{...lCard,padding:10,border:`1px solid ${vipPreferredToken===0?'#fbbf24':'#5b21b6'}`,background:vipPreferredToken===0?'rgba(251,191,36,.08)':'#1e0840',cursor:'pointer',textAlign:'center'}}>
-                  <div style={{fontSize:11,color:'#8b949e'}}>Drachma</div>
-                  <div style={{fontFamily:'monospace',fontWeight:700,color:'#60a5fa'}}>{vipData.drachmaOut.toFixed(2)}</div>
+              {(()=>{
+                const drachmaLocked = vipData.drachmaOut > vipData.drachmaPoolFree
+                const sushiLocked = vipData.sushiOut > vipData.sushiPoolFree
+                return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,margin:'10px 0'}}>
+                  <div onClick={()=>{if(!drachmaLocked) setVipPreferredToken(0)}} style={{...lCard,padding:10,border:`1px solid ${vipPreferredToken===0&&!drachmaLocked?'#fbbf24':'#5b21b6'}`,background:vipPreferredToken===0&&!drachmaLocked?'rgba(251,191,36,.08)':'#1e0840',cursor:drachmaLocked?'not-allowed':'pointer',textAlign:'center',opacity:drachmaLocked?0.4:1}}>
+                    <div style={{fontSize:11,color:'#8b949e'}}>Drachma</div>
+                    <div style={{fontFamily:'monospace',fontWeight:700,color:'#60a5fa'}}>{vipData.drachmaOut.toFixed(2)}</div>
+                    {drachmaLocked&&<div style={{fontSize:9,color:'#f87171',marginTop:2}}>Sin fondos</div>}
+                  </div>
+                  <div onClick={()=>{if(!sushiLocked) setVipPreferredToken(1)}} style={{...lCard,padding:10,border:`1px solid ${vipPreferredToken===1&&!sushiLocked?'#fbbf24':'#5b21b6'}`,background:vipPreferredToken===1&&!sushiLocked?'rgba(251,191,36,.08)':'#1e0840',cursor:sushiLocked?'not-allowed':'pointer',textAlign:'center',opacity:sushiLocked?0.4:1}}>
+                    <div style={{fontSize:11,color:'#8b949e'}}>SUSHI</div>
+                    <div style={{fontFamily:'monospace',fontWeight:700,color:'#a78bfa'}}>{vipData.sushiOut.toFixed(2)}</div>
+                    {sushiLocked&&<div style={{fontSize:9,color:'#f87171',marginTop:2}}>Sin fondos</div>}
+                  </div>
                 </div>
-                <div onClick={()=>setVipPreferredToken(1)} style={{...lCard,padding:10,border:`1px solid ${vipPreferredToken===1?'#fbbf24':'#5b21b6'}`,background:vipPreferredToken===1?'rgba(251,191,36,.08)':'#1e0840',cursor:'pointer',textAlign:'center'}}>
-                  <div style={{fontSize:11,color:'#8b949e'}}>SUSHI</div>
-                  <div style={{fontFamily:'monospace',fontWeight:700,color:'#a78bfa'}}>{vipData.sushiOut.toFixed(2)}</div>
-                </div>
-              </div>
+              })()}
               <button onClick={exchangeVipAction} disabled={exchangingVip||vipData.pendingHachi<=0} style={{...btnP,width:'100%',opacity:(exchangingVip||vipData.pendingHachi<=0)?0.4:1}}>{exchangingVip?'Cambiando...':vipData.pendingHachi<=0?'Nada acumulado todavía':'Cambiar ahora'}</button>
             </>}
           </div>

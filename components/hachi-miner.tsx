@@ -1037,7 +1037,7 @@ export default function HachiMiner() {
     if (v==='drachmaminer') { loadDrachmaMiner(p) }
     if (v==='wldminer') { loadWldMiner(p) }
     if (v==='weeklybonus') { loadWeeklyBonus(p) }
-    if (v==='pools') { loadPools(p); loadPoolsExtra(p) }
+    if (v==='pools') { loadPools(p); loadPoolsExtra(p); loadVipHolders(p) }
     if (v==='refs') loadRefs(p)
     if (v==='swap') { loadSwapHistory(p); loadStreakStatus(p); loadStreakHistory(p); loadSwapRanking(p) }
   }

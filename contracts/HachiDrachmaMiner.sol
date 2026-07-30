@@ -21,7 +21,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 //  defecto) sobre ese costo de mercado.
 //
 //  El Drachma se entrega de a poco durante un plazo configurable
-//  (30 dias por defecto). Solo 1 mina activa por usuario.
+//  (30 dias por defecto). Maximo configurable de minas activas
+//  simultaneas por usuario (arranca en 1).
 //  El HACHI pagado va directo al owner (no queda en el contrato).
 //
 //  No depende del PriceOracle compartido — contrato aislado.
@@ -97,8 +98,10 @@ contract HachiDrachmaMiner is ReentrancyGuard {
     }
 
     mapping(uint256 => DrachmaMine) public mines;
-    mapping(address => uint256) public activeMineId; // 0 = sin mina activa
+    mapping(address => uint256) public activeMineId; // referencia a la ULTIMA mina creada (compatibilidad)
+    mapping(address => uint256[]) public userMineIds; // TODAS las minas creadas por el usuario
     uint256 public mineId;
+    uint256 public maxActiveMines = 1; // configurable a futuro sin redeploy
 
     uint256 public drachmaPool;      // Drachma total depositado por el owner
     uint256 public drachmaCommitted; // Drachma reservado para minas activas
@@ -107,6 +110,11 @@ contract HachiDrachmaMiner is ReentrancyGuard {
     event Claimed(address indexed user, uint256 indexed id, uint256 amount);
     event PoolFunded(uint256 amount, uint256 newTotal);
     event UserVerified(address indexed user);
+    event EmergencyRequested(uint256 unlockTime);
+    event EmergencyExecuted(address token, uint256 amount);
+    event EmergencyCancelled();
+
+    uint256 public emergencyUnlockTime;
 
     modifier onlyOwner() { require(msg.sender == owner, "not owner"); _; }
     modifier onlyHuman() { require(humanVerified[msg.sender], "World ID required"); _; }
@@ -140,6 +148,18 @@ contract HachiDrachmaMiner is ReentrancyGuard {
     function setMineDuration(uint256 _seconds) external onlyOwner {
         require(_seconds > 0, "must be > 0");
         mineDuration = _seconds;
+    }
+
+    function setMaxActiveMines(uint256 _max) external onlyOwner {
+        require(_max > 0, "must be > 0");
+        maxActiveMines = _max;
+    }
+
+    function _countActiveMines(address user) internal view returns (uint256 count) {
+        uint256[] storage ids = userMineIds[user];
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (mines[ids[i]].active) count++;
+        }
     }
 
     function setHumanVerified(address user) external {
@@ -214,7 +234,7 @@ contract HachiDrachmaMiner is ReentrancyGuard {
 
     // --- MINAR (elige tier hasta el que califique, paga HACHI con descuento) ---
     function mineDrachma(uint8 tier, uint256 maxHachiIn) external nonReentrant onlyHuman returns (uint256 id) {
-        require(activeMineId[msg.sender] == 0 || !mines[activeMineId[msg.sender]].active, "Ya tenes una mina activa");
+        require(_countActiveMines(msg.sender) < maxActiveMines, "Alcanzaste el maximo de minerias activas");
 
         uint8 userTier = getUserTier(msg.sender);
         require(userTier != 255, "Necesitas una licencia WLD o Lock activo");
@@ -245,6 +265,7 @@ contract HachiDrachmaMiner is ReentrancyGuard {
             active: true
         });
         activeMineId[msg.sender] = id;
+        userMineIds[msg.sender].push(id);
 
         emit Mined(msg.sender, tier, hachiCost, drachmaTotal, id);
     }
@@ -255,9 +276,11 @@ contract HachiDrachmaMiner is ReentrancyGuard {
         if (!m.active) return 0;
         uint256 endT = block.timestamp < m.endTime ? block.timestamp : m.endTime;
         if (endT <= m.lastClaim) return 0;
-        uint256 elapsed = endT - m.lastClaim;
-        uint256 pending = m.drachmaPerSec * elapsed;
         uint256 maxRemaining = m.drachmaTotal - m.drachmaClaimed;
+        if (endT >= m.endTime) return maxRemaining; // tiempo cumplido: pagar TODO lo que reste, sin redondeo
+        uint256 elapsed = endT - m.lastClaim;
+        uint256 totalDuration = m.endTime - m.startTime;
+        uint256 pending = (m.drachmaTotal * elapsed) / totalDuration;
         return pending > maxRemaining ? maxRemaining : pending;
     }
 
@@ -279,5 +302,23 @@ contract HachiDrachmaMiner is ReentrancyGuard {
 
         IERC20(DRACHMA).safeTransfer(msg.sender, pending);
         emit Claimed(msg.sender, id, pending);
+    }
+
+    // --- EMERGENCIA (timelock de 48hs) -----------------------------
+    function requestEmergency() external onlyOwner {
+        emergencyUnlockTime = block.timestamp + 48 hours;
+        emit EmergencyRequested(emergencyUnlockTime);
+    }
+
+    function cancelEmergency() external onlyOwner {
+        emergencyUnlockTime = 0;
+        emit EmergencyCancelled();
+    }
+
+    function emergencyWithdraw(address token, uint256 amount) external onlyOwner nonReentrant {
+        require(emergencyUnlockTime > 0 && block.timestamp >= emergencyUnlockTime, "Timelock no cumplido");
+        emergencyUnlockTime = 0;
+        IERC20(token).safeTransfer(owner, amount);
+        emit EmergencyExecuted(token, amount);
     }
 }

@@ -1206,8 +1206,11 @@ export default function HachiMiner() {
           }
         }
 
-        // 2. Si no tiene nada real en el viejo, ¿el viejo todavía tiene pool suficiente?
-        if (!useOld) {
+        // 2. Si NUNCA minó en el viejo (activeMineId=0), chequear si el viejo tiene pool suficiente.
+        // Si ya minó ahí alguna vez (aunque solo le quede polvo), el contrato viejo lo va a
+        // rechazar para siempre por su propio chequeo interno de "1 mina activa" — así que
+        // en ese caso SIEMPRE usamos el nuevo, sin importar el pool del viejo.
+        if (!useOld && Number(oldActiveId) === 0) {
           const [oldPool, oldCommitted]: [bigint, bigint] = await Promise.all([dmOld.drachmaPool(), dmOld.drachmaCommitted()])
           useOld = fe(oldPool - oldCommitted) > 500
         }
@@ -1300,8 +1303,11 @@ export default function HachiMiner() {
           }
         }
 
-        // 2. Si no tiene nada real en el viejo, ¿el viejo todavía tiene pool suficiente?
-        if (!useOld) {
+        // 2. Si NUNCA minó en el viejo (activeMineId=0), chequear si el viejo tiene pool suficiente.
+        // Si ya minó ahí alguna vez (aunque solo le quede polvo), el contrato viejo lo va a
+        // rechazar para siempre por su propio chequeo interno de "1 mina activa" — así que
+        // en ese caso SIEMPRE usamos el nuevo, sin importar el pool del viejo.
+        if (!useOld && Number(oldActiveId) === 0) {
           const [oldHPool, oldHCommitted, oldDPool, oldDCommitted]: [bigint, bigint, bigint, bigint] = await Promise.all([
             wmOld.hachiPool(), wmOld.hachiCommitted(), wmOld.drachmaPool(), wmOld.drachmaCommitted(),
           ])

@@ -100,6 +100,7 @@ const WLD_MINER_ABI = [
   'function hachiCommitted() view returns (uint256)',
   'function drachmaCommitted() view returns (uint256)',
   'function variants(uint256) view returns (uint256 duration, uint256 returnBps)',
+  'function mineId() view returns (uint256)',
 ]
 const DRACHMA_MINER_ABI = [
   'function getUserTier(address) view returns (uint8)',
@@ -113,6 +114,7 @@ const DRACHMA_MINER_ABI = [
   'function drachmaPool() view returns (uint256)',
   'function drachmaCommitted() view returns (uint256)',
   'function mineDuration() view returns (uint256)',
+  'function mineId() view returns (uint256)',
 ]
 const WEEKLY_BONUS_ADDR = '0x67ECFC02B852FDd9D55D0cBF8866cE6ff74126dF'
 const WEEKLY_BONUS_ABI = [
@@ -341,9 +343,11 @@ export default function HachiMiner() {
   const [selWLD, setSelWLD] = useState(0)
   const [showBuyWLD, setShowBuyWLD] = useState(false)
   const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0, durationDays:15, loaded:false})
+  const [drachmaActiveCount, setDrachmaActiveCount] = useState({real:0, total:0})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
   const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0})
   const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0, loaded:false})
+  const [wldActiveCount, setWldActiveCount] = useState({real:0, total:0})
   const [wldMinerVariants, setWldMinerVariants] = useState([{days:7,pct:10},{days:15,pct:15},{days:30,pct:30}])
   const [selWldAmount, setSelWldAmount] = useState('')
   const [selWldVariant, setSelWldVariant] = useState(0)
@@ -1034,8 +1038,8 @@ export default function HachiMiner() {
     if (v==='lock') { loadLock(p); loadVipHolders(p) }
     if (v==='ranking') loadRanking(p)
     if (v==='estado') { loadMyStatus(p); loadWLDLics(p); loadLock(p); loadRanking(p); loadStreakStatus(p) }
-    if (v==='drachmaminer') { loadDrachmaMiner(p) }
-    if (v==='wldminer') { loadWldMiner(p) }
+    if (v==='drachmaminer') { loadDrachmaMiner(p); loadDrachmaActiveCount(p) }
+    if (v==='wldminer') { loadWldMiner(p); loadWldActiveCount(p) }
     if (v==='weeklybonus') { loadWeeklyBonus(p) }
     if (v==='pools') { loadPools(p); loadPoolsExtra(p); loadVipHolders(p) }
     if (v==='refs') loadRefs(p)
@@ -1152,6 +1156,32 @@ export default function HachiMiner() {
     throw lastErr
   }
 
+  const loadDrachmaActiveCount = async (p: ethers.JsonRpcProvider) => {
+    try {
+      await withRetry(async () => {
+        const dm = new ethers.Contract(DRACHMA_MINER_ADDR, DRACHMA_MINER_ABI, p)
+        const total = Number(await dm.mineId())
+        const nowSecs = Math.floor(Date.now()/1000)
+        let real = 0
+        const BATCH = 8
+        for (let i = 1; i <= total; i += BATCH) {
+          const ids = []
+          for (let j = i; j < Math.min(i+BATCH, total+1); j++) ids.push(j)
+          const results = await Promise.all(ids.map(id => dm.mines(id)))
+          for (const m of results) {
+            const active = m[9]
+            const drachmaTotal = fe(m[3])
+            const drachmaClaimed = fe(m[4])
+            const endTime = Number(m[7])
+            const restante = drachmaTotal - drachmaClaimed
+            if (active && (nowSecs < endTime || restante > 0.01)) real++
+          }
+        }
+        setDrachmaActiveCount({real, total})
+      })
+    } catch(e:any) { log('drachma count err: '+(e?.message||'').slice(0,80)) }
+  }
+
   const loadDrachmaMiner = async (p: ethers.JsonRpcProvider) => {
     try {
       await withRetry(async () => {
@@ -1179,6 +1209,35 @@ export default function HachiMiner() {
         })
       })
     } catch(e:any) { log('drachma miner err: '+(e?.message||'').slice(0,80)) }
+  }
+
+  const loadWldActiveCount = async (p: ethers.JsonRpcProvider) => {
+    try {
+      await withRetry(async () => {
+        const wm = new ethers.Contract(WLD_MINER_ADDR, WLD_MINER_ABI, p)
+        const total = Number(await wm.mineId())
+        const nowSecs = Math.floor(Date.now()/1000)
+        let real = 0
+        const BATCH = 8
+        for (let i = 1; i <= total; i += BATCH) {
+          const ids = []
+          for (let j = i; j < Math.min(i+BATCH, total+1); j++) ids.push(j)
+          const results = await Promise.all(ids.map(id => wm.mines(id)))
+          for (const m of results) {
+            const active = m[10]
+            const hachiTotal = fe(m[3])
+            const hachiClaimed = fe(m[4])
+            const drachmaTotal = fe(m[5])
+            const drachmaClaimed = fe(m[6])
+            const endTime = Number(m[8])
+            const restanteHachi = hachiTotal - hachiClaimed
+            const restanteDrachma = drachmaTotal - drachmaClaimed
+            if (active && (nowSecs < endTime || restanteHachi > 0.01 || restanteDrachma > 0.01)) real++
+          }
+        }
+        setWldActiveCount({real, total})
+      })
+    } catch(e:any) { log('wld count err: '+(e?.message||'').slice(0,80)) }
   }
 
   const loadWldMiner = async (p: ethers.JsonRpcProvider) => {
@@ -2188,6 +2247,7 @@ export default function HachiMiner() {
         {tab==='drachmaminer'&&<div>
           <div style={sLabel}>🪙 Drachma Miner</div>
           <div style={{fontSize:10,color:'#8b949e',marginBottom:8,textAlign:'right'}}>Pool disponible: {fmtPrecise(drachmaMiner.poolFree)} Drachma</div>
+          <div style={{fontSize:11,color:'#8b949e',textAlign:'center',marginBottom:8}}>Minerías activas ahora: <strong style={{color:'#34d399'}}>{drachmaActiveCount.real}</strong> de {drachmaActiveCount.total} creadas en total</div>
           <button onClick={()=>setShowInfoDrachma(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona el Drachma Miner?</button>
           {showInfoDrachma&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
             Con una licencia WLD activa o un Lock de al menos 50,000 HACHI, podés "minar" Drachma: elegís un nivel (según tu tier más alto) y pagás HACHI por un monto fijo de Drachma, con un descuento sobre el precio real de mercado.
@@ -2277,6 +2337,7 @@ export default function HachiMiner() {
             <span style={sLabel}>⛏️ WLD Miner</span>
             <span style={{fontSize:10,color:'#8b949e'}}>Pools: {fmtPrecise(wldMiner.poolFreeHachi)} HACHI / {fmtPrecise(wldMiner.poolFreeDrachma)} Drachma</span>
           </div>
+          <div style={{fontSize:11,color:'#8b949e',textAlign:'center',marginBottom:8}}>Minerías activas ahora: <strong style={{color:'#34d399'}}>{wldActiveCount.real}</strong> de {wldActiveCount.total} creadas en total</div>
           <button onClick={()=>setShowInfoWldMiner(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona?</button>
           {showInfoWldMiner&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
             Pagás WLD y recibís HACHI + Drachma combinados (70%/30%), generados de a poco durante el plazo que elijas. Cuanto más largo el plazo, mayor el retorno.

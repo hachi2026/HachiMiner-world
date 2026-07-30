@@ -1817,11 +1817,20 @@ export default function HachiMiner() {
                 const dailyDrachma = fe(l[2]) * 0.5
                 const secsSinceLoad = Math.max(0, (liveTick - wldLicsLoadedAt) / 1000)
                 const livePend = fe(pend) + (dailyHachi/86400) * secsSinceLoad
+                const nowSecs = Math.floor(liveTick/1000)
+                const endSecs = Number(l[7])
+                const startSecs = Number(l[6])
+                const secsLeft = endSecs - nowSecs
+                const diasLeft = Math.floor(Math.abs(secsLeft)/86400)
+                const horasLeft = Math.floor((Math.abs(secsLeft)%86400)/3600)
+                const countdownLabel = secsLeft <= 0 ? 'Vencida' : `${diasLeft}d ${horasLeft}h restantes`
                 return <div key={id.toString()} style={{borderBottom:'1px solid #3b0764',paddingBottom:10,marginBottom:10}}>
                   <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}><strong>{['Básica','Estándar','Premium','Elite'][l[1]]} <span style={{fontSize:11,color:'#8b949e'}}>#{id.toString()}</span></strong><div style={{color:l[10]?'#3fb950':'#8b949e'}}>●</div></div>
                   <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente</span><span style={{color:'#3fb950',fontFamily:'monospace'}}>{livePend.toFixed(6)} HACHI</span></div>
                   <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Genera por día</span><span style={{fontFamily:'monospace'}}>{dailyHachi.toFixed(6)} HACHI</span></div>
-                  <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Vence</span><span style={{fontFamily:'monospace'}}>{new Date(Number(l[7])*1000).toLocaleDateString()}</span></div>
+                  <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Comprada</span><span style={{fontFamily:'monospace'}}>{new Date(startSecs*1000).toLocaleDateString()}</span></div>
+                  <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Vence</span><span style={{fontFamily:'monospace'}}>{new Date(endSecs*1000).toLocaleDateString()}</span></div>
+                  <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Tiempo restante</span><span style={{fontFamily:'monospace',color:secsLeft<=0?'#f87171':'#fbbf24',fontWeight:700}}>{countdownLabel}</span></div>
                 </div>
               })}
               <button onClick={claimAllWLD} style={{...btnG,width:'100%',marginTop:4}}>Cobrar todo</button>

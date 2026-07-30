@@ -393,7 +393,7 @@ export default function HachiMiner() {
   const [lockBatches, setLockBatches] = useState<any[]>([])
   const [platformStats, setPlatformStats] = useState({totalLocked:'—',totalUsers:'—'})
   const [depositAmt, setDepositAmt] = useState('')
-  const [rankStats, setRankStats] = useState({points:'0',totalHist:'0',pos:'—',reward:'0',earned:'0',nextDist:'—'})
+  const [rankStats, setRankStats] = useState({points:'0',totalHist:'0',pos:'—',reward:'0',earned:'0',nextDist:'—',rewardRaw:0})
   const [rankList, setRankList] = useState<any[]>([])
   const [lastWinners, setLastWinners] = useState<{addr:string,amount:number,rank:number}[]>([])
   const [lastExecDate, setLastExecDate] = useState('')
@@ -1083,11 +1083,13 @@ export default function HachiMiner() {
   const loadRanking = async (p: ethers.JsonRpcProvider) => {
     const r = new ethers.Contract(C.ranking, RANKING, p)
     let myPts = 0, totalHist = '0', reward = '—', earned = '—', pos = '—', nextDist = '—', lastExecTs = 0
+    let rewardRaw = 0
     try {
       const s = await r.getUserStats(addr)
       myPts     = Number(s[0])
       totalHist = fmt(Number(s[1])) + ' pts'
-      reward    = fmt(fe(s[2])) + ' HACHI'
+      rewardRaw = fe(s[2])
+      reward    = fmt(rewardRaw) + ' HACHI'
       earned    = fmt(fe(s[3])) + ' HACHI'
     } catch(e: any) { log('ranking getUserStats err: '+(e?.message||'').slice(0,60)) }
     try {
@@ -1131,7 +1133,7 @@ export default function HachiMiner() {
       log('lastWinners err: '+(e?.message||'').slice(0,80))
       try { log('lastWinners err detail: '+JSON.stringify(e).slice(0,120)) } catch {}
     }
-    setRankStats({points:fmt(myPts), totalHist, pos, reward, earned, nextDist})
+    setRankStats({points:fmt(myPts), totalHist, pos, reward, earned, nextDist, rewardRaw})
   }
 
   const loadMyStatus = async (p: ethers.JsonRpcProvider) => {
@@ -2142,7 +2144,7 @@ export default function HachiMiner() {
             {[['Mis puntos',rankStats.points],['Mi posición',rankStats.pos],['Premio pendiente',rankStats.reward],['Total ganado',rankStats.earned]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e'}}>{l}</span><span style={{fontFamily:'monospace',fontWeight:600}}>{v}</span></div>)}
             <div style={{fontSize:11,color:'#8b949e',marginTop:8}}>Próximo reparto: <span style={{color:'#fbbf24',fontWeight:600}}>{rankStats.nextDist}</span></div>
           </div>
-          <button onClick={claimPrize} style={btnGo}>Cobrar premio</button>
+          <button onClick={claimPrize} disabled={rankStats.rewardRaw<=0} style={{...btnGo,opacity:rankStats.rewardRaw<=0?0.4:1,cursor:rankStats.rewardRaw<=0?'not-allowed':'pointer'}}>{rankStats.rewardRaw<=0?'Sin premio pendiente':'Cobrar premio'}</button>
           <div style={{...sLabel,marginTop:12}}>Ranking (cada 15 días)</div>
           {rankList.length===0?<div style={empty}><div style={{fontSize:28}}>🏆</div><div>Sin participantes aún</div></div>:
           <div style={{maxHeight:440,overflowY:'auto',WebkitOverflowScrolling:'touch',paddingRight:2,marginBottom:8}}>

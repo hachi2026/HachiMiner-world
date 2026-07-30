@@ -2209,9 +2209,12 @@ export default function HachiMiner() {
                   </div>
                 })}
               </div>
-              <button onClick={mineDrachmaAction} disabled={!connected||drachmaMiner.active} style={{...btnP,width:'100%',opacity:(!connected||drachmaMiner.active)?0.4:1}}>{drachmaMiner.active?'Ya tenés una mina activa':`Minar · ${fmtPrecise(drachmaMiner.costs[selDrachmaTier])} HACHI`}</button>
+              {(()=>{
+                const drachmaReallyActive = drachmaMiner.active && drachmaMiner.pending > 0.01
+                return <button onClick={mineDrachmaAction} disabled={!connected||drachmaReallyActive} style={{...btnP,width:'100%',opacity:(!connected||drachmaReallyActive)?0.4:1}}>{drachmaReallyActive?'Ya tenés una mina activa':`Minar · ${fmtPrecise(drachmaMiner.costs[selDrachmaTier])} HACHI`}</button>
+              })()}
             </div>
-            {drachmaMiner.active&&<div style={{...card,marginTop:12}}>
+            {drachmaMiner.active&&drachmaMiner.pending>0.01&&<div style={{...card,marginTop:12}}>
               <div style={cTitle}>Tu minería activa</div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Total</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(drachmaMiner.drachmaTotal)} Drachma</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Ya reclamado</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(drachmaMiner.drachmaClaimed)} Drachma</span></div>
@@ -2305,9 +2308,12 @@ export default function HachiMiner() {
                 <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Recibirías (HACHI)</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(wldMinerPreview.hachi)}</span></div>
                 <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Recibirías (Drachma)</span><span style={{fontFamily:'monospace',color:'#60a5fa'}}>{fmtPrecise(wldMinerPreview.drachma)}</span></div>
               </div>}
-              <button onClick={mineWldAction} disabled={!connected||miningWld||wldMiner.active} style={{...btnP,width:'100%',opacity:(!connected||miningWld||wldMiner.active)?0.4:1}}>{wldMiner.active?'Ya tenés una minería activa':miningWld?'Minando...':'Minar'}</button>
+              {(()=>{
+                const wldReallyActive = wldMiner.active && (wldMiner.pendingHachi > 0.01 || wldMiner.pendingDrachma > 0.01)
+                return <button onClick={mineWldAction} disabled={!connected||miningWld||wldReallyActive} style={{...btnP,width:'100%',opacity:(!connected||miningWld||wldReallyActive)?0.4:1}}>{wldReallyActive?'Ya tenés una minería activa':miningWld?'Minando...':'Minar'}</button>
+              })()}
             </div>
-            {wldMiner.active&&<div style={{...card,marginTop:12}}>
+            {wldMiner.active&&(wldMiner.pendingHachi>0.01||wldMiner.pendingDrachma>0.01)&&<div style={{...card,marginTop:12}}>
               <div style={cTitle}>Tu minería activa</div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI total / reclamado</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(wldMiner.hachiTotal)} / {fmtPrecise(wldMiner.hachiClaimed)}</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Drachma total / reclamado</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(wldMiner.drachmaTotal)} / {fmtPrecise(wldMiner.drachmaClaimed)}</span></div>

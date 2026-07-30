@@ -2108,12 +2108,6 @@ export default function HachiMiner() {
           <button onClick={()=>setShowInfoSwap(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona el Swap?</button>
           {showInfoSwap&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
             El Swap te permite intercambiar HACHI y WLD directo en la app, usando la liquidez real del pool de Uniswap (no un precio inventado).
-            <br/><br/>
-            Cada vez que <strong>comprás HACHI</strong> (WLD→HACHI):
-            <br/>• Sumás puntos para el <strong>Ranking de compradores</strong> (Top 20, reparto de premios cada 15 días)
-            <br/>• Contás para la <strong>misión diaria de racha</strong>: hacé 5 compras de HACHI que sumen 500 HACHI o más el mismo día calendario (se resetea a medianoche UTC), y reclamás un bono de SUSHI que crece cada día que sigas la racha — desde 1,000 hasta 10,000 al llegar al día 7.
-            <br/><br/>
-            Si un día no llegás a cumplir la misión, no perdés nada — solo no sumás ese día. Pero si pasan más de 48hs sin reclamar ningún bono, la racha vuelve a empezar del día 1.
           </div>}
           {SWAP_MAINTENANCE_MODE&&!debugMode&&<div style={{background:'rgba(251,191,36,.1)',border:'1px solid rgba(251,191,36,.4)',borderRadius:8,padding:16,marginBottom:12,textAlign:'center'}}>
             <div style={{fontSize:28,marginBottom:8}}>🛠️</div>
@@ -2142,55 +2136,10 @@ export default function HachiMiner() {
             <div style={{fontSize:10,color:'#8b949e',marginBottom:12,lineHeight:1.5}}>Liquidez real de Uniswap · Fee de pool 0.3% + fee de app 0.05% · Tolerancia a slippage 1%</div>
             <button onClick={doSwap} disabled={!connected||swapLoading||!swapIn||Number(swapIn)<=0} style={{...btnP,width:'100%',opacity:(!connected||swapLoading||!swapIn||Number(swapIn)<=0)?0.4:1}}>{swapLoading?'Intercambiando...':'Intercambiar'}</button>
           </div>
-          {connected&&<div style={{...card,marginTop:12,marginBottom:12,border:'1px solid #fbbf24'}}>
-            <div style={{background:'linear-gradient(90deg,#fbbf24,#f59e0b)',borderRadius:8,padding:'10px 14px',marginBottom:12,textAlign:'center',boxShadow:'0 0 16px rgba(251,191,36,.5)'}}>
-              <div style={{fontSize:13,fontWeight:800,color:'#1e0840',letterSpacing:0.3}}>🏁 Campaña finalizada — vigente hasta agotar el pool disponible. ¡Gracias por participar!</div>
-            </div>
-            <div style={cTitle}>🔥 Racha de swaps — Día {streakStatus.day}/7</div>
-            <div style={{display:'flex',gap:3,marginBottom:10}}>
-              {[1,2,3,4,5,6,7].map(d=><div key={d} style={{flex:1,height:6,borderRadius:3,background:d<streakStatus.day?'#3fb950':d===streakStatus.day?'#fbbf24':'#3b0764'}} />)}
-            </div>
-            <div style={{fontSize:10,color:'#8b949e',marginBottom:8,textAlign:'right'}}>Pool disponible: {fmtPrecise(streakStatus.poolFree)} SUSHI</div>
-            <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>Progreso de hoy (se resetea a medianoche UTC):</div>
-            <div style={{fontSize:12,color:streakStatus.swaps>=5?'#3fb950':'#e6edf3'}}>• Swaps: {streakStatus.swaps}/5</div>
-            <div style={{fontSize:12,color:streakStatus.volume>=500?'#3fb950':'#e6edf3',marginBottom:10}}>• Volumen: {fmtPrecise(streakStatus.volume)}/500 HACHI</div>
-            <button onClick={claimStreak} disabled={!streakStatus.canClaimNow||claimingStreak} style={{...btnP,width:'100%',opacity:(streakStatus.canClaimNow&&!claimingStreak)?1:0.4,boxShadow:streakStatus.canClaimNow?'0 0 20px rgba(52,211,153,.7)':'none',border:streakStatus.canClaimNow?'1px solid #34d399':'none',fontWeight:800}}>{(() => {
-              if (claimingStreak) return 'Reclamando...'
-              if (streakStatus.canClaimNow) return `Reclamar ${fmtPrecise(streakStatus.nextAmount)} SUSHI`
-              if (streakStatus.missionDone) {
-                const secondsLeft = Math.max(0, (streakStatus.lastCreditedAt + 20*3600) - Math.floor(liveTick/1000))
-                const h = Math.floor(secondsLeft/3600), m = Math.floor((secondsLeft%3600)/60)
-                return `Misión cumplida — próximo en ${h}h ${m}m`
-              }
-              return 'Completá la misión de hoy'
-            })()}</button>
-          </div>}
-          {streakHistory.length>0&&<div style={{...card,marginBottom:12}}>
-            <div style={cTitle}>Historial de bonos de racha</div>
-            {streakHistory.map((h,i)=><a key={h.hash+i} href={`https://worldscan.org/tx/${h.hash}`} target="_blank" rel="noopener noreferrer" style={{textDecoration:'none'}}>
-              <div style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #3b0764',fontSize:12}}>
-                <span style={{color:'#e6edf3'}}>Día {h.day}</span>
-                <span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(h.amount)} SUSHI ↗</span>
-              </div>
-            </a>)}
-          </div>}
-          <div style={{background:'linear-gradient(90deg,#f59e0b,#d97706)',borderRadius:8,padding:'10px 14px',marginBottom:12,textAlign:'center',boxShadow:'0 0 14px rgba(245,158,11,.4)'}}>
-            <div style={{fontSize:13,fontWeight:800,color:'#451a03'}}>🏁 Campaña de ranking finalizada — ¡gracias a todos los que participaron! El bono diario de racha sigue activo hasta que se agoten los fondos del pool.</div>
+          <div style={{background:'linear-gradient(90deg,#f59e0b,#d97706)',borderRadius:8,padding:'14px',marginTop:12,marginBottom:12,textAlign:'center',boxShadow:'0 0 14px rgba(245,158,11,.4)'}}>
+            <div style={{fontSize:14,fontWeight:800,color:'#451a03'}}>🏁 Campaña de racha y ranking finalizada</div>
+            <div style={{fontSize:12,color:'#451a03',marginTop:4}}>¡Gracias a todos los que participaron! Seguimos construyendo juntos.</div>
           </div>
-          {swapLastWinners.length>0&&<div style={card}>
-            <div style={cTitle}>🏆 Último reparto ({swapLastExecDate}) — {swapLastWinners.length} participantes</div>
-            <div style={{fontSize:11,color:'#8b949e',marginBottom:8,fontStyle:'italic'}}>✓ Ya se depositó automático en cada wallet — no hace falta reclamar nada.</div>
-            <div style={{maxHeight:320,overflowY:'auto',WebkitOverflowScrolling:'touch',paddingRight:2}}>
-              {swapLastWinners.map(({addr:wa,amount,rank})=>{
-                const isMe = wa.toLowerCase()===addr.toLowerCase()
-                return <div key={rank} style={{display:'flex',alignItems:'center',gap:10,padding:'7px 0',borderBottom:'1px solid #3b0764'}}>
-                  <span style={{fontFamily:'monospace',fontWeight:700,width:28,color:'#fbbf24'}}>{rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`#${rank}`}</span>
-                  <span style={{fontFamily:'monospace',fontSize:12,flex:1,color:'#c9d1d9'}}>{nameFor(wa)}{isMe&&<span style={{color:'#34d399'}}> (vos)</span>}</span>
-                  <span style={{fontFamily:'monospace',fontSize:12,fontWeight:600,color:'#34d399'}}>{fmtPrecise(amount)} HACHI</span>
-                </div>
-              })}
-            </div>
-          </div>}
           <div style={sLabel}>Tu historial</div>
           {swapHistory.length===0?<div style={empty}><div style={{fontSize:28}}>🔄</div><div>Sin intercambios todavía</div></div>:(swapHistoryExpanded?swapHistory:swapHistory.slice(0,5)).map((h,i)=>{
             const inName = h.tokenIn.toLowerCase()===C.hachi.toLowerCase() ? 'HACHI' : 'WLD'

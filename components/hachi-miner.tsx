@@ -2332,6 +2332,14 @@ export default function HachiMiner() {
             El tope de WLD que podés invertir depende de tu licencia WLD o Lock (el que sea más alto). Solo podés tener <strong>1 minería activa a la vez</strong>.
           </div>}
           {!wldMiner.loaded?<div style={empty}><div style={{fontSize:28}}>⏳</div><div>Consultando tu licencia y Lock...</div></div>:wldMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
+            {(()=>{
+              const CUTOFF_TS = 1785281858
+              const startTime = wldMiner.endTime - (wldMiner.variant===2?604800:wldMiner.variant===1?1296000:2592000)
+              const posibleAfectado = wldMiner.active && wldMiner.variant===2 && startTime < CUTOFF_TS
+              return posibleAfectado ? <div style={{background:'rgba(251,191,36,.1)',border:'1px solid rgba(251,191,36,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:12,color:'#fde68a',lineHeight:1.6}}>
+                ⚠️ <strong>Aviso importante:</strong> detectamos que tu minería activa se creó antes del 28/07, cuando un error visual en esta pantalla podía hacer que el sistema registrara una duración distinta a la que veías seleccionada (por ejemplo, elegir "30 días" y que quedara grabado como "7 días"). Ya está corregido. Si creés que tu duración no coincide con la que elegiste, escribinos y lo revisamos con los datos reales de la blockchain.
+              </div> : null
+            })()}
             <div style={card}>
               <div style={{fontSize:12,color:'#8b949e',marginBottom:8}}>Tu tope máximo: <strong style={{color:'#fbbf24'}}>{fmtPrecise(wldMiner.cap)} WLD</strong></div>
               <div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:'8px 10px',marginBottom:10,fontSize:11,color:'#f87171',fontWeight:600,textAlign:'center'}}>⚠️ Solo podés tener 1 minería activa a la vez</div>

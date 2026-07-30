@@ -23,8 +23,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 //  alto, mismo mapeo que HachiDrachmaMiner):
 //    Basica: 2 WLD | Estandar: 5 WLD | Premium: 7 WLD | Elite: 12 WLD
 //
-//  Solo 1 mina activa por usuario (de cualquiera de las 3
-//  variantes). Sin exigencia de World ID (funciona en v1 y v2).
+//  Maximo configurable de minas activas simultaneas por usuario
+//  (arranca en 1). Sin exigencia de World ID (funciona en v1 y v2).
 //  Limitado por el stock disponible de AMBOS pools (HACHI y Drachma).
 // ============================================================
 
@@ -99,8 +99,10 @@ contract HachiWldMiner is ReentrancyGuard {
     }
 
     mapping(uint256 => WldMine) public mines;
-    mapping(address => uint256) public activeMineId;
+    mapping(address => uint256) public activeMineId; // referencia a la ULTIMA mina creada (compatibilidad)
+    mapping(address => uint256[]) public userMineIds; // TODAS las minas creadas por el usuario
     uint256 public mineId;
+    uint256 public maxActiveMines = 1; // configurable a futuro sin redeploy
 
     uint256 public hachiPool;
     uint256 public hachiCommitted;
@@ -110,6 +112,11 @@ contract HachiWldMiner is ReentrancyGuard {
     event Mined(address indexed user, uint8 variant, uint256 wldIn, uint256 hachiTotal, uint256 drachmaTotal, uint256 indexed id);
     event Claimed(address indexed user, uint256 indexed id, uint256 hachiAmount, uint256 drachmaAmount);
     event PoolFunded(string token, uint256 amount, uint256 newTotal);
+    event EmergencyRequested(uint256 unlockTime);
+    event EmergencyExecuted(address token, uint256 amount);
+    event EmergencyCancelled();
+
+    uint256 public emergencyUnlockTime;
 
     modifier onlyOwner() { require(msg.sender == owner, "not owner"); _; }
 
@@ -141,6 +148,18 @@ contract HachiWldMiner is ReentrancyGuard {
     function setVariant(uint8 idx, uint256 duration, uint256 returnBps) external onlyOwner {
         require(idx < 3, "invalid variant");
         variants[idx] = VariantConfig({duration: duration, returnBps: returnBps});
+    }
+
+    function setMaxActiveMines(uint256 _max) external onlyOwner {
+        require(_max > 0, "must be > 0");
+        maxActiveMines = _max;
+    }
+
+    function _countActiveMines(address user) internal view returns (uint256 count) {
+        uint256[] storage ids = userMineIds[user];
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (mines[ids[i]].active) count++;
+        }
     }
 
     function setHumanVerified(address user) external onlyOwner {
@@ -217,7 +236,7 @@ contract HachiWldMiner is ReentrancyGuard {
     // --- MINAR ------------------------------------------------------
     function mineWld(uint256 wldAmount, uint8 variantIdx, uint256 minHachiTotal, uint256 minDrachmaTotal) external nonReentrant returns (uint256 id) {
         require(variantIdx < 3, "invalid variant");
-        require(activeMineId[msg.sender] == 0 || !mines[activeMineId[msg.sender]].active, "Ya tenes una mina activa");
+        require(_countActiveMines(msg.sender) < maxActiveMines, "Alcanzaste el maximo de minerias activas");
 
         uint256 cap = maxInvestableWld(msg.sender);
         require(cap > 0, "Necesitas una licencia WLD o Lock activo");
@@ -252,6 +271,7 @@ contract HachiWldMiner is ReentrancyGuard {
             active: true
         });
         activeMineId[msg.sender] = id;
+        userMineIds[msg.sender].push(id);
 
         emit Mined(msg.sender, variantIdx, wldAmount, hachiTotal, drachmaTotal, id);
     }
@@ -262,18 +282,22 @@ contract HachiWldMiner is ReentrancyGuard {
         if (!m.active) return (0, 0);
         uint256 endT = block.timestamp < m.endTime ? block.timestamp : m.endTime;
         if (endT <= m.lastClaim) return (0, 0);
+
+        uint256 maxHachi = m.hachiTotal - m.hachiClaimed;
+        uint256 maxDrachma = m.drachmaTotal - m.drachmaClaimed;
+
+        if (endT >= m.endTime) {
+            // tiempo cumplido: pagar TODO lo que reste, sin redondeo
+            return (maxHachi, maxDrachma);
+        }
+
         uint256 elapsed = endT - m.lastClaim;
         uint256 totalDuration = m.endTime - m.startTime;
 
-        uint256 hachiRate = m.hachiTotal / totalDuration;
-        uint256 drachmaRate = m.drachmaTotal / totalDuration;
-
-        uint256 pHachi = hachiRate * elapsed;
-        uint256 maxHachi = m.hachiTotal - m.hachiClaimed;
+        uint256 pHachi = (m.hachiTotal * elapsed) / totalDuration;
         pendingHachi = pHachi > maxHachi ? maxHachi : pHachi;
 
-        uint256 pDrachma = drachmaRate * elapsed;
-        uint256 maxDrachma = m.drachmaTotal - m.drachmaClaimed;
+        uint256 pDrachma = (m.drachmaTotal * elapsed) / totalDuration;
         pendingDrachma = pDrachma > maxDrachma ? maxDrachma : pDrachma;
     }
 
@@ -301,5 +325,23 @@ contract HachiWldMiner is ReentrancyGuard {
         if (pDrachma > 0) IERC20(DRACHMA).safeTransfer(msg.sender, pDrachma);
 
         emit Claimed(msg.sender, id, pHachi, pDrachma);
+    }
+
+    // --- EMERGENCIA (timelock de 48hs) -----------------------------
+    function requestEmergency() external onlyOwner {
+        emergencyUnlockTime = block.timestamp + 48 hours;
+        emit EmergencyRequested(emergencyUnlockTime);
+    }
+
+    function cancelEmergency() external onlyOwner {
+        emergencyUnlockTime = 0;
+        emit EmergencyCancelled();
+    }
+
+    function emergencyWithdraw(address token, uint256 amount) external onlyOwner nonReentrant {
+        require(emergencyUnlockTime > 0 && block.timestamp >= emergencyUnlockTime, "Timelock no cumplido");
+        emergencyUnlockTime = 0;
+        IERC20(token).safeTransfer(owner, amount);
+        emit EmergencyExecuted(token, amount);
     }
 }

@@ -2532,8 +2532,8 @@ export default function HachiMiner() {
               <div style={cTitle}>Tu minería activa</div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI total / reclamado</span><span style={{fontFamily:'monospace'}}>{wldMiner.hachiTotal.toFixed(2)} / <span style={{color:'#3fb950'}}>{wldMiner.hachiClaimed.toFixed(2)}</span></span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Drachma total / reclamado</span><span style={{fontFamily:'monospace'}}>{wldMiner.drachmaTotal.toFixed(2)} / <span style={{color:'#3fb950'}}>{wldMiner.drachmaClaimed.toFixed(2)}</span></span></div>
-              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente HACHI</span><span style={{fontFamily:'monospace',color:'#f59e0b'}}>{wldMiner.pendingHachi.toFixed(2)}</span></div>
-              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pendiente Drachma</span><span style={{fontFamily:'monospace',color:'#f59e0b'}}>{wldMiner.pendingDrachma.toFixed(2)}</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Liberados HACHI</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{wldMiner.pendingHachi.toFixed(2)}</span></div>
+              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Liberados Drachma</span><span style={{fontFamily:'monospace',color:'#60a5fa'}}>{wldMiner.pendingDrachma.toFixed(2)}</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Termina</span><span style={{fontFamily:'monospace'}}>{new Date(wldMiner.endTime*1000).toLocaleDateString()}</span></div>
               <button onClick={claimWldMinerAction} disabled={claimingWldMiner||(wldMiner.pendingHachi<=0&&wldMiner.pendingDrachma<=0)} style={{...btnG,width:'100%',marginTop:8,opacity:(wldMiner.pendingHachi>0||wldMiner.pendingDrachma>0)?1:0.4}}>{claimingWldMiner?'Reclamando...':'Reclamar'}</button>
             </div>}

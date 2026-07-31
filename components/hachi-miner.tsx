@@ -351,6 +351,8 @@ export default function HachiMiner() {
   const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0, loaded:false, contractAddr:'0x2C191913eBdA9b2bb61E3d00Ca5d35b6991F4B9A', isNewContract:true})
   const [wldActiveCount, setWldActiveCount] = useState({real:0, total:0})
   const [wldMinerVariants, setWldMinerVariants] = useState([{days:7,pct:10},{days:15,pct:15},{days:30,pct:30}])
+  const [wldMinerHistory, setWldMinerHistory] = useState<{contrato:string, id:number, hachiTotal:number, drachmaTotal:number, done:boolean}[]>([])
+  const [showWldHistory, setShowWldHistory] = useState(false)
   const [selWldAmount, setSelWldAmount] = useState('')
   const [selWldVariant, setSelWldVariant] = useState(0)
   const [wldMinerPreview, setWldMinerPreview] = useState({hachi:0, drachma:0})
@@ -1041,7 +1043,7 @@ export default function HachiMiner() {
     if (v==='ranking') loadRanking(p)
     if (v==='estado') { loadMyStatus(p); loadWLDLics(p); loadLock(p); loadRanking(p); loadStreakStatus(p) }
     if (v==='drachmaminer') { loadDrachmaMiner(p); loadDrachmaActiveCount(p) }
-    if (v==='wldminer') { loadWldMiner(p); loadWldActiveCount(p) }
+    if (v==='wldminer') { loadWldMiner(p); loadWldActiveCount(p); loadWldMinerHistory(p) }
     if (v==='weeklybonus') { loadWeeklyBonus(p) }
     if (v==='pools') { loadPools(p); loadPoolsExtra(p); loadVipHolders(p) }
     if (v==='refs') loadRefs(p)
@@ -1274,6 +1276,30 @@ export default function HachiMiner() {
         setWldActiveCount({real, total})
       })
     } catch(e:any) { log('wld count err: '+(e?.message||'').slice(0,80)) }
+  }
+
+  const loadWldMinerHistory = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const wmOld = new ethers.Contract(WLD_MINER_ADDR_OLD, WLD_MINER_ABI, p)
+      const wmNew = new ethers.Contract(WLD_MINER_ADDR_NEW, WLD_MINER_ABI, p)
+      const [oldId, newId] = await Promise.all([wmOld.activeMineId(addr), wmNew.activeMineId(addr)])
+      const history: {contrato:string, id:number, hachiTotal:number, drachmaTotal:number, done:boolean}[] = []
+      if (Number(oldId) > 0) {
+        const m = await wmOld.mines(oldId)
+        const hachiTotal = fe(m[3]), hachiClaimed = fe(m[4])
+        const drachmaTotal = fe(m[5]), drachmaClaimed = fe(m[6])
+        const done = (hachiTotal - hachiClaimed <= 0.01) && (drachmaTotal - drachmaClaimed <= 0.01)
+        history.push({contrato:'Anterior', id:Number(oldId), hachiTotal, drachmaTotal, done})
+      }
+      if (Number(newId) > 0) {
+        const m = await wmNew.mines(newId)
+        const hachiTotal = fe(m[3]), hachiClaimed = fe(m[4])
+        const drachmaTotal = fe(m[5]), drachmaClaimed = fe(m[6])
+        const done = (hachiTotal - hachiClaimed <= 0.01) && (drachmaTotal - drachmaClaimed <= 0.01)
+        history.push({contrato:'Actual', id:Number(newId), hachiTotal, drachmaTotal, done})
+      }
+      setWldMinerHistory(history)
+    } catch(e:any) { log('wld history err: '+(e?.message||'').slice(0,80)) }
   }
 
   const loadWldMiner = async (p: ethers.JsonRpcProvider) => {
@@ -2422,6 +2448,15 @@ export default function HachiMiner() {
             Pagás WLD y recibís HACHI + Drachma combinados (70%/30%), generados de a poco durante el plazo que elijas. Cuanto más largo el plazo, mayor el retorno.
             <br/><br/>
             El tope de WLD que podés invertir depende de tu licencia WLD o Lock (el que sea más alto). Solo podés tener <strong>1 minería activa a la vez</strong>.
+          </div>}
+          <button onClick={()=>setShowWldHistory(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>📜 Minerías terminadas</button>
+          {showWldHistory&&<div style={{background:'rgba(52,211,153,.08)',border:'1px solid rgba(52,211,153,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c9d1d9',lineHeight:1.6}}>
+            {wldMinerHistory.filter(h=>h.done).length===0?<div style={{textAlign:'center',color:'#8b949e'}}>Todavía no tenés ninguna minería terminada.</div>:wldMinerHistory.filter(h=>h.done).map(h=>(
+              <div key={h.contrato+h.id} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #3b0764'}}>
+                <span>✓ Mina #{h.id} ({h.contrato})</span>
+                <span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(h.hachiTotal)} HACHI + {fmtPrecise(h.drachmaTotal)} Drachma pagados</span>
+              </div>
+            ))}
           </div>}
           {!wldMiner.loaded?<div style={empty}><div style={{fontSize:28}}>⏳</div><div>Consultando tu licencia y Lock...</div></div>:wldMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
             {(()=>{

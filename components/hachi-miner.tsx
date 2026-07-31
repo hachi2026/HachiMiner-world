@@ -2412,11 +2412,12 @@ export default function HachiMiner() {
                 })}
               </div>
               {(()=>{
-                const drachmaReallyActive = drachmaMiner.active && drachmaMiner.pending > 0.01
+                const nowSecsDm = Math.floor(Date.now()/1000)
+                const drachmaReallyActive = drachmaMiner.active && (nowSecsDm < drachmaMiner.endTime || drachmaMiner.pending > 0.01)
                 return <button onClick={mineDrachmaAction} disabled={!connected||drachmaReallyActive} style={{...btnP,width:'100%',opacity:(!connected||drachmaReallyActive)?0.4:1}}>{drachmaReallyActive?'Ya tenés una mina activa':`Minar · ${fmtPrecise(drachmaMiner.costs[selDrachmaTier])} HACHI`}</button>
               })()}
             </div>
-            {drachmaMiner.active&&drachmaMiner.pending>0.01&&<div style={{...card,marginTop:12}}>
+            {drachmaMiner.active&&(Math.floor(Date.now()/1000)<drachmaMiner.endTime||drachmaMiner.pending>0.01)&&<div style={{...card,marginTop:12}}>
               <div style={cTitle}>Tu minería activa</div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Total</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(drachmaMiner.drachmaTotal)} Drachma</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Ya reclamado</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(drachmaMiner.drachmaClaimed)} Drachma</span></div>

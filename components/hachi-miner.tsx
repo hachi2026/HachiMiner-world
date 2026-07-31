@@ -389,6 +389,8 @@ export default function HachiMiner() {
   const [vipData, setVipData] = useState({level:255, pendingHachi:0, drachmaOut:0, sushiOut:0, drachmaPoolFree:0, sushiPoolFree:0, loaded:false})
   const [vipPreferredToken, setVipPreferredToken] = useState(0)
   const [showInfoVip, setShowInfoVip] = useState(false)
+  const [drachmaMinerHistory, setDrachmaMinerHistory] = useState<{contrato:string, id:number, drachmaTotal:number, done:boolean}[]>([])
+  const [showDrachmaHistory, setShowDrachmaHistory] = useState(false)
   const [showDeposits, setShowDeposits] = useState(false)
   const [showInfoTiers, setShowInfoTiers] = useState(false)
   const [exchangingVip, setExchangingVip] = useState(false)
@@ -1042,7 +1044,7 @@ export default function HachiMiner() {
     if (v==='lock') { loadLock(p); loadVipHolders(p) }
     if (v==='ranking') loadRanking(p)
     if (v==='estado') { loadMyStatus(p); loadWLDLics(p); loadLock(p); loadRanking(p); loadStreakStatus(p) }
-    if (v==='drachmaminer') { loadDrachmaMiner(p); loadDrachmaActiveCount(p) }
+    if (v==='drachmaminer') { loadDrachmaMiner(p); loadDrachmaActiveCount(p); loadDrachmaMinerHistory(p) }
     if (v==='wldminer') { loadWldMiner(p); loadWldActiveCount(p); loadWldMinerHistory(p) }
     if (v==='weeklybonus') { loadWeeklyBonus(p) }
     if (v==='pools') { loadPools(p); loadPoolsExtra(p); loadVipHolders(p) }
@@ -1186,6 +1188,28 @@ export default function HachiMiner() {
         setDrachmaActiveCount({real, total})
       })
     } catch(e:any) { log('drachma count err: '+(e?.message||'').slice(0,80)) }
+  }
+
+  const loadDrachmaMinerHistory = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const dmOld = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, DRACHMA_MINER_ABI, p)
+      const dmNew = new ethers.Contract(DRACHMA_MINER_ADDR_NEW, DRACHMA_MINER_ABI, p)
+      const [oldId, newId] = await Promise.all([dmOld.activeMineId(addr), dmNew.activeMineId(addr)])
+      const history: {contrato:string, id:number, drachmaTotal:number, done:boolean}[] = []
+      if (Number(oldId) > 0) {
+        const m = await dmOld.mines(oldId)
+        const drachmaTotal = fe(m[3]), drachmaClaimed = fe(m[4])
+        const done = (drachmaTotal - drachmaClaimed) <= 0.01
+        history.push({contrato:'Anterior', id:Number(oldId), drachmaTotal, done})
+      }
+      if (Number(newId) > 0) {
+        const m = await dmNew.mines(newId)
+        const drachmaTotal = fe(m[3]), drachmaClaimed = fe(m[4])
+        const done = (drachmaTotal - drachmaClaimed) <= 0.01
+        history.push({contrato:'Actual', id:Number(newId), drachmaTotal, done})
+      }
+      setDrachmaMinerHistory(history)
+    } catch(e:any) { log('drachma history err: '+(e?.message||'').slice(0,80)) }
   }
 
   const loadDrachmaMiner = async (p: ethers.JsonRpcProvider) => {
@@ -2358,6 +2382,15 @@ export default function HachiMiner() {
             El Drachma no llega de golpe — se genera de a poco durante {drachmaMiner.durationDays} días, y lo vas reclamando cuando quieras con el botón "Reclamar Drachma".
             <br/><br/>
             Solo podés tener <strong>1 minería activa a la vez</strong> — cuando termine de generarse del todo, podés arrancar una nueva.
+          </div>}
+          <button onClick={()=>setShowDrachmaHistory(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>📜 Minerías terminadas</button>
+          {showDrachmaHistory&&<div style={{background:'rgba(52,211,153,.08)',border:'1px solid rgba(52,211,153,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c9d1d9',lineHeight:1.6}}>
+            {drachmaMinerHistory.filter(h=>h.done).length===0?<div style={{textAlign:'center',color:'#8b949e'}}>Todavía no tenés ninguna minería terminada.</div>:drachmaMinerHistory.filter(h=>h.done).map(h=>(
+              <div key={h.contrato+h.id} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #3b0764'}}>
+                <span>✓ Mina #{h.id} ({h.contrato})</span>
+                <span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(h.drachmaTotal)} Drachma pagados</span>
+              </div>
+            ))}
           </div>}
           {!drachmaMiner.loaded?<div style={empty}><div style={{fontSize:28}}>⏳</div><div>Consultando tu licencia y Lock...</div></div>:drachmaMiner.tier===255?<div style={empty}><div style={{fontSize:28}}>🔒</div><div>Necesitás una licencia WLD o Lock activo para acceder</div></div>:<>
             <div style={card}>

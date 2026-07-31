@@ -1580,6 +1580,7 @@ export default function HachiMiner() {
       toast_('Reclamando Drachma...', '#d29922')
       await sendTx(drachmaMiner.contractAddr, DRACHMA_MINER_ABI, 'claimDrachma', [drachmaMiner.activeMineId])
       toast_('✓ Drachma reclamado', '#3fb950')
+      await new Promise(r => setTimeout(r, 1500))
       loadDrachmaMiner(rpc())
       loadBal(addr, rpc())
     } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }

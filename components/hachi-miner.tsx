@@ -2414,7 +2414,7 @@ export default function HachiMiner() {
               {(()=>{
                 const nowSecsDm = Math.floor(Date.now()/1000)
                 const drachmaReallyActive = drachmaMiner.active && (nowSecsDm < drachmaMiner.endTime || drachmaMiner.pending > 0.01)
-                return <button onClick={mineDrachmaAction} disabled={!connected||drachmaReallyActive} style={{...btnP,width:'100%',opacity:(!connected||drachmaReallyActive)?0.4:1}}>{drachmaReallyActive?'Ya tenés una mina activa':`Minar · ${fmtPrecise(drachmaMiner.costs[selDrachmaTier])} HACHI`}</button>
+                return <button onClick={mineDrachmaAction} disabled={!connected||drachmaReallyActive} style={{...btnP,width:'100%',opacity:(!connected||drachmaReallyActive)?0.4:1}}>{drachmaReallyActive?'Ya tenés una mina activa':`Pagás ${fmtPrecise(drachmaMiner.costs[selDrachmaTier])} HACHI → recibís ${fmtPrecise(drachmaMiner.amounts[selDrachmaTier])} Drachma`}</button>
               })()}
             </div>
             {drachmaMiner.active&&(Math.floor(Date.now()/1000)<drachmaMiner.endTime||drachmaMiner.pending>0.01)&&<div style={{...card,marginTop:12}}>

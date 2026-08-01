@@ -2411,6 +2411,9 @@ export default function HachiMiner() {
                   </div>
                 })}
               </div>
+              <div style={{background:'rgba(52,211,153,.1)',border:'1px solid rgba(52,211,153,.4)',borderRadius:8,padding:10,marginBottom:10,textAlign:'center',fontSize:12,color:'#6ee7b7',fontWeight:700}}>
+                🟢 <strong>7 días</strong> de duración durante todo agosto (promo del mes)
+              </div>
               {(()=>{
                 const nowSecsDm = Math.floor(Date.now()/1000)
                 const drachmaReallyActive = drachmaMiner.active && (nowSecsDm < drachmaMiner.endTime || drachmaMiner.pending > 0.01)

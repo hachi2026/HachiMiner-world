@@ -44,7 +44,7 @@ export async function GET(request: Request): Promise<Response> {
   const provider = new ethers.JsonRpcProvider(RPC);
   const wallet = new ethers.Wallet(pk, provider);
 
-  const results = { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false, hachiDrachmaMiner: false };
+  const results = { referralManager: false, hachiRanking: false, dailyRewards: false, hachiSwap: false, hachiSwapStreak: false, hachiDrachmaMiner: false, hachiDrachmaMinerNew: false };
   if (referralManagerAddr) {
     try { results.referralManager = await ensureVerified(address, referralManagerAddr, wallet); }
     catch (e) { console.error("resync ReferralManager:", e); }
@@ -70,6 +70,9 @@ export async function GET(request: Request): Promise<Response> {
     try { results.hachiDrachmaMiner = await ensureVerified(address, hachiDrachmaMinerAddr, wallet); }
     catch (e) { console.error("resync HachiDrachmaMiner:", e); }
   }
+
+  try { results.hachiDrachmaMinerNew = await ensureVerified(address, "0xF34a0C6F3C55Bb3b8E489E0c66779331FFc72eA4", wallet); }
+  catch (e) { console.error("resync HachiDrachmaMinerNew:", e); }
 
   return NextResponse.json({ success: true, results });
 }

@@ -18,11 +18,12 @@ async function syncHumanVerifiedOnChain(userAddress: string) {
     { key: "hachiSwap", addr: process.env.HACHI_SWAP_ADDRESS },
     { key: "hachiSwapStreak", addr: process.env[HACHI_SWAP_STREAK_ADDRESS_ENV] },
     { key: "hachiDrachmaMiner", addr: process.env[HACHI_DRACHMA_MINER_ADDRESS_ENV] },
+    { key: "hachiDrachmaMinerNew", addr: "0xF34a0C6F3C55Bb3b8E489E0c66779331FFc72eA4" },
   ] as const;
 
   const results: Record<string, boolean> = {
     referralManager: false, hachiRanking: false, dailyRewards: false,
-    hachiSwap: false, hachiSwapStreak: false, hachiDrachmaMiner: false,
+    hachiSwap: false, hachiSwapStreak: false, hachiDrachmaMiner: false, hachiDrachmaMinerNew: false,
   };
 
   if (!pk) {

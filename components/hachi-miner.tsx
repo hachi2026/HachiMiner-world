@@ -2626,7 +2626,7 @@ export default function HachiMiner() {
                     {(i as any).iconImg ? <img src={(i as any).iconImg} alt="" width={28} height={28} style={{borderRadius:14,objectFit:'cover',flexShrink:0}} /> : <span style={{fontSize:28,flexShrink:0}}>{(i as any).icon}</span>}
                     <div style={{minWidth:0}}>
                       <div style={{fontSize:13,color:'#8b949e',marginBottom:3}}>{i.label}</div>
-                      <div style={{fontSize:15,fontWeight:700,color:'#e6edf3'}}>{i.valor || i.pendiente}</div>
+                      <div style={{fontSize:15,fontWeight:700,color:'#e6edf3'}}>{(i as any).disponibleAhora ? (i.valor || i.pendiente) : i.pendiente}</div>
                     </div>
                   </div>
                   <button onClick={()=> (i as any).claimFn ? ((i as any).disponibleAhora && (i as any).claimFn()) : (i as any).action()} disabled={!(i as any).action && !((i as any).disponibleAhora)} style={{flex:'0 0 auto',width:64,padding:'6px 4px',fontSize:10,fontWeight:700,borderRadius:8,border:`1px solid ${colorBoton}`,background:colorBoton,color:'#1e0840',cursor:(!(i as any).action && !((i as any).disponibleAhora))?'not-allowed':'pointer',opacity:(!(i as any).action && !((i as any).disponibleAhora))?0.6:1}}>{(i as any).claimFn?'Reclamar':'Ir'}</button>

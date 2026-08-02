@@ -1484,12 +1484,13 @@ export default function HachiMiner() {
     } catch(e:any) { log('pools extra err: '+(e?.message||'').slice(0,80)) }
   }
 
-  const previewWldMine = async () => {
+  const previewWldMine = async (variantOverride?: number) => {
     const wldAmount = parseFloat(selWldAmount)
+    const variant = variantOverride !== undefined ? variantOverride : selWldVariant
     if (!wldAmount || wldAmount <= 0) { setWldMinerPreview({hachi:0, drachma:0}); return }
     try {
       const wm = new ethers.Contract(wldMiner.contractAddr, WLD_MINER_ABI, rpc())
-      const [hachiTotal, drachmaTotal] = await wm.previewMine(pe(wldAmount), selWldVariant)
+      const [hachiTotal, drachmaTotal] = await wm.previewMine(pe(wldAmount), variant)
       setWldMinerPreview({hachi: fe(hachiTotal), drachma: fe(drachmaTotal)})
     } catch(e) { setWldMinerPreview({hachi:0, drachma:0}) }
   }
@@ -2516,13 +2517,13 @@ export default function HachiMiner() {
               <div style={{background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,padding:'8px 10px',marginBottom:10,fontSize:11,color:'#f87171',fontWeight:600,textAlign:'center'}}>⚠️ Solo podés tener 1 minería activa a la vez</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:10}}>
                 {wldMinerVariants.map(({days,pct},i)=>[`${days} días`, `${pct}%`]).map(([d,r],i)=>
-                  <div key={i} onClick={()=>{setSelWldVariant(i); previewWldMine()}} style={{...lCard,padding:8,border:`1px solid ${selWldVariant===i?'#fbbf24':'#5b21b6'}`,background:selWldVariant===i?'rgba(251,191,36,.08)':'#1e0840',cursor:'pointer'}}>
+                  <div key={i} onClick={()=>{setSelWldVariant(i); previewWldMine(i)}} style={{...lCard,padding:8,border:`1px solid ${selWldVariant===i?'#fbbf24':'#5b21b6'}`,background:selWldVariant===i?'rgba(251,191,36,.08)':'#1e0840',cursor:'pointer'}}>
                     <div style={{fontSize:11,fontWeight:700}}>{d}</div>
                     <div style={{fontSize:14,fontWeight:700,color:'#34d399'}}>{r}</div>
                   </div>
                 )}
               </div>
-              <input type="number" value={selWldAmount} onChange={e=>setSelWldAmount(e.target.value)} onBlur={previewWldMine} placeholder="Cantidad de WLD" style={{width:'100%',padding:10,borderRadius:8,border:'1px solid #5b21b6',background:'#1e0840',color:'#e6edf3',fontSize:14,marginBottom:10}} />
+              <input type="number" value={selWldAmount} onChange={e=>setSelWldAmount(e.target.value)} onBlur={()=>previewWldMine()} placeholder="Cantidad de WLD" style={{width:'100%',padding:10,borderRadius:8,border:'1px solid #5b21b6',background:'#1e0840',color:'#e6edf3',fontSize:14,marginBottom:10}} />
               {(wldMinerPreview.hachi>0||wldMinerPreview.drachma>0)&&<div style={{...pBox,marginBottom:10}}>
                 <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Recibirías (HACHI)</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{fmtPrecise(wldMinerPreview.hachi)}</span></div>
                 <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Recibirías (Drachma)</span><span style={{fontFamily:'monospace',color:'#60a5fa'}}>{fmtPrecise(wldMinerPreview.drachma)}</span></div>

@@ -199,7 +199,7 @@ const REFERRAL = [
   'function currentNewBonus() view returns (uint256)',
 ]
 
-type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'|'weeklybonus'|'voting'|'wldminer'|'mineria'
+type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'|'weeklybonus'|'voting'|'wldminer'|'mineria'|'centrohachi'
 type Lang = 'es'|'en'|'pt'
 const detectLang = (): Lang => {
   if (typeof navigator === 'undefined') return 'es'
@@ -1047,6 +1047,7 @@ export default function HachiMiner() {
     if (v==='drachmaminer') { loadDrachmaMiner(p); loadDrachmaActiveCount(p); loadDrachmaMinerHistory(p) }
     if (v==='wldminer') { loadWldMiner(p); loadWldActiveCount(p); loadWldMinerHistory(p) }
     if (v==='weeklybonus') { loadWeeklyBonus(p) }
+    if (v==='centrohachi') { loadWLDLics(p); loadDrachmaMiner(p); loadWldMiner(p); loadWeeklyBonus(p); loadVipHolders(p); loadLock(p); checkDaily(addr, p) }
     if (v==='pools') { loadPools(p); loadPoolsExtra(p); loadVipHolders(p) }
     if (v==='refs') loadRefs(p)
     if (v==='swap') { loadSwapHistory(p); loadStreakStatus(p); loadStreakHistory(p); loadSwapRanking(p) }
@@ -1937,7 +1938,8 @@ export default function HachiMiner() {
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
             {[
               {icon:'🐱',label:'Mi Estado',tab:'estado' as Tab,delay:0},
-              {icon:'⛏️',label:'Minería',tab:'mineria' as Tab,delay:0.3,isNew:true},
+              {icon:'🎯',label:'Centro Hachi',tab:'centrohachi' as Tab,delay:0.15,isNew:true},
+              {icon:'⛏️',label:'Minería',tab:'mineria' as Tab,delay:0.3},
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
               {icon:'🗳️',label:'Votación',tab:'voting' as Tab,delay:3.3},
               {icon:'🔄',label:'Swap',tab:'swap' as Tab,delay:1.2},
@@ -2584,6 +2586,55 @@ export default function HachiMiner() {
               <span style={{fontSize:12,fontWeight:600}}>{btn.label}</span>
             </button>)}
           </div>
+        </div>}
+
+        {tab==='centrohachi'&&<div>
+          <div style={sLabel}>🎯 Centro Hachi</div>
+          <div style={{fontSize:11,color:'#8b949e',textAlign:'center',marginBottom:12,lineHeight:1.5}}>
+            Todo lo que tenés disponible para reclamar o usar, en un solo lugar.
+          </div>
+          {(()=>{
+            const wldLicsPendTotal = wldLics.reduce((acc,l)=>acc+Number(fe(l.pend||BigInt(0))),0)
+            const maxBasicCH = wldTierActive===255?0:wldTierActive===0?1:wldTierActive===1?2:wldTierActive===2?3:4
+            const bocadoDisponible = Math.max(0, maxBasicCH - basicBoughtToday)
+            const lockPendNum = parseFloat(lockData.pending) || 0
+
+            const items = [
+              { key:'drachma', icon:'🪙', label:'Drachma Miner', valor: drachmaMiner.pending>0.01 ? `${drachmaMiner.pending.toFixed(2)} Drachma` : null, tab:'drachmaminer' as Tab },
+              { key:'wldminer', icon:'⛏️', label:'WLD Miner', valor: (wldMiner.pendingHachi>0.01||wldMiner.pendingDrachma>0.01) ? `${wldMiner.pendingHachi.toFixed(2)} HACHI + ${wldMiner.pendingDrachma.toFixed(2)} Drachma` : null, tab:'wldminer' as Tab },
+              { key:'wldlics', icon:'📜', label:'Licencias WLD (Hachi Miner)', valor: wldLicsPendTotal>0.01 ? `${fmtPrecise(wldLicsPendTotal)} HACHI` : null, action:()=>{setLicTab('wld'); loadTab('lics')} },
+              { key:'diario', icon:'🐷', label:'Claim diario', valor: piggy.canWithdraw && piggy.accrued>0 ? `${fmtPrecise(piggy.accrued)} HACHI` : null, tab:'estado' as Tab },
+              { key:'semanal', icon:'📅', label:'Bono Semanal', valor: weeklyBonus.pending>0.01 ? `${fmtPrecise(weeklyBonus.pending)} SUSHI` : null, tab:'weeklybonus' as Tab },
+              { key:'bocado', icon:'🍡', label:'Bocado disponible hoy', valor: bocadoDisponible>0 ? `${bocadoDisponible} disponible${bocadoDisponible>1?'s':''}` : null, action:()=>{setLicTab('sushi'); loadTab('lics')} },
+              { key:'reinversion', icon:'💎', label:'Reinversión VIP', valor: vipData.pendingHachi>0.01 ? `${vipData.pendingHachi.toFixed(2)} HACHI acumulado` : null, tab:'lock' as Tab },
+              { key:'lock', icon:'🔒', label:'Lock (APY)', valor: lockPendNum>0.01 ? `${lockData.pending} HACHI` : null, tab:'lock' as Tab },
+            ]
+
+            const disponibles = items.filter(i=>i.valor)
+            const sinNada = items.filter(i=>!i.valor)
+
+            return <>
+              {disponibles.length===0 && <div style={empty}><div style={{fontSize:28}}>🐱</div><div>No tenés nada pendiente para reclamar ahora mismo.</div></div>}
+              {disponibles.map(i=>(
+                <div key={i.key} style={{...card,display:'flex',justifyContent:'space-between',alignItems:'center',padding:14,marginBottom:10}}>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <span style={{fontSize:24}}>{i.icon}</span>
+                    <div>
+                      <div style={{fontSize:12,color:'#8b949e'}}>{i.label}</div>
+                      <div style={{fontSize:14,fontWeight:700,color:'#3fb950'}}>{i.valor}</div>
+                    </div>
+                  </div>
+                  <button onClick={()=> i.action ? i.action() : loadTab(i.tab!)} style={{...btnP,padding:'8px 14px',fontSize:12}}>Ir</button>
+                </div>
+              ))}
+              {sinNada.length>0 && <>
+                <div style={{fontSize:11,color:'#8b949e',textAlign:'center',margin:'16px 0 8px'}}>Sin novedades por ahora:</div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'center'}}>
+                  {sinNada.map(i=><span key={i.key} style={{fontSize:11,color:'#6b6494',border:'1px solid #3b0764',borderRadius:20,padding:'4px 10px'}}>{i.icon} {i.label}</span>)}
+                </div>
+              </>}
+            </>
+          })()}
         </div>}
 
         {tab==='refs'&&<div>

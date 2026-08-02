@@ -2379,6 +2379,10 @@ export default function HachiMiner() {
 
         {tab==='drachmaminer'&&<div>
           <div style={sLabel}>🪙 Drachma Miner</div>
+          {drachmaMiner.activeMineId===0 && drachmaMiner.contractAddr===DRACHMA_MINER_ADDR_OLD && <div style={{background:'linear-gradient(135deg,#fbbf24,#f59e0b)',borderRadius:10,padding:14,marginBottom:12,textAlign:'center',boxShadow:'0 0 16px rgba(251,191,36,.5)'}}>
+            <div style={{fontSize:14,fontWeight:800,color:'#1e0840'}}>🎁 ¡Conseguí tu primera minería Drachma y ganá 10,000 SUSHI!</div>
+            <div style={{fontSize:11,color:'#1e0840',marginTop:4,lineHeight:1.4}}>Solo por tiempo limitado, hasta agotar el pool. El bono se paga de forma manual los días <strong>5 y 10 de agosto</strong>.</div>
+          </div>}
           <div style={{fontSize:10,color:'#8b949e',marginBottom:8,textAlign:'right'}}>Pool disponible: {fmtPrecise(drachmaMiner.poolFree)} Drachma</div>
           <div style={{fontSize:11,color:'#8b949e',textAlign:'center',marginBottom:8}}>Minerías activas ahora: <strong style={{color:'#34d399'}}>{drachmaActiveCount.real}</strong> de {drachmaActiveCount.total} creadas en total</div>
           <button onClick={()=>setShowInfoDrachma(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funciona el Drachma Miner?</button>

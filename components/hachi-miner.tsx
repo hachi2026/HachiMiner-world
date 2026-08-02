@@ -2599,40 +2599,36 @@ export default function HachiMiner() {
             const bocadoDisponible = Math.max(0, maxBasicCH - basicBoughtToday)
             const lockPendNum = parseFloat(lockData.pending) || 0
 
+            const fmtSecsCH = (s:number) => { const d=Math.floor(s/86400), h=Math.floor((s%86400)/3600); return d>0?`${d}d ${h}h`:`${h}h` }
+            const nowSecsCH = Math.floor(Date.now()/1000)
+            const msUntilMidnightUTC = new Date().setUTCHours(24,0,0,0) - Date.now()
+            const bocadoResetIn = fmtSecsCH(Math.floor(msUntilMidnightUTC/1000))
+
             const items = [
-              { key:'drachma', icon:'🪙', label:'Drachma Miner', valor: drachmaMiner.pending>0.01 ? `${drachmaMiner.pending.toFixed(2)} Drachma` : null, claimFn: claimDrachmaMineAction },
-              { key:'wldminer', icon:'⛏️', label:'WLD Miner', valor: (wldMiner.pendingHachi>0.01||wldMiner.pendingDrachma>0.01) ? `${wldMiner.pendingHachi.toFixed(2)} HACHI + ${wldMiner.pendingDrachma.toFixed(2)} Drachma` : null, claimFn: claimWldMinerAction },
-              { key:'wldlics', icon:'📜', label:'Licencias WLD (Hachi Miner)', valor: wldLicsPendTotal>0.01 ? `${fmtPrecise(wldLicsPendTotal)} HACHI` : null, claimFn: claimAllWLD },
-              { key:'diario', icon:'🐷', label:'Claim diario', valor: piggy.canWithdraw && piggy.accrued>0 ? `${fmtPrecise(piggy.accrued)} HACHI` : null, claimFn: withdrawDaily },
-              { key:'semanal', icon:'📅', label:'Bono Semanal', valor: weeklyBonus.pending>0.01 ? `${fmtPrecise(weeklyBonus.pending)} SUSHI` : null, claimFn: claimWeeklyBonus },
-              { key:'bocado', icon:'🍡', label:'Bocado disponible hoy', valor: bocadoDisponible>0 ? `${bocadoDisponible} disponible${bocadoDisponible>1?'s':''}` : null, action:()=>{setLicTab('sushi'); loadTab('lics')} },
-              { key:'reinversion', icon:'💎', label:'Reinversión VIP', valor: vipData.pendingHachi>0.01 ? `${vipData.pendingHachi.toFixed(2)} HACHI acumulado` : null, action:()=>loadTab('lock') },
-              { key:'lock', icon:'🔒', label:'Lock (APY)', valor: lockPendNum>0.01 ? `${lockData.pending} HACHI` : null, claimFn: claimAPY },
+              { key:'wldlics', iconImg:'/hachi-logo.png', label:'Hachi Miner (Licencias WLD)', valor: wldLicsPendTotal>0.01 ? `${fmtPrecise(wldLicsPendTotal)} HACHI` : null, pendiente: 'Sin nada acumulado todavía', disponibleAhora:true, claimFn: claimAllWLD },
+              { key:'drachma', iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh', label:'Drachma Miner', valor: drachmaMiner.pending>0.01 ? `${drachmaMiner.pending.toFixed(2)} Drachma` : null, pendiente: 'Sin nada acumulado todavía', disponibleAhora:true, claimFn: claimDrachmaMineAction },
+              { key:'wldminer', icon:'⛏️', label:'WLD Miner', valor: (wldMiner.pendingHachi>0.01||wldMiner.pendingDrachma>0.01) ? `${wldMiner.pendingHachi.toFixed(2)} HACHI + ${wldMiner.pendingDrachma.toFixed(2)} Drachma` : null, pendiente: 'Sin nada acumulado todavía', disponibleAhora:true, claimFn: claimWldMinerAction },
+              { key:'lock', icon:'🔒', label:'Lock (APY)', valor: lockPendNum>0.01 ? `${lockData.pending} HACHI` : null, pendiente: lockData.nextClaimIn!=='—' ? `Disponible en ${lockData.nextClaimIn}` : 'Sin nada acumulado todavía', disponibleAhora: lockData.nextClaimIn==='—', claimFn: claimAPY },
+              { key:'diario', icon:'🐱', label:'Claim diario', valor: piggy.canWithdraw && piggy.accrued>0 ? `${fmtPrecise(piggy.accrued)} HACHI` : null, pendiente: !piggy.canWithdraw ? `Disponible en ${Math.ceil(piggy.secondsUntilNext/3600)}h` : 'Sin nada acumulado todavía', disponibleAhora: piggy.canWithdraw, claimFn: withdrawDaily },
+              { key:'bocado', iconImg:'/hachi-cat-savings.png', label:'Bocado disponible hoy', valor: bocadoDisponible>0 ? `${bocadoDisponible} disponible${bocadoDisponible>1?'s':''}` : null, pendiente: `Se resetea en ${bocadoResetIn}`, disponibleAhora:false, action:()=>{setLicTab('sushi'); loadTab('lics')} },
+              { key:'reinversion', icon:'💎', label:'Reinversión VIP', valor: vipData.pendingHachi>0.01 ? `${vipData.pendingHachi.toFixed(2)} HACHI acumulado` : null, pendiente: 'Sin nada acumulado todavía', disponibleAhora:true, action:()=>loadTab('lock') },
+              { key:'semanal', icon:'📅', label:'Bono Semanal', valor: weeklyBonus.pending>0.01 ? `${fmtPrecise(weeklyBonus.pending)} SUSHI` : null, pendiente: weeklyBonus.secondsUntilNext>0 ? `Disponible en ${fmtSecsCH(weeklyBonus.secondsUntilNext)}` : 'Sin nada acumulado todavía', disponibleAhora: weeklyBonus.secondsUntilNext<=0, claimFn: claimWeeklyBonus },
             ]
 
-            const disponibles = items.filter(i=>i.valor)
-            const sinNada = items.filter(i=>!i.valor)
-
             return <>
-              {disponibles.length===0 && <div style={empty}><div style={{fontSize:28}}>🐱</div><div>No tenés nada pendiente para reclamar ahora mismo.</div></div>}
-              {disponibles.map(i=>(
-                <div key={i.key} style={{...card,display:'flex',justifyContent:'space-between',alignItems:'center',padding:14,marginBottom:10}}>
+              {items.map(i=>{
+                const tieneAlgo = !!i.valor
+                return <div key={i.key} style={{...card,display:'flex',justifyContent:'space-between',alignItems:'center',padding:14,marginBottom:10,opacity:tieneAlgo?1:0.7}}>
                   <div style={{display:'flex',alignItems:'center',gap:10}}>
-                    <span style={{fontSize:24}}>{i.icon}</span>
+                    {(i as any).iconImg ? <img src={(i as any).iconImg} alt="" width={24} height={24} style={{borderRadius:12,objectFit:'cover',flexShrink:0}} /> : <span style={{fontSize:24}}>{(i as any).icon}</span>}
                     <div>
                       <div style={{fontSize:12,color:'#8b949e'}}>{i.label}</div>
-                      <div style={{fontSize:14,fontWeight:700,color:'#3fb950'}}>{i.valor}</div>
+                      <div style={{fontSize:14,fontWeight:700,color:tieneAlgo?'#3fb950':'#8b949e'}}>{i.valor || i.pendiente}</div>
                     </div>
                   </div>
-                  <button onClick={()=> (i as any).claimFn ? (i as any).claimFn() : (i as any).action()} style={{...btnP,padding:'8px 14px',fontSize:12}}>{(i as any).claimFn?'Reclamar':'Ir'}</button>
+                  <button onClick={()=> (i as any).claimFn ? ((i as any).disponibleAhora && (i as any).claimFn()) : (i as any).action()} disabled={!(i as any).action && !((i as any).disponibleAhora)} style={{...btnP,padding:'8px 14px',fontSize:12,opacity:(!(i as any).action && !((i as any).disponibleAhora))?0.4:1,cursor:(!(i as any).action && !((i as any).disponibleAhora))?'not-allowed':'pointer'}}>{(i as any).claimFn?'Reclamar':'Ir'}</button>
                 </div>
-              ))}
-              {sinNada.length>0 && <>
-                <div style={{fontSize:11,color:'#8b949e',textAlign:'center',margin:'16px 0 8px'}}>Sin novedades por ahora:</div>
-                <div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'center'}}>
-                  {sinNada.map(i=><span key={i.key} style={{fontSize:11,color:'#6b6494',border:'1px solid #3b0764',borderRadius:20,padding:'4px 10px'}}>{i.icon} {i.label}</span>)}
-                </div>
-              </>}
+              })}
             </>
           })()}
         </div>}

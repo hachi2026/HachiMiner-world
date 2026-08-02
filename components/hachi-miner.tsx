@@ -2540,7 +2540,18 @@ export default function HachiMiner() {
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Drachma total / reclamado</span><span style={{fontFamily:'monospace'}}>{wldMiner.drachmaTotal.toFixed(2)} / <span style={{color:'#3fb950'}}>{wldMiner.drachmaClaimed.toFixed(2)}</span></span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Liberados HACHI</span><span style={{fontFamily:'monospace',color:'#3fb950'}}>{wldMiner.pendingHachi.toFixed(2)}</span></div>
               <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Liberados Drachma</span><span style={{fontFamily:'monospace',color:'#60a5fa'}}>{wldMiner.pendingDrachma.toFixed(2)}</span></div>
-              <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Termina</span><span style={{fontFamily:'monospace'}}>{new Date(wldMiner.endTime*1000).toLocaleDateString()}</span></div>
+              {(()=>{
+                const durDias = wldMinerVariants[wldMiner.variant]?.days || 0
+                const startTime = wldMiner.endTime - durDias*86400
+                const nowSecs = Math.floor(Date.now()/1000)
+                const diasRestantes = Math.max(0, Math.ceil((wldMiner.endTime - nowSecs) / 86400))
+                return <>
+                  <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Fecha de inicio</span><span style={{fontFamily:'monospace'}}>{new Date(startTime*1000).toLocaleDateString()}</span></div>
+                  <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Fecha de término</span><span style={{fontFamily:'monospace'}}>{new Date(wldMiner.endTime*1000).toLocaleDateString()}</span></div>
+                  <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Duración</span><span style={{fontFamily:'monospace'}}>{durDias} días</span></div>
+                  <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Te quedan</span><span style={{fontFamily:'monospace',color:diasRestantes<=0?'#3fb950':'#fbbf24',fontWeight:700}}>{diasRestantes<=0?'Terminada — reclamá el saldo':`${diasRestantes} días minando`}</span></div>
+                </>
+              })()}
               <button onClick={claimWldMinerAction} disabled={claimingWldMiner||(wldMiner.pendingHachi<=0&&wldMiner.pendingDrachma<=0)} style={{...btnG,width:'100%',marginTop:8,opacity:(wldMiner.pendingHachi>0||wldMiner.pendingDrachma>0)?1:0.4}}>{claimingWldMiner?'Reclamando...':'Reclamar'}</button>
             </div>}
           </>}

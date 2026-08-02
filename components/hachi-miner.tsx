@@ -1969,6 +1969,7 @@ export default function HachiMiner() {
             </div>
             <button onClick={withdrawDaily} disabled={!piggy.canWithdraw||!connected} style={{...btnG,width:'100%',padding:'10px 12px',opacity:(!piggy.canWithdraw||!connected)?0.4:1}}>Retirar al wallet</button>
             <div style={{fontSize:10,color:'#8b949e',marginTop:8,lineHeight:1.5}}>{piggy.canWithdraw ? `Podés reclamar ${fmt(piggy.accrued)} HACHI${piggy.bonus>0?` + ${fmt(piggy.bonus)} bonus`:''} ahora.` : `Próximo reclamo disponible en ${Math.ceil(piggy.secondsUntilNext/3600)}h.`} Se puede reclamar una vez cada 24hs.</div>
+            <div style={{fontSize:9,color:'#fbbf24',marginTop:4,fontStyle:'italic'}}>🐱 Bono aumentado por agosto, mes de los gatos — vuelve a su base normal después.</div>
             <div style={{fontSize:10,color:'#8b949e',marginTop:4}}>Licencias WLD activas: <span style={{color:'#e6edf3',fontWeight:600}}>{activeLicCount}</span></div>
           </div>
           <button onClick={()=>loadTab('swap')} style={{...btnG,width:'100%',marginBottom:12}}>🪙 Comprar HACHI</button>

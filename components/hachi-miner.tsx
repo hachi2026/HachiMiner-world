@@ -347,7 +347,7 @@ export default function HachiMiner() {
   const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0, durationDays:15, loaded:false, contractAddr:'0xF34a0C6F3C55Bb3b8E489E0c66779331FFc72eA4', isNewContract:true})
   const [drachmaActiveCount, setDrachmaActiveCount] = useState({real:0, total:0})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
-  const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0})
+  const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0, drachmaMinerFreeNew:0, wldMinerHachiFreeNew:0, wldMinerDrachmaFreeNew:0})
   const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0, loaded:false, contractAddr:'0x2C191913eBdA9b2bb61E3d00Ca5d35b6991F4B9A', isNewContract:true})
   const [wldActiveCount, setWldActiveCount] = useState({real:0, total:0})
   const [wldMinerVariants, setWldMinerVariants] = useState([{days:30,pct:30},{days:15,pct:12},{days:7,pct:5}])
@@ -1459,17 +1459,21 @@ export default function HachiMiner() {
       const streakC = new ethers.Contract(STREAK_ADDR, streakAbi, p)
       const rankingC = new ethers.Contract(C.ranking, rankingAbi, p)
       const dmC = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, dmAbi, p)
+      const dmCNew = new ethers.Contract(DRACHMA_MINER_ADDR_NEW, dmAbi, p)
       const wbC = new ethers.Contract(WEEKLY_BONUS_ADDR, wbAbi, p)
       const wmC = new ethers.Contract(WLD_MINER_ADDR_OLD, wmAbi, p)
+      const wmCNew = new ethers.Contract(WLD_MINER_ADDR_NEW, wmAbi, p)
 
-      const [apyPool, totalLocked, lockUsers, dailyHachiPool, dailyBonusPool, streakPool, rankingPeriodPool, dmPool, dmCommitted, wbPool, wmHachiPool, wmHachiCommitted, wmDrachmaPool, wmDrachmaCommitted]: [bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint] = await Promise.all([
+      const [apyPool, totalLocked, lockUsers, dailyHachiPool, dailyBonusPool, streakPool, rankingPeriodPool, dmPool, dmCommitted, dmPoolNew, dmCommittedNew, wbPool, wmHachiPool, wmHachiCommitted, wmDrachmaPool, wmDrachmaCommitted, wmHachiPoolNew, wmHachiCommittedNew, wmDrachmaPoolNew, wmDrachmaCommittedNew]: [bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint,bigint] = await Promise.all([
         lockC.apyPool(), lockC.totalLocked(), lockC.totalUsers(),
         dailyC.hachiPool(), dailyC.bonusPool(),
         streakC.streakSushiPool(),
         rankingC.periodPool(),
         dmC.drachmaPool(), dmC.drachmaCommitted(),
+        dmCNew.drachmaPool(), dmCNew.drachmaCommitted(),
         wbC.sushiPool(),
         wmC.hachiPool(), wmC.hachiCommitted(), wmC.drachmaPool(), wmC.drachmaCommitted(),
+        wmCNew.hachiPool(), wmCNew.hachiCommitted(), wmCNew.drachmaPool(), wmCNew.drachmaCommitted(),
       ])
 
       setPoolsExtra({
@@ -1478,9 +1482,12 @@ export default function HachiMiner() {
         streakPool: fe(streakPool),
         rankingPeriodPool: fe(rankingPeriodPool),
         drachmaMinerFree: fe(dmPool - dmCommitted),
+        drachmaMinerFreeNew: fe(dmPoolNew - dmCommittedNew),
         weeklyBonusPool: fe(wbPool),
         wldMinerHachiFree: fe(wmHachiPool - wmHachiCommitted),
         wldMinerDrachmaFree: fe(wmDrachmaPool - wmDrachmaCommitted),
+        wldMinerHachiFreeNew: fe(wmHachiPoolNew - wmHachiCommittedNew),
+        wldMinerDrachmaFreeNew: fe(wmDrachmaPoolNew - wmDrachmaCommittedNew),
       })
     } catch(e:any) { log('pools extra err: '+(e?.message||'').slice(0,80)) }
   }
@@ -2257,11 +2264,16 @@ export default function HachiMiner() {
             {[['Total',poolsData.wldTotal||'—'],['Reservado',poolsData.wldComm||'—'],['Libre',poolsData.wldFree||'—'],['Total pagado',poolsData.wldPaid||'—'],['Licencias disponibles',poolsData.licsAvail||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
           </div>
           <div style={card}><div style={cTitle}>🪙 Drachma Miner</div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.drachmaMinerFree)} Drachma</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Libre (contrato anterior)</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.drachmaMinerFree)} Drachma</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Libre (contrato actual)</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.drachmaMinerFreeNew)} Drachma</span></div>
           </div>
           <div style={card}><div style={cTitle}>⛏️ WLD Miner</div>
+            <div style={{fontSize:11,color:'#8b949e',fontWeight:700,marginTop:2}}>Contrato anterior</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.wldMinerHachiFree)} HACHI</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Drachma libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.wldMinerDrachmaFree)} Drachma</span></div>
+            <div style={{fontSize:11,color:'#8b949e',fontWeight:700,marginTop:6}}>Contrato actual</div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.wldMinerHachiFreeNew)} HACHI</span></div>
+            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Drachma libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.wldMinerDrachmaFreeNew)} Drachma</span></div>
           </div>
           <div style={card}><div style={{...cTitle,display:'flex',alignItems:'center',gap:6}}><img src="/hachi-cat-savings.png" width={20} height={20} style={{borderRadius:4,objectFit:'cover',flexShrink:0}} />Pool A — Bocado</div>
             {[['Libre',poolsData.poolAF||'—'],['Licencias Bocado disponibles',poolsData.sushiAvail||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
@@ -2277,15 +2289,9 @@ export default function HachiMiner() {
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool HACHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.dailyHachiPool)} HACHI</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool Drachma</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.dailyBonusPool)} Drachma</span></div>
           </div>
-          <div style={card}><div style={cTitle}>🏆 Ranking (premios cada 15 días)</div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Period pool</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.rankingPeriodPool)} HACHI</span></div>
-          </div>
           <div style={card}><div style={cTitle}>📊 Estadísticas</div>
             {[['Licencias WLD vendidas',poolsData.wldLics||'—'],['Licencias Bocado vendidas',poolsData.sushiLics||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>🔥 HACHI quemados</span><span style={{fontFamily:'monospace',color:'#f87171',fontWeight:600}}>{poolsData.burned||'—'}</span></div>
-          </div>
-          <div style={card}><div style={cTitle}>🔥 Racha de swaps</div>
-            <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.streakPool)} SUSHI</span></div>
           </div>
         </div>}
 

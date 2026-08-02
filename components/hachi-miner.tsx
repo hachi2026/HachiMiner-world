@@ -350,7 +350,7 @@ export default function HachiMiner() {
   const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0})
   const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0, loaded:false, contractAddr:'0x2C191913eBdA9b2bb61E3d00Ca5d35b6991F4B9A', isNewContract:true})
   const [wldActiveCount, setWldActiveCount] = useState({real:0, total:0})
-  const [wldMinerVariants, setWldMinerVariants] = useState([{days:7,pct:10},{days:15,pct:15},{days:30,pct:30}])
+  const [wldMinerVariants, setWldMinerVariants] = useState([{days:30,pct:30},{days:15,pct:12},{days:7,pct:5}])
   const [wldMinerHistory, setWldMinerHistory] = useState<{contrato:string, id:number, wldPaid:number, hachiTotal:number, drachmaTotal:number, done:boolean}[]>([])
   const [showWldHistory, setShowWldHistory] = useState(false)
   const [selWldAmount, setSelWldAmount] = useState('')

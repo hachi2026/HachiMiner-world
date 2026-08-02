@@ -2600,14 +2600,14 @@ export default function HachiMiner() {
             const lockPendNum = parseFloat(lockData.pending) || 0
 
             const items = [
-              { key:'drachma', icon:'🪙', label:'Drachma Miner', valor: drachmaMiner.pending>0.01 ? `${drachmaMiner.pending.toFixed(2)} Drachma` : null, tab:'drachmaminer' as Tab },
-              { key:'wldminer', icon:'⛏️', label:'WLD Miner', valor: (wldMiner.pendingHachi>0.01||wldMiner.pendingDrachma>0.01) ? `${wldMiner.pendingHachi.toFixed(2)} HACHI + ${wldMiner.pendingDrachma.toFixed(2)} Drachma` : null, tab:'wldminer' as Tab },
-              { key:'wldlics', icon:'📜', label:'Licencias WLD (Hachi Miner)', valor: wldLicsPendTotal>0.01 ? `${fmtPrecise(wldLicsPendTotal)} HACHI` : null, action:()=>{setLicTab('wld'); loadTab('lics')} },
-              { key:'diario', icon:'🐷', label:'Claim diario', valor: piggy.canWithdraw && piggy.accrued>0 ? `${fmtPrecise(piggy.accrued)} HACHI` : null, tab:'estado' as Tab },
-              { key:'semanal', icon:'📅', label:'Bono Semanal', valor: weeklyBonus.pending>0.01 ? `${fmtPrecise(weeklyBonus.pending)} SUSHI` : null, tab:'weeklybonus' as Tab },
+              { key:'drachma', icon:'🪙', label:'Drachma Miner', valor: drachmaMiner.pending>0.01 ? `${drachmaMiner.pending.toFixed(2)} Drachma` : null, claimFn: claimDrachmaMineAction },
+              { key:'wldminer', icon:'⛏️', label:'WLD Miner', valor: (wldMiner.pendingHachi>0.01||wldMiner.pendingDrachma>0.01) ? `${wldMiner.pendingHachi.toFixed(2)} HACHI + ${wldMiner.pendingDrachma.toFixed(2)} Drachma` : null, claimFn: claimWldMinerAction },
+              { key:'wldlics', icon:'📜', label:'Licencias WLD (Hachi Miner)', valor: wldLicsPendTotal>0.01 ? `${fmtPrecise(wldLicsPendTotal)} HACHI` : null, claimFn: claimAllWLD },
+              { key:'diario', icon:'🐷', label:'Claim diario', valor: piggy.canWithdraw && piggy.accrued>0 ? `${fmtPrecise(piggy.accrued)} HACHI` : null, claimFn: withdrawDaily },
+              { key:'semanal', icon:'📅', label:'Bono Semanal', valor: weeklyBonus.pending>0.01 ? `${fmtPrecise(weeklyBonus.pending)} SUSHI` : null, claimFn: claimWeeklyBonus },
               { key:'bocado', icon:'🍡', label:'Bocado disponible hoy', valor: bocadoDisponible>0 ? `${bocadoDisponible} disponible${bocadoDisponible>1?'s':''}` : null, action:()=>{setLicTab('sushi'); loadTab('lics')} },
-              { key:'reinversion', icon:'💎', label:'Reinversión VIP', valor: vipData.pendingHachi>0.01 ? `${vipData.pendingHachi.toFixed(2)} HACHI acumulado` : null, tab:'lock' as Tab },
-              { key:'lock', icon:'🔒', label:'Lock (APY)', valor: lockPendNum>0.01 ? `${lockData.pending} HACHI` : null, tab:'lock' as Tab },
+              { key:'reinversion', icon:'💎', label:'Reinversión VIP', valor: vipData.pendingHachi>0.01 ? `${vipData.pendingHachi.toFixed(2)} HACHI acumulado` : null, action:()=>loadTab('lock') },
+              { key:'lock', icon:'🔒', label:'Lock (APY)', valor: lockPendNum>0.01 ? `${lockData.pending} HACHI` : null, claimFn: claimAPY },
             ]
 
             const disponibles = items.filter(i=>i.valor)
@@ -2624,7 +2624,7 @@ export default function HachiMiner() {
                       <div style={{fontSize:14,fontWeight:700,color:'#3fb950'}}>{i.valor}</div>
                     </div>
                   </div>
-                  <button onClick={()=> i.action ? i.action() : loadTab(i.tab!)} style={{...btnP,padding:'8px 14px',fontSize:12}}>Ir</button>
+                  <button onClick={()=> (i as any).claimFn ? (i as any).claimFn() : (i as any).action()} style={{...btnP,padding:'8px 14px',fontSize:12}}>{(i as any).claimFn?'Reclamar':'Ir'}</button>
                 </div>
               ))}
               {sinNada.length>0 && <>

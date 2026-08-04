@@ -371,6 +371,7 @@ export default function HachiMiner() {
   const [wldLicsLoaded, setWldLicsLoaded] = useState(false)
   const [liveTick, setLiveTick] = useState(Date.now())
   const [selSUSHI, setSelSUSHI] = useState(0)
+  const [sushiQty, setSushiQty] = useState(1)
   const [sushiPrev, setSushiPrev] = useState({base:'—',d1:'—',d2:'—',total:'—',dailyLeft:'—'})
   const [sushiAccess, setSushiAccess] = useState(false)
   const [accrualStarted, setAccrualStarted] = useState(true)
@@ -961,16 +962,19 @@ export default function HachiMiner() {
 
   const buySUSHI = async () => {
     if (!connected) { toast_(t('err_connect'),'#f85149'); return }
-    const hachiNeeded = [500,2000,5000,10000][selSUSHI]
+    const hachiNeeded = [500,2000,5000,10000][selSUSHI] * sushiQty
     if (hachiRaw < hachiNeeded) { toast_(`Sin saldo HACHI. Comprá HACHI: ${HACHI_BUY_URL}`,'#f85149'); return }
     try {
-      toast_('Comprando Bocado...', '#d29922')
-      const amt = [pe(500),pe(2000),pe(5000),pe(10000)][selSUSHI]
+      toast_(sushiQty>1?`Comprando ${sushiQty} Bocados...`:'Comprando Bocado...', '#d29922')
+      const amtUnit = [pe(500),pe(2000),pe(5000),pe(10000)][selSUSHI]
+      const amtTotal = amtUnit * BigInt(sushiQty)
+      const calls = Array.from({length: sushiQty}, () => ({ to: C.core, abi: CORE, fnName: 'buyLicenseSushi', args: [selSUSHI] }))
       await sendTxMulti([
-        ...buildPermit2Approvals(C.hachi, C.core, amt),
-        { to: C.core, abi: CORE, fnName: 'buyLicenseSushi', args: [selSUSHI] },
+        ...buildPermit2Approvals(C.hachi, C.core, amtTotal),
+        ...calls,
       ])
-      toast_('✓ Bocado comprado', '#3fb950')
+      toast_(sushiQty>1?`✓ ${sushiQty} Bocados comprados`:'✓ Bocado comprado', '#3fb950')
+      setSushiQty(1)
       await loadAll(addr)
     } catch(e: any) {
       const msg = (e.reason||e.message||'').toLowerCase()
@@ -2076,13 +2080,26 @@ export default function HachiMiner() {
                   <div style={{fontSize:12,fontWeight:700,color:'#fbbf24',marginTop:6}}>{sushiPrices[0]}</div>
                 </div>
               </div>
-              <div style={pBox}>{[['Tipo',sushiNames[selSUSHI]],['Precio',sushiPrices[selSUSHI]],['SUSHI base',sushiPrev.base],['Bonus inmediato','+25%'],['Recibís al instante (×1.25)',sushiPrev.total]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace',fontSize:13}}>{v}</span></div>)}</div>
+              {(()=>{
+                const maxBasicNow2 = wldTierActive===255?0:wldTierActive===0?1:wldTierActive===1?2:wldTierActive===2?3:4
+                const disponiblesHoy = Math.max(0, maxBasicNow2 - basicBoughtToday)
+                if (disponiblesHoy <= 1) return null
+                return <div style={{marginBottom:10}}>
+                  <div style={{fontSize:11,color:'#8b949e',marginBottom:4}}>¿Cuántos Bocados querés comprar de una vez? (tenés {disponiblesHoy} disponibles hoy)</div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    {Array.from({length: disponiblesHoy}, (_, idx) => idx+1).map(n=>
+                      <button key={n} onClick={()=>setSushiQty(n)} style={{padding:'6px 14px',borderRadius:8,border:`1px solid ${sushiQty===n?'#fbbf24':'#5b21b6'}`,background:sushiQty===n?'rgba(251,191,36,.15)':'#1e0840',color:'#e6edf3',fontSize:13,fontWeight:700,cursor:'pointer'}}>{n}</button>
+                    )}
+                  </div>
+                </div>
+              })()}
+              <div style={pBox}>{[['Tipo',sushiNames[selSUSHI]],['Cantidad',sushiQty],['Precio total',`${([500,2000,5000,10000][selSUSHI]*sushiQty).toLocaleString()} HACHI`],['SUSHI base',sushiPrev.base],['Bonus inmediato','+25%'],['Recibís al instante (×1.25, ×'+sushiQty+')',sushiPrev.total]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace',fontSize:13}}>{v}</span></div>)}</div>
               {(()=>{
                 const poolEmpty = !(poolsData.poolAFreeNum > 0)
                 const maxBasicNow = wldTierActive===255?0:wldTierActive===0?1:wldTierActive===1?2:wldTierActive===2?3:4
-                const dailyLimitHit = selSUSHI===0 && basicBoughtToday >= maxBasicNow
+                const dailyLimitHit = selSUSHI===0 && (basicBoughtToday + sushiQty) > maxBasicNow
                 const disabled = poolEmpty || dailyLimitHit
-                const label = poolEmpty ? '⏳ Sin fondos en el pool ahora — probá más tarde' : dailyLimitHit ? '🚫 Límite diario alcanzado, volvé mañana' : `Comprar · ${sushiPrices[selSUSHI]}`
+                const label = poolEmpty ? '⏳ Sin fondos en el pool ahora — probá más tarde' : dailyLimitHit ? '🚫 Supera el límite diario disponible' : sushiQty>1 ? `Comprar ${sushiQty} · ${([500,2000,5000,10000][selSUSHI]*sushiQty).toLocaleString()} HACHI` : `Comprar · ${sushiPrices[selSUSHI]}`
                 return <button onClick={buySUSHI} disabled={disabled} style={{...btnG, opacity: disabled?0.5:1, cursor: disabled?'not-allowed':'pointer'}}>{label}</button>
               })()}
               {(()=>{

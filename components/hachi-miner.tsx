@@ -231,7 +231,7 @@ const LOGIN = {
       { icon:'🐱', title:'Reúne y cobra tus HACHI', desc:'Hachi te prepara una recompensa lista para reclamar cada 24hs, según tu actividad (lock y licencias). Un solo toque, sin esperas largas.' },
       { icon:'🔄', title:'Swap HACHI ↔ WLD', desc:'Intercambiá HACHI y WLD directo en la app, con la liquidez real de Uniswap.' },
       { icon:'🪙', iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh', title:'Drachma Miner', desc:'Minerá Drachma pagando HACHI, según tu nivel de licencia o Lock.' },
-      { icon:'📅', title:'Bono Semanal', desc:'Ganá SUSHI cada semana según tus licencias WLD activas.' },
+      { icon:'🎁', title:'Reward', desc:'Un regalo sorpresa cada semana según tus licencias WLD activas.' },
     ],
     stepsTitle: 'Cómo empezar',
     steps: [
@@ -2297,7 +2297,7 @@ export default function HachiMiner() {
           <div style={card}><div style={{...cTitle,display:'flex',alignItems:'center',gap:6}}><img src="/hachi-cat-savings.png" width={20} height={20} style={{borderRadius:4,objectFit:'cover',flexShrink:0}} />Pool A — Bocado</div>
             {[['Libre',poolsData.poolAF||'—'],['Licencias Bocado disponibles',poolsData.sushiAvail||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
           </div>
-          <div style={card}><div style={cTitle}>📅 Bono Semanal</div>
+          <div style={card}><div style={cTitle}>🎁 Reward</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.weeklyBonusPool)} SUSHI</span></div>
           </div>
           <div style={card}><div style={cTitle}>💎 Reinversión VIP</div>
@@ -2626,7 +2626,7 @@ export default function HachiMiner() {
               {icon:'🍡',label:'Bocado',action:()=>{setLicTab('sushi'); loadTab('lics')},iconImg:'/hachi-cat-savings.png'},
               {icon:'🪙',label:'Drachma Miner',action:()=>loadTab('drachmaminer'),iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
               {icon:'⛏️',label:'WLD Miner',action:()=>loadTab('wldminer')},
-              {icon:'📅',label:'Bono Semanal',action:()=>loadTab('weeklybonus')},
+              {icon:'🎁',label:'Reward',action:()=>loadTab('weeklybonus')},
             ].map(btn=><button key={btn.label} onClick={btn.action} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'16px 8px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer'}}>
               {(btn as any).iconImg ? <img src={(btn as any).iconImg} alt="" width={26} height={26} style={{borderRadius:13,objectFit:'cover'}} /> : <span style={{fontSize:26}}>{btn.icon}</span>}
               <span style={{fontSize:12,fontWeight:600}}>{btn.label}</span>
@@ -2658,7 +2658,7 @@ export default function HachiMiner() {
               { key:'diario', icon:'🐱', label:'Claim diario', valor: piggy.canWithdraw && piggy.accrued>0 ? `${fmtPrecise(piggy.accrued)} HACHI` : null, pendiente: !piggy.canWithdraw ? `Disponible en ${Math.ceil(piggy.secondsUntilNext/3600)}h` : 'Sin nada acumulado todavía', disponibleAhora: piggy.canWithdraw, tieneInversion: true, claimFn: withdrawDaily },
               { key:'bocado', iconImg:'/hachi-cat-savings.png', label:'Bocado disponible hoy', valor: bocadoDisponible>0 ? `${bocadoDisponible} disponible${bocadoDisponible>1?'s':''}` : null, pendiente: `Se resetea en ${bocadoResetIn}`, disponibleAhora:false, tieneInversion: wldTierActive!==255, action:()=>{setLicTab('sushi'); loadTab('lics')} },
               { key:'reinversion', icon:'💎', label:'Reinversión VIP', valor: vipData.pendingHachi>0.01 ? `${vipData.pendingHachi.toFixed(2)} HACHI acumulado` : null, pendiente: 'Sin nada acumulado todavía', disponibleAhora:true, tieneInversion: vipData.level!==255, action:()=>loadTab('lock') },
-              { key:'semanal', icon:'📅', label:'Bono Semanal', valor: weeklyBonus.pending>0.01 ? `${fmtPrecise(weeklyBonus.pending)} SUSHI` : null, pendiente: weeklyBonus.secondsUntilNext>0 ? `Disponible en ${fmtSecsCH(weeklyBonus.secondsUntilNext)}` : 'Sin nada acumulado todavía', disponibleAhora: weeklyBonus.secondsUntilNext<=0, tieneInversion: weeklyBonus.dailyRate>0, claimFn: claimWeeklyBonus },
+              { key:'semanal', icon:'🎁', label:'Reward', valor: weeklyBonus.pending>0.01 ? `${fmtPrecise(weeklyBonus.pending)} SUSHI` : null, pendiente: weeklyBonus.secondsUntilNext>0 ? `Disponible en ${fmtSecsCH(weeklyBonus.secondsUntilNext)}` : 'Sin nada acumulado todavía', disponibleAhora: weeklyBonus.secondsUntilNext<=0, tieneInversion: weeklyBonus.dailyRate>0, claimFn: claimWeeklyBonus },
             ]
 
             return <>

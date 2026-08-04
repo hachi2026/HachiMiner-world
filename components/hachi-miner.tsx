@@ -1568,9 +1568,10 @@ export default function HachiMiner() {
 
   const mineDrachmaAction = async () => {
     if (!connected) { toast_(t('err_connect'),'#f85149'); return }
+    const costWithSlippage = drachmaMiner.costs[selDrachmaTier] * 1.02
+    if (hachiRaw < costWithSlippage) { toast_(`Sin saldo HACHI suficiente. Necesitás ${costWithSlippage.toFixed(2)}, tenés ${hachiRaw.toFixed(2)}.`,'#f85149'); return }
     try {
       toast_('Minando Drachma...', '#d29922')
-      const costWithSlippage = drachmaMiner.costs[selDrachmaTier] * 1.02
       const costWei = pe(costWithSlippage)
       await sendTxMulti([
         ...buildPermit2Approvals(C.hachi, drachmaMiner.contractAddr, costWei),

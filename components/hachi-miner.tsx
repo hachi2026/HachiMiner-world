@@ -964,15 +964,15 @@ export default function HachiMiner() {
     if (!connected) { toast_(t('err_connect'),'#f85149'); return }
     const hachiNeeded = [500,2000,5000,10000][selSUSHI] * sushiQty
     if (hachiRaw < hachiNeeded) { toast_(`Sin saldo HACHI. Comprá HACHI: ${HACHI_BUY_URL}`,'#f85149'); return }
+    const amtUnit = [pe(500),pe(2000),pe(5000),pe(10000)][selSUSHI]
     try {
-      toast_(sushiQty>1?`Comprando ${sushiQty} Bocados...`:'Comprando Bocado...', '#d29922')
-      const amtUnit = [pe(500),pe(2000),pe(5000),pe(10000)][selSUSHI]
-      const amtTotal = amtUnit * BigInt(sushiQty)
-      const calls = Array.from({length: sushiQty}, () => ({ to: C.core, abi: CORE, fnName: 'buyLicenseSushi', args: [selSUSHI] }))
-      await sendTxMulti([
-        ...buildPermit2Approvals(C.hachi, C.core, amtTotal),
-        ...calls,
-      ])
+      for (let i = 0; i < sushiQty; i++) {
+        toast_(sushiQty>1?`Comprando Bocado ${i+1} de ${sushiQty}...`:'Comprando Bocado...', '#d29922')
+        await sendTxMulti([
+          ...buildPermit2Approvals(C.hachi, C.core, amtUnit),
+          { to: C.core, abi: CORE, fnName: 'buyLicenseSushi', args: [selSUSHI] },
+        ])
+      }
       toast_(sushiQty>1?`✓ ${sushiQty} Bocados comprados`:'✓ Bocado comprado', '#3fb950')
       setSushiQty(1)
       await loadAll(addr)

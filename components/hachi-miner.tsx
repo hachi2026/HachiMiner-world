@@ -144,6 +144,7 @@ const CORE = [
   'function getUserWLDLics(address) view returns (uint256[])',
   'function getUserSushiLics(address) view returns (uint256[])',
   'function wldLics(uint256) view returns (address,uint8,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool)',
+  'function wldLicId() view returns (uint256)',
   'function sushiLics(uint256) view returns (address,uint8,uint256,uint256,uint256,uint256,bool)',
   'function specialSushiAvailable(address) view returns (bool)',
   'function lastSpecialSushi(address) view returns (uint256)',
@@ -351,6 +352,7 @@ export default function HachiMiner() {
   const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0, drachmaMinerFreeNew:0, wldMinerHachiFreeNew:0, wldMinerDrachmaFreeNew:0})
   const [wldMiner, setWldMiner] = useState({tier:255, cap:0, activeMineId:0, active:false, variant:0, hachiTotal:0, hachiClaimed:0, drachmaTotal:0, drachmaClaimed:0, pendingHachi:0, pendingDrachma:0, endTime:0, poolFreeHachi:0, poolFreeDrachma:0, loaded:false, contractAddr:'0x2C191913eBdA9b2bb61E3d00Ca5d35b6991F4B9A', isNewContract:true})
   const [wldActiveCount, setWldActiveCount] = useState({real:0, total:0})
+  const [wldLicActiveCount, setWldLicActiveCount] = useState({real:0, total:0})
   const [wldMinerVariants, setWldMinerVariants] = useState([{days:30,pct:30},{days:15,pct:12},{days:7,pct:5}])
   const [wldMinerHistory, setWldMinerHistory] = useState<{contrato:string, id:number, wldPaid:number, hachiTotal:number, drachmaTotal:number, done:boolean}[]>([])
   const [showWldHistory, setShowWldHistory] = useState(false)
@@ -1046,7 +1048,7 @@ export default function HachiMiner() {
   const loadTab = async (v: Tab) => {
     setTab(v); if (!connected) return
     const p = rpc()
-    if (v==='lics') loadWLDLics(p)
+    if (v==='lics') { loadWLDLics(p); loadWldLicActiveCount(p) }
     if (v==='lock') { loadLock(p); loadVipHolders(p) }
     if (v==='ranking') loadRanking(p)
     if (v==='estado') { loadMyStatus(p); loadWLDLics(p); loadLock(p); loadRanking(p); loadStreakStatus(p) }
@@ -1281,6 +1283,32 @@ export default function HachiMiner() {
         })
       })
     } catch(e:any) { log('drachma miner err: '+(e?.message||'').slice(0,80)) }
+  }
+
+  const loadWldLicActiveCount = async (p: ethers.JsonRpcProvider) => {
+    try {
+      await withRetry(async () => {
+        const core = new ethers.Contract(C.core, CORE, p)
+        const total = Number(await core.wldLicId())
+        const nowSecs = Math.floor(Date.now()/1000)
+        let real = 0
+        const BATCH = 8
+        for (let i = 0; i < total; i += BATCH) {
+          const ids = []
+          for (let j = i; j < Math.min(i+BATCH, total); j++) ids.push(j)
+          const results = await Promise.all(ids.map(id => core.wldLics(id)))
+          for (const l of results) {
+            const active = l[10]
+            const hachiTotal = fe(l[3])
+            const hachiClaimed = fe(l[5])
+            const endTime = Number(l[7])
+            const restante = hachiTotal - hachiClaimed
+            if (active && (nowSecs < endTime || restante > 0.01)) real++
+          }
+        }
+        setWldLicActiveCount({real, total})
+      })
+    } catch(e:any) { log('wld lic count err: '+(e?.message||'').slice(0,80)) }
   }
 
   const loadWldActiveCount = async (p: ethers.JsonRpcProvider) => {
@@ -1998,6 +2026,10 @@ export default function HachiMiner() {
 
         {tab==='lics'&&<div>
           {licTab==='wld'&&<div>
+            <div style={{display:'flex',justifyContent:'center',gap:16,marginBottom:10,fontSize:13,fontWeight:700}}>
+              <span style={{color:'#34d399'}}>🟢 Activas {wldLicActiveCount.real}</span>
+              <span style={{color:'#f87171'}}>🔴 Terminadas {wldLicActiveCount.total - wldLicActiveCount.real}</span>
+            </div>
             <button onClick={()=>setShowInfoLics(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funcionan las licencias?</button>
             {showInfoLics&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
               <strong>¿Quién puede participar?</strong> Cualquier usuario verificado con World ID. Comprar tu primera licencia WLD es el punto de entrada a todo el sistema de minería de Hachi.

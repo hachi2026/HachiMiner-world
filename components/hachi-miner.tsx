@@ -107,6 +107,7 @@ const WLD_MINER_ABI = [
 const DRACHMA_MINER_ABI = [
   'function getUserTier(address) view returns (uint8)',
   'function costInHachi(uint8) view returns (uint256)',
+  'function discountBps() view returns (uint256)',
   'function tierDrachmaAmounts(uint256) view returns (uint256)',
   'function mineDrachma(uint8,uint256) returns (uint256)',
   'function claimDrachma(uint256)',
@@ -344,7 +345,7 @@ export default function HachiMiner() {
   const [swapHistoryExpanded, setSwapHistoryExpanded] = useState(false)
   const [selWLD, setSelWLD] = useState(0)
   const [showBuyWLD, setShowBuyWLD] = useState(false)
-  const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0, durationDays:15, loaded:false, contractAddr:'0xF34a0C6F3C55Bb3b8E489E0c66779331FFc72eA4', isNewContract:true})
+  const [drachmaMiner, setDrachmaMiner] = useState({tier:255, amounts:[0,0,0,0], costs:[0,0,0,0], activeMineId:0, active:false, drachmaTotal:0, drachmaClaimed:0, pending:0, endTime:0, poolFree:0, durationDays:15, loaded:false, contractAddr:'0xF34a0C6F3C55Bb3b8E489E0c66779331FFc72eA4', isNewContract:true, discountBps:1500})
   const [drachmaActiveCount, setDrachmaActiveCount] = useState({real:0, total:0})
   const [selDrachmaTier, setSelDrachmaTier] = useState(0)
   const [poolsExtra, setPoolsExtra] = useState({apyPool:0, totalLocked:0, lockUsers:0, dailyHachiPool:0, dailyBonusPool:0, streakPool:0, rankingPeriodPool:0, drachmaMinerFree:0, weeklyBonusPool:0, wldMinerHachiFree:0, wldMinerDrachmaFree:0, drachmaMinerFreeNew:0, wldMinerHachiFreeNew:0, wldMinerDrachmaFreeNew:0})
@@ -1254,7 +1255,7 @@ export default function HachiMiner() {
         const dmAddr = useOld ? DRACHMA_MINER_ADDR_OLD : DRACHMA_MINER_ADDR_NEW
         const dm = useOld ? dmOld : new ethers.Contract(DRACHMA_MINER_ADDR_NEW, DRACHMA_MINER_ABI, p)
 
-        const [tier, activeId, durationSecs] = await Promise.all([dm.getUserTier(addr), dm.activeMineId(addr), dm.mineDuration()])
+        const [tier, activeId, durationSecs, discountBpsRaw] = await Promise.all([dm.getUserTier(addr), dm.activeMineId(addr), dm.mineDuration(), dm.discountBps().catch(() => BigInt(1500))])
         const amounts = await Promise.all([0,1,2,3].map(i => dm.tierDrachmaAmounts(i)))
         const costs = await Promise.all([0,1,2,3].map(i => dm.costInHachi(i).catch(() => BigInt(0))))
 
@@ -1275,6 +1276,7 @@ export default function HachiMiner() {
           loaded: true,
           contractAddr: dmAddr,
           isNewContract: !useOld,
+          discountBps: Number(discountBpsRaw),
           ...mineInfo,
         })
       })
@@ -2450,7 +2452,10 @@ export default function HachiMiner() {
               {(()=>{
                 const nowSecsDm = Math.floor(Date.now()/1000)
                 const drachmaReallyActive = drachmaMiner.active && (nowSecsDm < drachmaMiner.endTime || drachmaMiner.pending > 0.01)
-                return <button onClick={mineDrachmaAction} disabled={!connected||drachmaReallyActive} style={{...btnP,width:'100%',opacity:(!connected||drachmaReallyActive)?0.4:1}}>{drachmaReallyActive?'Ya tenés una mina activa':`Pagás ${fmtPrecise(drachmaMiner.costs[selDrachmaTier])} HACHI → recibís ${fmtPrecise(drachmaMiner.amounts[selDrachmaTier])} Drachma`}</button>
+                return <>
+                  <div style={{fontSize:11,color:'#3fb950',textAlign:'center',marginBottom:6,fontWeight:600}}>🎁 Ganás un {((drachmaMiner.discountBps/(10000-drachmaMiner.discountBps))*100).toFixed(1)}% extra respecto al valor de mercado (descuento del {(drachmaMiner.discountBps/100).toFixed(0)}%)</div>
+                  <button onClick={mineDrachmaAction} disabled={!connected||drachmaReallyActive} style={{...btnP,width:'100%',opacity:(!connected||drachmaReallyActive)?0.4:1}}>{drachmaReallyActive?'Ya tenés una mina activa':`Pagás ${fmtPrecise(drachmaMiner.costs[selDrachmaTier])} HACHI → recibís ${fmtPrecise(drachmaMiner.amounts[selDrachmaTier])} Drachma`}</button>
+                </>
               })()}
             </div>
             {drachmaMiner.active&&(Math.floor(Date.now()/1000)<drachmaMiner.endTime||drachmaMiner.pending>0.01)&&<div style={{...card,marginTop:12}}>

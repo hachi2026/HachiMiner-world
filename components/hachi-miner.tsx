@@ -428,7 +428,7 @@ export default function HachiMiner() {
   const t = (k: keyof typeof TR.es) => TR[lang][k] || TR.es[k]
   const loginCopy = LOGIN[lang] || LOGIN.es
   const rpc = () => new ethers.JsonRpcProvider(RPC)
-  const toast_ = (msg: string, color='#a78bfa') => { setToast({msg,color}); setTimeout(()=>setToast(null),4000) }
+  const toast_ = (msg: string, color='#a78bfa') => { if (msg.includes('__VERIFY_OPENED__')) return; setToast({msg,color}); setTimeout(()=>setToast(null),4000) }
 
   // 1) Inicializar MiniKit (OBLIGATORIO en v2 antes de cualquier comando)
   // 2) Si estamos dentro de World App, conectar automáticamente
@@ -852,7 +852,7 @@ export default function HachiMiner() {
   // { address, data } para evitar que MiniKit inspeccione el nombre de la función.
   // Tras recibir el transaction_id de MiniKit, hacemos polling hasta confirmar el minado on-chain.
   const sendTx = async (contractAddr: string, abi: string[], fnName: string, args: any[]) => {
-    if (!verified) { await handleOpenVerify(); throw new Error('Verificate para continuar, y volvé a intentarlo') }
+    if (!verified) { await handleOpenVerify(); throw new Error('__VERIFY_OPENED__') }
     log('tx: '+fnName+' inWA:'+inWA)
     if (MiniKit.isInstalled()) {
       const data = encodeFunctionData({ abi: parseAbi(abi), functionName: fnName as any, args })
@@ -880,7 +880,7 @@ export default function HachiMiner() {
   // ABI declarativo { to, abi, fnName, args } (funciones de nuestros contratos).
   // Incluye polling on-chain tras recibir el transaction_id de MiniKit.
   const sendTxMulti = async (calls: ({ to: string; data: `0x${string}` } | { to: string; abi: string[]; fnName: string; args: any[] })[]) => {
-    if (!verified) { await handleOpenVerify(); throw new Error('Verificate para continuar, y volvé a intentarlo') }
+    if (!verified) { await handleOpenVerify(); throw new Error('__VERIFY_OPENED__') }
     if (MiniKit.isInstalled()) {
       const txs = calls.map((c) => {
         if ('data' in c) return { to: c.to, data: c.data }
@@ -1950,6 +1950,7 @@ export default function HachiMiner() {
                 </div>}
               </div>
             </div>
+            {connected&&!verified&&<button onClick={handleOpenVerify} disabled={rpLoading} style={{...btnP,width:'100%',padding:'10px 12px',marginBottom:8,opacity:rpLoading?0.6:1}}>{rpLoading?'Preparando verificación...':'🪪 Verificar con World ID'}</button>}
             <button onClick={withdrawDaily} disabled={!piggy.canWithdraw||!connected} style={{...btnG,width:'100%',padding:'10px 12px',opacity:(!piggy.canWithdraw||!connected)?0.4:1}}>Retirar al wallet</button>
             <div style={{fontSize:10,color:'#8b949e',marginTop:8,lineHeight:1.5}}>{piggy.canWithdraw ? `Podés reclamar ${fmt(piggy.accrued)} HACHI${piggy.bonus>0?` + ${fmt(piggy.bonus)} bonus`:''} ahora.` : `Próximo reclamo disponible en ${Math.ceil(piggy.secondsUntilNext/3600)}h.`} Se puede reclamar una vez cada 24hs.</div>
             <div style={{fontSize:9,color:'#fbbf24',marginTop:4,fontStyle:'italic'}}>🐱 Bono aumentado por agosto, mes de los gatos — vuelve a su base normal después.</div>

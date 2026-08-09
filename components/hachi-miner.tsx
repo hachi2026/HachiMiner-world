@@ -533,7 +533,7 @@ export default function HachiMiner() {
       const walletAuthResult = await MiniKit.walletAuth({
         nonce: genNonce(),
         statement: 'HachiMiner',
-        expirationTime: new Date(Date.now() + 24*60*60*1000),
+        expirationTime: new Date(Date.now() + 60*1000),
         notBefore: new Date(Date.now() - 60*1000),
       })
       log('walletAuth executedWith: ' + walletAuthResult.executedWith)

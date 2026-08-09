@@ -2075,8 +2075,19 @@ export default function HachiMiner() {
                 const maxBasicNow = wldTierActive===255?0:wldTierActive===0?1:wldTierActive===1?2:wldTierActive===2?3:4
                 const dailyLimitHit = selSUSHI===0 && (basicBoughtToday + sushiQty) > maxBasicNow
                 const disabled = poolEmpty || dailyLimitHit
-                const label = poolEmpty ? '⏳ Sin fondos en el pool ahora — probá más tarde' : dailyLimitHit ? '🚫 Supera el límite diario disponible' : sushiQty>1 ? `Comprar ${sushiQty} · ${([500,2000,5000,10000][selSUSHI]*sushiQty).toLocaleString()} HACHI` : `Comprar · ${sushiPrices[selSUSHI]}`
-                return <button onClick={buySUSHI} disabled={disabled} style={{...btnG, opacity: disabled?0.5:1, cursor: disabled?'not-allowed':'pointer'}}>{label}</button>
+                const label = poolEmpty ? '⏳ En pausa por ahora' : dailyLimitHit ? '🚫 Supera el límite diario disponible' : sushiQty>1 ? `Comprar ${sushiQty} · ${([500,2000,5000,10000][selSUSHI]*sushiQty).toLocaleString()} HACHI` : `Comprar · ${sushiPrices[selSUSHI]}`
+                return <>
+                  {poolEmpty && <div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
+                    <strong>🐱 Bocado en pausa por ahora</strong>
+                    <br/><br/>
+                    La plataforma de SUSHI está teniendo problemas técnicos externos a nosotros — no es algo de nuestro contrato ni de la app. Ellos mismos informaron que ya están trabajando en solucionarlo.
+                    <br/><br/>
+                    Mientras tanto, ponemos Bocado en pausa para cuidar el sistema. Apenas se resuelva (o encontremos una alternativa mejor), lo reactivamos y avisamos acá mismo.
+                    <br/><br/>
+                    Si tenés HACHI para invertir, <strong>Drachma Miner</strong> sigue funcionando normal mientras tanto. 🪙
+                  </div>}
+                  <button onClick={buySUSHI} disabled={disabled} style={{...btnG, opacity: disabled?0.5:1, cursor: disabled?'not-allowed':'pointer'}}>{label}</button>
+                </>
               })()}
               {(()=>{
                 const tierLabel = !wldTierLoaded?'Consultando...':wldTierActive===255?'Sin licencia WLD':['Básica','Estándar','Premium','Elite'][wldTierActive]??'—'

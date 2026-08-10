@@ -1321,28 +1321,35 @@ export default function HachiMiner() {
   const loadWldActiveCount = async (p: ethers.JsonRpcProvider) => {
     try {
       await withRetry(async () => {
-        const wm = new ethers.Contract(WLD_MINER_ADDR_OLD, WLD_MINER_ABI, p)
-        const total = Number(await wm.mineId())
         const nowSecs = Math.floor(Date.now()/1000)
-        let real = 0
-        const BATCH = 8
-        for (let i = 1; i <= total; i += BATCH) {
-          const ids = []
-          for (let j = i; j < Math.min(i+BATCH, total+1); j++) ids.push(j)
-          const results = await Promise.all(ids.map(id => wm.mines(id)))
-          for (const m of results) {
-            const active = m[10]
-            const hachiTotal = fe(m[3])
-            const hachiClaimed = fe(m[4])
-            const drachmaTotal = fe(m[5])
-            const drachmaClaimed = fe(m[6])
-            const endTime = Number(m[8])
-            const restanteHachi = hachiTotal - hachiClaimed
-            const restanteDrachma = drachmaTotal - drachmaClaimed
-            if (active && (nowSecs < endTime || restanteHachi > 0.01 || restanteDrachma > 0.01)) real++
+        const scanContract = async (addr: string) => {
+          const wm = new ethers.Contract(addr, WLD_MINER_ABI, p)
+          const total = Number(await wm.mineId())
+          let real = 0
+          const BATCH = 8
+          for (let i = 1; i <= total; i += BATCH) {
+            const ids = []
+            for (let j = i; j < Math.min(i+BATCH, total+1); j++) ids.push(j)
+            const results = await Promise.all(ids.map(id => wm.mines(id)))
+            for (const m of results) {
+              const active = m[10]
+              const hachiTotal = fe(m[3])
+              const hachiClaimed = fe(m[4])
+              const drachmaTotal = fe(m[5])
+              const drachmaClaimed = fe(m[6])
+              const endTime = Number(m[8])
+              const restanteHachi = hachiTotal - hachiClaimed
+              const restanteDrachma = drachmaTotal - drachmaClaimed
+              if (active && (nowSecs < endTime || restanteHachi > 0.01 || restanteDrachma > 0.01)) real++
+            }
           }
+          return { real, total }
         }
-        setWldActiveCount({real, total})
+        const [oldResult, newResult] = await Promise.all([
+          scanContract(WLD_MINER_ADDR_OLD),
+          scanContract(WLD_MINER_ADDR_NEW),
+        ])
+        setWldActiveCount({ real: oldResult.real + newResult.real, total: oldResult.total + newResult.total })
       })
     } catch(e:any) { log('wld count err: '+(e?.message||'').slice(0,80)) }
   }

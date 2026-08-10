@@ -118,6 +118,7 @@ const DRACHMA_MINER_ABI = [
   'function drachmaCommitted() view returns (uint256)',
   'function mineDuration() view returns (uint256)',
   'function mineId() view returns (uint256)',
+  'function userMineIds(address, uint256) view returns (uint256)',
 ]
 const WEEKLY_BONUS_ADDR = '0x67ECFC02B852FDd9D55D0cBF8866cE6ff74126dF'
 const WEEKLY_BONUS_ABI = [
@@ -1210,8 +1211,10 @@ export default function HachiMiner() {
     try {
       const dmOld = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, DRACHMA_MINER_ABI, p)
       const dmNew = new ethers.Contract(DRACHMA_MINER_ADDR_NEW, DRACHMA_MINER_ABI, p)
-      const [oldId, newId] = await Promise.all([dmOld.activeMineId(addr), dmNew.activeMineId(addr)])
       const history: {contrato:string, id:number, hachiPaid:number, drachmaTotal:number, done:boolean}[] = []
+
+      // Contrato viejo: solo tiene la última (no lleva lista completa)
+      const oldId = await dmOld.activeMineId(addr)
       if (Number(oldId) > 0) {
         const m = await dmOld.mines(oldId)
         const hachiPaid = fe(m[2])
@@ -1219,13 +1222,23 @@ export default function HachiMiner() {
         const done = (drachmaTotal - drachmaClaimed) <= 0.01
         history.push({contrato:'Anterior', id:Number(oldId), hachiPaid, drachmaTotal, done})
       }
-      if (Number(newId) > 0) {
-        const m = await dmNew.mines(newId)
+
+      // Contrato nuevo: recorrer userMineIds hasta que falle, trae TODAS las minas
+      const newIds: number[] = []
+      for (let i = 0; i < 50; i++) {
+        try {
+          const id = await dmNew.userMineIds(addr, i)
+          newIds.push(Number(id))
+        } catch (e) { break }
+      }
+      for (const id of newIds) {
+        const m = await dmNew.mines(id)
         const hachiPaid = fe(m[2])
         const drachmaTotal = fe(m[3]), drachmaClaimed = fe(m[4])
         const done = (drachmaTotal - drachmaClaimed) <= 0.01
-        history.push({contrato:'Actual', id:Number(newId), hachiPaid, drachmaTotal, done})
+        history.push({contrato:'Actual', id, hachiPaid, drachmaTotal, done})
       }
+
       setDrachmaMinerHistory(history)
     } catch(e:any) { log('drachma history err: '+(e?.message||'').slice(0,80)) }
   }

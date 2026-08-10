@@ -2071,7 +2071,8 @@ export default function HachiMiner() {
               })()}
               <div style={pBox}>{[['Tipo',sushiNames[selSUSHI]],['Cantidad',sushiQty],['Precio total',`${([500,2000,5000,10000][selSUSHI]*sushiQty).toLocaleString()} HACHI`],['SUSHI base',sushiPrev.base],['Bonus inmediato','+25%'],['Recibís al instante (×1.25, ×'+sushiQty+')',sushiPrev.total]].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace',fontSize:13}}>{v}</span></div>)}</div>
               {(()=>{
-                const poolEmpty = !(poolsData.poolAFreeNum > 0)
+                const sushiNeeded = [500,2000,5000,10000][selSUSHI] * sushiQty
+                const poolEmpty = poolsData.poolAFreeNum < sushiNeeded
                 const maxBasicNow = wldTierActive===255?0:wldTierActive===0?1:wldTierActive===1?2:wldTierActive===2?3:4
                 const dailyLimitHit = selSUSHI===0 && (basicBoughtToday + sushiQty) > maxBasicNow
                 const disabled = poolEmpty || dailyLimitHit

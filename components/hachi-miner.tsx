@@ -1176,25 +1176,32 @@ export default function HachiMiner() {
   const loadDrachmaActiveCount = async (p: ethers.JsonRpcProvider) => {
     try {
       await withRetry(async () => {
-        const dm = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, DRACHMA_MINER_ABI, p)
-        const total = Number(await dm.mineId())
         const nowSecs = Math.floor(Date.now()/1000)
-        let real = 0
-        const BATCH = 8
-        for (let i = 1; i <= total; i += BATCH) {
-          const ids = []
-          for (let j = i; j < Math.min(i+BATCH, total+1); j++) ids.push(j)
-          const results = await Promise.all(ids.map(id => dm.mines(id)))
-          for (const m of results) {
-            const active = m[9]
-            const drachmaTotal = fe(m[3])
-            const drachmaClaimed = fe(m[4])
-            const endTime = Number(m[7])
-            const restante = drachmaTotal - drachmaClaimed
-            if (active && (nowSecs < endTime || restante > 0.01)) real++
+        const scanContract = async (addr: string) => {
+          const dm = new ethers.Contract(addr, DRACHMA_MINER_ABI, p)
+          const total = Number(await dm.mineId())
+          let real = 0
+          const BATCH = 8
+          for (let i = 1; i <= total; i += BATCH) {
+            const ids = []
+            for (let j = i; j < Math.min(i+BATCH, total+1); j++) ids.push(j)
+            const results = await Promise.all(ids.map(id => dm.mines(id)))
+            for (const m of results) {
+              const active = m[9]
+              const drachmaTotal = fe(m[3])
+              const drachmaClaimed = fe(m[4])
+              const endTime = Number(m[7])
+              const restante = drachmaTotal - drachmaClaimed
+              if (active && (nowSecs < endTime || restante > 0.01)) real++
+            }
           }
+          return { real, total }
         }
-        setDrachmaActiveCount({real, total})
+        const [oldResult, newResult] = await Promise.all([
+          scanContract(DRACHMA_MINER_ADDR_OLD),
+          scanContract(DRACHMA_MINER_ADDR_NEW),
+        ])
+        setDrachmaActiveCount({ real: oldResult.real + newResult.real, total: oldResult.total + newResult.total })
       })
     } catch(e:any) { log('drachma count err: '+(e?.message||'').slice(0,80)) }
   }

@@ -2001,22 +2001,15 @@ export default function HachiMiner() {
             </div>
             <button onClick={()=>setShowInfoLics(v=>!v)} style={{background:'none',border:'1px solid #5b21b6',borderRadius:8,color:'#a78bfa',fontSize:12,padding:'6px 12px',cursor:'pointer',marginBottom:10,width:'100%'}}>ℹ️ ¿Cómo funcionan las licencias?</button>
             {showInfoLics&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.6}}>
-              <strong>¿Quién puede participar?</strong> Cualquier usuario verificado con World ID. Comprar tu primera licencia WLD es el punto de entrada a todo el sistema de minería de Hachi.
+              <strong style={{color:'#fbbf24'}}>¿Quién puede participar?</strong> Cualquier usuario verificado con World ID. Comprar tu primera licencia WLD es el punto de entrada a todo el sistema de minería de Hachi.
               <br/><br/>
-              <strong>Licencias WLD:</strong> pagás WLD una vez y recibís HACHI de forma lineal durante 3 meses (30% de retorno total, 35% en Elite). Podés tener hasta <strong>5 licencias WLD nuevas por mes</strong>.
+              <strong style={{color:'#fbbf24'}}>Licencias WLD:</strong> pagás WLD una vez y recibís HACHI de forma lineal durante 3 meses — <strong style={{color:'#fbbf24'}}>30% de retorno total</strong> (35% en Elite).
               <br/><br/>
-              <strong>Tu licencia te convierte en minero:</strong> según tu nivel (Básica/Estándar/Premium/Elite), tenés acceso a distintos mineros más avanzados dentro de la app — Drachma Miner y WLD Miner — cada uno con un tope de inversión que crece con tu nivel. Cuanto más alto tu nivel, a más minerías y mayores montos podés acceder.
+              <strong style={{color:'#fbbf24'}}>Ejemplo con 50 WLD:</strong> generás HACHI equivalente al 30% de esos 50 WLD, repartido en 3 meses. Además, mientras la licencia esté activa, esos mismos 50 WLD te dan <strong style={{color:'#fbbf24'}}>25 Drachma por día</strong> en el Claim diario (0.5 Drachma por cada WLD invertido, todos los días, durante los 3 meses completos).
               <br/><br/>
-              <strong>Cuántos Bocados Básicos podés comprar por día</strong> (según tu licencia WLD activa más alta):
-              <br/>• Sin licencia WLD: no disponible
-              <br/>• Básica: 1 por día
-              <br/>• Estándar: 2 por día
-              <br/>• Premium: 3 por día
-              <br/>• Elite: 4 por día
+              <strong style={{color:'#fbbf24'}}>Tu licencia te convierte en minero:</strong> según tu nivel (Básica/Estándar/Premium/Elite), tenés acceso a distintos mineros más avanzados dentro de la app — Drachma Miner y WLD Miner — cada uno con un tope de inversión que crece con tu nivel. Cuanto más alto tu nivel, a más minerías y mayores montos podés acceder.
               <br/><br/>
-              <strong>Licencias Bocado:</strong> pagás HACHI y recibís SUSHI al instante (el monto base + 25% de bonus), sin esperar.
-              <br/><br/>
-              <strong>Sistema limitado y sostenible:</strong> todos los topes de inversión están pensados según tu nivel, para que el sistema crezca de forma controlada. El equipo de Hachi reinvierte parte de lo recaudado y distribuye recursos entre los distintos pools para mantener todo funcionando — podés ver el detalle real en la página de <strong>Transparencia</strong> (junto a los enlaces de comunidad).
+              <strong style={{color:'#fbbf24'}}>Sistema limitado y sostenible:</strong> todos los topes de inversión están pensados según tu nivel, para que el sistema crezca de forma controlada. El equipo de Hachi reinvierte parte de lo recaudado y distribuye recursos entre los distintos pools para mantener todo funcionando — podés ver el detalle real en la página de <strong style={{color:'#fbbf24'}}>Transparencia</strong> (junto a los enlaces de comunidad).
             </div>}
             <div style={{background:'rgba(251,191,36,.1)',border:'1px solid rgba(251,191,36,.4)',borderRadius:8,padding:12,marginBottom:12,fontSize:12,color:'#fbbf24',textAlign:'center',fontWeight:700}}>
               🔒 Máximo 3 licencias Elite activas al mismo tiempo, por usuario

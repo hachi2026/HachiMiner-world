@@ -1974,6 +1974,7 @@ export default function HachiMiner() {
                 {piggy.bonus>0&&<div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:8}}>
                   <div style={{fontSize:18,fontWeight:700,fontFamily:'monospace',color:'#60a5fa'}}>{piggy.bonus.toFixed(1)}</div>
                   <div style={{fontSize:12,color:'#8b949e'}}>Drachma</div>
+                  <span style={{fontSize:10,fontWeight:800,color:'#fbbf24',background:'rgba(251,191,36,.15)',border:'1px solid rgba(251,191,36,.4)',borderRadius:6,padding:'2px 6px'}}>x2 hasta el 24/08</span>
                 </div>}
               </div>
             </div>

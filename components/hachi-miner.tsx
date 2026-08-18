@@ -2792,6 +2792,7 @@ export default function HachiMiner() {
             </div>
             <div style={{background:'rgba(52,211,153,.1)',border:'1px solid rgba(52,211,153,.4)',borderRadius:8,padding:10,marginBottom:12,textAlign:'center',fontSize:12,color:'#6ee7b7',fontWeight:700}}>
               📅 Sorteo mensual — próxima ejecución: <strong>1 de septiembre</strong>
+              <br/><span style={{fontSize:10,fontWeight:400}}>Solo cuentan las licencias/minerías obtenidas desde el 18 de agosto de 2026 en adelante. Las compras anteriores a esa fecha no participan.</span>
             </div>
             <div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.7}}>
               <strong style={{color:'#fbbf24'}}>¿Cómo funciona?</strong> Cada vez que comprás una licencia WLD, minás en Drachma Miner o minás en WLD Miner, recibís un número único de sorteo — no hace falta hacer nada extra, es automático.
@@ -2805,7 +2806,7 @@ export default function HachiMiner() {
               <br/><br/>
               El sorteo se hace de forma verificable, usando un bloque futuro de la blockchain como semilla al azar — nadie (ni nosotros) puede predecir o manipular el resultado.
             </div>
-            <button onClick={loadMyRaffleNumbers} disabled={loadingMyNumbers||!connected} style={{...btnP,width:'100%',opacity:(loadingMyNumbers||!connected)?0.5:1}}>{loadingMyNumbers?'Buscando tus números...':'🎟️ Ver mis números'}</button>
+            <button onClick={loadMyRaffleNumbers} disabled={loadingMyNumbers||!connected} style={{...btnP,width:'100%',opacity:(loadingMyNumbers||!connected)?0.5:1}}>{loadingMyNumbers?'⏳ Buscando tus números... puede tardar unos segundos':'🎟️ Ver mis números'}</button>
             {myRaffleNumbers!==null&&<div style={{...card,marginTop:12}}>
               {myRaffleNumbers.length===0
                 ? <div style={{textAlign:'center',color:'#8b949e',fontSize:13}}>Todavía no tenés ningún número — comprá una licencia WLD, o miná en Drachma Miner o WLD Miner para conseguir el tuyo.</div>

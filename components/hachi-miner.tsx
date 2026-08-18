@@ -1634,6 +1634,8 @@ export default function HachiMiner() {
     }
   }
 
+  const RAFFLE_BASELINE = 290 // total acumulado histórico justo antes de activar el sorteo — se resta siempre, así el sorteo arranca desde 1 con las compras nuevas, no cuenta lo de antes
+
   const loadRaffleTotal = async (p: ethers.JsonRpcProvider) => {
     try {
       const dmOld = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, DRACHMA_MINER_ABI, p)
@@ -1644,7 +1646,7 @@ export default function HachiMiner() {
       const [dOld, dNew, wOld, wNew, lics] = await Promise.all([
         dmOld.mineId(), dmNew.mineId(), wmOld.mineId(), wmNew.mineId(), core.wldLicId(),
       ])
-      setRaffleTotalTickets(Number(dOld) + Number(dNew) + Number(wOld) + Number(wNew) + Number(lics))
+      setRaffleTotalTickets(Math.max(0, Number(dOld) + Number(dNew) + Number(wOld) + Number(wNew) + Number(lics) - RAFFLE_BASELINE))
     } catch(e) { /* silencioso */ }
   }
 
@@ -1691,7 +1693,10 @@ export default function HachiMiner() {
 
       all.sort((a,b) => a.startTime - b.startTime)
       const myNumbers: number[] = []
-      all.forEach((item, i) => { if (item.owner === addr.toLowerCase()) myNumbers.push(i+1) })
+      all.forEach((item, i) => {
+        const numeroRelativo = (i+1) - RAFFLE_BASELINE
+        if (item.owner === addr.toLowerCase() && numeroRelativo > 0) myNumbers.push(numeroRelativo)
+      })
       setMyRaffleNumbers(myNumbers)
     } catch(e:any) { log('raffle numbers err: '+(e?.message||'').slice(0,80)); setMyRaffleNumbers([]) }
     finally { setLoadingMyNumbers(false) }
@@ -1708,8 +1713,8 @@ export default function HachiMiner() {
       const [dOld, dNew, wOld, wNew, lics] = await Promise.all([
         dmOld.mineId(), dmNew.mineId(), wmOld.mineId(), wmNew.mineId(), core.wldLicId(),
       ])
-      const numero = Number(dOld) + Number(dNew) + Number(wOld) + Number(wNew) + Number(lics)
-      setTimeout(() => toast_(`🎟️ ¡Tu número de sorteo es el #${numero}!`, '#fbbf24'), 2500)
+      const numero = Number(dOld) + Number(dNew) + Number(wOld) + Number(wNew) + Number(lics) - RAFFLE_BASELINE
+      if (numero > 0) setTimeout(() => toast_(`🎟️ ¡Tu número de sorteo es el #${numero}!`, '#fbbf24'), 2500)
     } catch(e) { /* si falla el cálculo, no interrumpe la compra */ }
   }
 

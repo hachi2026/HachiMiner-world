@@ -2040,7 +2040,6 @@ export default function HachiMiner() {
             {[
               {icon:'🐱',label:'Mi Estado',tab:'estado' as Tab,delay:0},
               {icon:'🎯',label:'Centro Hachi',tab:'centrohachi' as Tab,delay:0.15},
-              {icon:'🎟️',label:'Sorteo',tab:'sorteo' as Tab,delay:0.2,isNew:true},
               {icon:'⛏️',label:'Minería',tab:'mineria' as Tab,delay:0.3},
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
               {icon:'🗳️',label:'Votación',tab:'voting' as Tab,delay:3.3},
@@ -2730,6 +2729,7 @@ export default function HachiMiner() {
               {icon:'🪙',label:'Drachma Miner',action:()=>loadTab('drachmaminer'),iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
               {icon:'⛏️',label:'WLD Miner',action:()=>loadTab('wldminer')},
               {icon:'🎁',label:'Reward',action:()=>loadTab('weeklybonus')},
+              {icon:'🎟️',label:'Sorteo',action:()=>loadTab('sorteo')},
             ].map(btn=><button key={btn.label} onClick={btn.action} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'16px 8px',borderRadius:12,border:'1px solid #5b21b6',background:'linear-gradient(135deg,#2d1b69,#1e0840)',color:'#e6edf3',cursor:'pointer'}}>
               {(btn as any).iconImg ? <img src={(btn as any).iconImg} alt="" width={26} height={26} style={{borderRadius:13,objectFit:'cover'}} /> : <span style={{fontSize:26}}>{btn.icon}</span>}
               <span style={{fontSize:12,fontWeight:600}}>{btn.label}</span>

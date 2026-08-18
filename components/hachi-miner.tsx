@@ -202,7 +202,7 @@ const REFERRAL = [
   'function currentNewBonus() view returns (uint256)',
 ]
 
-type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'|'weeklybonus'|'voting'|'wldminer'|'mineria'|'centrohachi'
+type Tab = 'home'|'lics'|'lock'|'ranking'|'pools'|'swap'|'refs'|'estado'|'drachmaminer'|'weeklybonus'|'voting'|'wldminer'|'mineria'|'centrohachi'|'sorteo'
 type Lang = 'es'|'en'|'pt'
 const detectLang = (): Lang => {
   if (typeof navigator === 'undefined') return 'es'
@@ -368,6 +368,9 @@ export default function HachiMiner() {
   const [showInfoDrachma, setShowInfoDrachma] = useState(false)
   const [showInfoWeekly, setShowInfoWeekly] = useState(false)
   const [giftOpened, setGiftOpened] = useState(false)
+  const [raffleTotalTickets, setRaffleTotalTickets] = useState(0)
+  const [myRaffleNumbers, setMyRaffleNumbers] = useState<number[]|null>(null)
+  const [loadingMyNumbers, setLoadingMyNumbers] = useState(false)
   const [showInfoSwap, setShowInfoSwap] = useState(false)
   const [showInfoLics, setShowInfoLics] = useState(false)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
@@ -1058,6 +1061,7 @@ export default function HachiMiner() {
     if (v==='wldminer') { loadWldMiner(p); loadWldActiveCount(p); loadWldMinerHistory(p) }
     if (v==='weeklybonus') { loadWeeklyBonus(p) }
     if (v==='centrohachi') { loadWLDLics(p); loadDrachmaMiner(p); loadWldMiner(p); loadWeeklyBonus(p); loadVipHolders(p); loadLock(p); checkDaily(addr, p) }
+    if (v==='sorteo') { loadRaffleTotal(p) }
     if (v==='pools') { loadPools(p); loadPoolsExtra(p); loadVipHolders(p) }
     if (v==='refs') loadRefs(p)
     if (v==='swap') { loadSwapHistory(p); loadStreakStatus(p); loadStreakHistory(p); loadSwapRanking(p) }
@@ -1630,6 +1634,69 @@ export default function HachiMiner() {
     }
   }
 
+  const loadRaffleTotal = async (p: ethers.JsonRpcProvider) => {
+    try {
+      const dmOld = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, DRACHMA_MINER_ABI, p)
+      const dmNew = new ethers.Contract(DRACHMA_MINER_ADDR_NEW, DRACHMA_MINER_ABI, p)
+      const wmOld = new ethers.Contract(WLD_MINER_ADDR_OLD, WLD_MINER_ABI, p)
+      const wmNew = new ethers.Contract(WLD_MINER_ADDR_NEW, WLD_MINER_ABI, p)
+      const core = new ethers.Contract(C.core, CORE, p)
+      const [dOld, dNew, wOld, wNew, lics] = await Promise.all([
+        dmOld.mineId(), dmNew.mineId(), wmOld.mineId(), wmNew.mineId(), core.wldLicId(),
+      ])
+      setRaffleTotalTickets(Number(dOld) + Number(dNew) + Number(wOld) + Number(wNew) + Number(lics))
+    } catch(e) { /* silencioso */ }
+  }
+
+  const loadMyRaffleNumbers = async () => {
+    if (!addr) return
+    setLoadingMyNumbers(true)
+    try {
+      const p = rpc()
+      const dmOld = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, DRACHMA_MINER_ABI, p)
+      const dmNew = new ethers.Contract(DRACHMA_MINER_ADDR_NEW, DRACHMA_MINER_ABI, p)
+      const wmOld = new ethers.Contract(WLD_MINER_ADDR_OLD, WLD_MINER_ABI, p)
+      const wmNew = new ethers.Contract(WLD_MINER_ADDR_NEW, WLD_MINER_ABI, p)
+      const core = new ethers.Contract(C.core, CORE, p)
+
+      const all: {owner:string, startTime:number}[] = []
+
+      const scanDrachma = async (c: ethers.Contract) => {
+        const total = Number(await c.mineId())
+        for (let id = 1; id <= total; id++) {
+          const m = await c.mines(id)
+          all.push({ owner: m[0].toLowerCase(), startTime: Number(m[6]) })
+        }
+      }
+      const scanWldMiner = async (c: ethers.Contract) => {
+        const total = Number(await c.mineId())
+        for (let id = 1; id <= total; id++) {
+          const m = await c.mines(id)
+          all.push({ owner: m[0].toLowerCase(), startTime: Number(m[7]) })
+        }
+      }
+      const scanLics = async () => {
+        const total = Number(await core.wldLicId())
+        for (let id = 0; id < total; id++) {
+          const l = await core.wldLics(id)
+          all.push({ owner: l[0].toLowerCase(), startTime: Number(l[6]) })
+        }
+      }
+
+      await Promise.all([
+        scanDrachma(dmOld), scanDrachma(dmNew),
+        scanWldMiner(wmOld), scanWldMiner(wmNew),
+        scanLics(),
+      ])
+
+      all.sort((a,b) => a.startTime - b.startTime)
+      const myNumbers: number[] = []
+      all.forEach((item, i) => { if (item.owner === addr.toLowerCase()) myNumbers.push(i+1) })
+      setMyRaffleNumbers(myNumbers)
+    } catch(e:any) { log('raffle numbers err: '+(e?.message||'').slice(0,80)); setMyRaffleNumbers([]) }
+    finally { setLoadingMyNumbers(false) }
+  }
+
   const showRaffleNumber = async () => {
     try {
       const p = rpc()
@@ -1967,7 +2034,8 @@ export default function HachiMiner() {
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
             {[
               {icon:'🐱',label:'Mi Estado',tab:'estado' as Tab,delay:0},
-              {icon:'🎯',label:'Centro Hachi',tab:'centrohachi' as Tab,delay:0.15,isNew:true},
+              {icon:'🎯',label:'Centro Hachi',tab:'centrohachi' as Tab,delay:0.15},
+              {icon:'🎟️',label:'Sorteo',tab:'sorteo' as Tab,delay:0.2,isNew:true},
               {icon:'⛏️',label:'Minería',tab:'mineria' as Tab,delay:0.3},
               {icon:'🔒',label:'Lock',tab:'lock' as Tab,delay:0.9},
               {icon:'🗳️',label:'Votación',tab:'voting' as Tab,delay:3.3},
@@ -2710,6 +2778,35 @@ export default function HachiMiner() {
             </>
           })()}
         </div>}
+
+          {tab==='sorteo'&&<div>
+            <div style={sLabel}>🎟️ Sorteo Hachi</div>
+            <div style={{...card,textAlign:'center',marginBottom:12}}>
+              <div style={{fontSize:13,color:'#8b949e',marginBottom:4}}>Números repartidos hasta ahora</div>
+              <div style={{fontSize:36,fontWeight:800,color:'#fbbf24',fontFamily:'monospace'}}>{raffleTotalTickets}</div>
+            </div>
+            <div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.7}}>
+              <strong style={{color:'#fbbf24'}}>¿Cómo funciona?</strong> Cada vez que comprás una licencia WLD, minás en Drachma Miner o minás en WLD Miner, recibís un número único de sorteo — no hace falta hacer nada extra, es automático.
+              <br/><br/>
+              <strong style={{color:'#fbbf24'}}>Premios:</strong>
+              <br/>🥇 1er premio: 50,000 HACHI
+              <br/>🥈 2do premio: 30,000 HACHI
+              <br/>🥉 3er premio: 20,000 HACHI
+              <br/><br/>
+              El sorteo se hace de forma verificable, usando un bloque futuro de la blockchain como semilla al azar — nadie (ni nosotros) puede predecir o manipular el resultado.
+            </div>
+            <button onClick={loadMyRaffleNumbers} disabled={loadingMyNumbers||!connected} style={{...btnP,width:'100%',opacity:(loadingMyNumbers||!connected)?0.5:1}}>{loadingMyNumbers?'Buscando tus números...':'🎟️ Ver mis números'}</button>
+            {myRaffleNumbers!==null&&<div style={{...card,marginTop:12}}>
+              {myRaffleNumbers.length===0
+                ? <div style={{textAlign:'center',color:'#8b949e',fontSize:13}}>Todavía no tenés ningún número — comprá una licencia WLD, o miná en Drachma Miner o WLD Miner para conseguir el tuyo.</div>
+                : <>
+                    <div style={{fontSize:12,color:'#8b949e',marginBottom:8,textAlign:'center'}}>Tenés {myRaffleNumbers.length} número{myRaffleNumbers.length>1?'s':''}:</div>
+                    <div style={{display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center'}}>
+                      {myRaffleNumbers.map(n=><span key={n} style={{background:'rgba(251,191,36,.15)',border:'1px solid rgba(251,191,36,.5)',borderRadius:8,padding:'8px 14px',fontSize:16,fontWeight:800,color:'#fbbf24',fontFamily:'monospace'}}>#{n}</span>)}
+                    </div>
+                  </>}
+            </div>}
+          </div>}
 
         {tab==='refs'&&<div>
           <div style={card}><div style={cTitle}>Mi código de referido</div>

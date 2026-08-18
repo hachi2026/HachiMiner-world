@@ -2790,13 +2790,18 @@ export default function HachiMiner() {
               <div style={{fontSize:13,color:'#8b949e',marginBottom:4}}>Números repartidos hasta ahora</div>
               <div style={{fontSize:36,fontWeight:800,color:'#fbbf24',fontFamily:'monospace'}}>{raffleTotalTickets}</div>
             </div>
+            <div style={{background:'rgba(52,211,153,.1)',border:'1px solid rgba(52,211,153,.4)',borderRadius:8,padding:10,marginBottom:12,textAlign:'center',fontSize:12,color:'#6ee7b7',fontWeight:700}}>
+              📅 Sorteo mensual — próxima ejecución: <strong>1 de septiembre</strong>
+            </div>
             <div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.7}}>
               <strong style={{color:'#fbbf24'}}>¿Cómo funciona?</strong> Cada vez que comprás una licencia WLD, minás en Drachma Miner o minás en WLD Miner, recibís un número único de sorteo — no hace falta hacer nada extra, es automático.
               <br/><br/>
               <strong style={{color:'#fbbf24'}}>Premios:</strong>
-              <br/>🥇 1er premio: 50,000 HACHI
-              <br/>🥈 2do premio: 30,000 HACHI
-              <br/>🥉 3er premio: 20,000 HACHI
+              <br/>🥇 1er premio: 10 WLD
+              <br/>🥈 2do premio: 5 WLD
+              <br/>🥉 3er premio: 30,000 HACHI
+              <br/>🏅 4to premio: 20,000 HACHI
+              <br/>🏅 5to premio: 10,000 HACHI
               <br/><br/>
               El sorteo se hace de forma verificable, usando un bloque futuro de la blockchain como semilla al azar — nadie (ni nosotros) puede predecir o manipular el resultado.
             </div>

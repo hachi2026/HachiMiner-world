@@ -961,6 +961,7 @@ export default function HachiMiner() {
         { to: C.core, abi: CORE, fnName: 'buyLicenseWLD', args: [selWLD] },
       ])
       toast_('✓ Licencia WLD comprada', '#3fb950')
+      showRaffleNumber()
       await loadAll(addr)
     } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
   }
@@ -1582,6 +1583,7 @@ export default function HachiMiner() {
         { to: wldMiner.contractAddr, abi: WLD_MINER_ABI, fnName: 'mineWld', args: [wldWei, selWldVariant, minHachi, minDrachma] },
       ])
       toast_('✓ Minería iniciada', '#3fb950')
+      showRaffleNumber()
       setSelWldAmount('')
       loadWldMiner(rpc())
     } catch(e: any) { toast_('Error: '+(e.reason||e.message||'error').slice(0,80), '#f85149') }
@@ -1628,6 +1630,22 @@ export default function HachiMiner() {
     }
   }
 
+  const showRaffleNumber = async () => {
+    try {
+      const p = rpc()
+      const dmOld = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, DRACHMA_MINER_ABI, p)
+      const dmNew = new ethers.Contract(DRACHMA_MINER_ADDR_NEW, DRACHMA_MINER_ABI, p)
+      const wmOld = new ethers.Contract(WLD_MINER_ADDR_OLD, WLD_MINER_ABI, p)
+      const wmNew = new ethers.Contract(WLD_MINER_ADDR_NEW, WLD_MINER_ABI, p)
+      const core = new ethers.Contract(C.core, CORE, p)
+      const [dOld, dNew, wOld, wNew, lics] = await Promise.all([
+        dmOld.mineId(), dmNew.mineId(), wmOld.mineId(), wmNew.mineId(), core.wldLicId(),
+      ])
+      const numero = Number(dOld) + Number(dNew) + Number(wOld) + Number(wNew) + Number(lics)
+      setTimeout(() => toast_(`🎟️ ¡Tu número de sorteo es el #${numero}!`, '#fbbf24'), 2500)
+    } catch(e) { /* si falla el cálculo, no interrumpe la compra */ }
+  }
+
   const mineDrachmaAction = async () => {
     if (!connected) { toast_(t('err_connect'),'#f85149'); return }
     const costWithSlippage = drachmaMiner.costs[selDrachmaTier] * 1.02
@@ -1640,6 +1658,7 @@ export default function HachiMiner() {
         { to: drachmaMiner.contractAddr, abi: DRACHMA_MINER_ABI, fnName: 'mineDrachma', args: [selDrachmaTier, costWei] },
       ])
       toast_(`✓ Drachma en generación (${drachmaMiner.durationDays} días)`, '#3fb950')
+      showRaffleNumber()
       loadDrachmaMiner(rpc())
     } catch(e: any) {
       log('drachma mine err: ' + JSON.stringify(e).slice(0,900))

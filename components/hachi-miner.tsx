@@ -371,6 +371,7 @@ export default function HachiMiner() {
   const [raffleTotalTickets, setRaffleTotalTickets] = useState(0)
   const [myRaffleNumbers, setMyRaffleNumbers] = useState<number[]|null>(null)
   const [loadingMyNumbers, setLoadingMyNumbers] = useState(false)
+  const [raffleParticipants, setRaffleParticipants] = useState<{numero:number, owner:string}[]>([])
   const [showInfoSwap, setShowInfoSwap] = useState(false)
   const [showInfoLics, setShowInfoLics] = useState(false)
   const [wldPrev, setWldPrev] = useState({base:'—',total:'—',daily:'—',monthly:'—'})
@@ -1638,15 +1639,11 @@ export default function HachiMiner() {
 
   const loadRaffleTotal = async (p: ethers.JsonRpcProvider) => {
     try {
-      const dmOld = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, DRACHMA_MINER_ABI, p)
-      const dmNew = new ethers.Contract(DRACHMA_MINER_ADDR_NEW, DRACHMA_MINER_ABI, p)
-      const wmOld = new ethers.Contract(WLD_MINER_ADDR_OLD, WLD_MINER_ABI, p)
-      const wmNew = new ethers.Contract(WLD_MINER_ADDR_NEW, WLD_MINER_ABI, p)
-      const core = new ethers.Contract(C.core, CORE, p)
-      const [dOld, dNew, wOld, wNew, lics] = await Promise.all([
-        dmOld.mineId(), dmNew.mineId(), wmOld.mineId(), wmNew.mineId(), core.wldLicId(),
-      ])
-      setRaffleTotalTickets(Math.max(0, Number(dOld) + Number(dNew) + Number(wOld) + Number(wNew) + Number(lics) - RAFFLE_BASELINE))
+      const res = await fetch('/api/raffle-list' + (addr ? ('?address='+addr.toLowerCase()) : ''))
+      const data = await res.json()
+      setRaffleTotalTickets(data.total || 0)
+      setRaffleParticipants(data.participants || [])
+      if (addr && data.myNumbers) setMyRaffleNumbers(data.myNumbers)
     } catch(e) { /* silencioso */ }
   }
 
@@ -1654,50 +1651,10 @@ export default function HachiMiner() {
     if (!addr) return
     setLoadingMyNumbers(true)
     try {
-      const p = rpc()
-      const dmOld = new ethers.Contract(DRACHMA_MINER_ADDR_OLD, DRACHMA_MINER_ABI, p)
-      const dmNew = new ethers.Contract(DRACHMA_MINER_ADDR_NEW, DRACHMA_MINER_ABI, p)
-      const wmOld = new ethers.Contract(WLD_MINER_ADDR_OLD, WLD_MINER_ABI, p)
-      const wmNew = new ethers.Contract(WLD_MINER_ADDR_NEW, WLD_MINER_ABI, p)
-      const core = new ethers.Contract(C.core, CORE, p)
-
-      const all: {owner:string, startTime:number}[] = []
-
-      const scanDrachma = async (c: ethers.Contract) => {
-        const total = Number(await c.mineId())
-        for (let id = 1; id <= total; id++) {
-          const m = await c.mines(id)
-          all.push({ owner: m[0].toLowerCase(), startTime: Number(m[6]) })
-        }
-      }
-      const scanWldMiner = async (c: ethers.Contract) => {
-        const total = Number(await c.mineId())
-        for (let id = 1; id <= total; id++) {
-          const m = await c.mines(id)
-          all.push({ owner: m[0].toLowerCase(), startTime: Number(m[7]) })
-        }
-      }
-      const scanLics = async () => {
-        const total = Number(await core.wldLicId())
-        for (let id = 0; id < total; id++) {
-          const l = await core.wldLics(id)
-          all.push({ owner: l[0].toLowerCase(), startTime: Number(l[6]) })
-        }
-      }
-
-      await Promise.all([
-        scanDrachma(dmOld), scanDrachma(dmNew),
-        scanWldMiner(wmOld), scanWldMiner(wmNew),
-        scanLics(),
-      ])
-
-      all.sort((a,b) => a.startTime - b.startTime)
-      const myNumbers: number[] = []
-      all.forEach((item, i) => {
-        const numeroRelativo = (i+1) - RAFFLE_BASELINE
-        if (item.owner === addr.toLowerCase() && numeroRelativo > 0) myNumbers.push(numeroRelativo)
-      })
-      setMyRaffleNumbers(myNumbers)
+      const res = await fetch('/api/raffle-list?address=' + addr.toLowerCase())
+      const data = await res.json()
+      setMyRaffleNumbers(data.myNumbers || [])
+      setRaffleParticipants(data.participants || [])
     } catch(e:any) { log('raffle numbers err: '+(e?.message||'').slice(0,80)); setMyRaffleNumbers([]) }
     finally { setLoadingMyNumbers(false) }
   }
@@ -2816,6 +2773,15 @@ export default function HachiMiner() {
                       {myRaffleNumbers.map(n=><span key={n} style={{background:'rgba(251,191,36,.15)',border:'1px solid rgba(251,191,36,.5)',borderRadius:8,padding:'8px 14px',fontSize:16,fontWeight:800,color:'#fbbf24',fontFamily:'monospace'}}>#{n}</span>)}
                     </div>
                   </>}
+            </div>}
+            {raffleParticipants.length>0&&<div style={{...card,marginTop:12}}>
+              <div style={{fontSize:12,color:'#8b949e',marginBottom:8,textAlign:'center'}}>Todos los participantes ({raffleParticipants.length}):</div>
+              <div style={{display:'flex',flexDirection:'column',gap:6,maxHeight:300,overflowY:'auto'}}>
+                {raffleParticipants.map(p=><div key={p.numero} style={{display:'flex',justifyContent:'space-between',fontSize:12,fontFamily:'monospace',color:'#c4b5fd',padding:'4px 8px',background:'rgba(167,139,250,.06)',borderRadius:6}}>
+                  <span style={{color:'#fbbf24',fontWeight:700}}>#{p.numero}</span>
+                  <span>{p.owner.slice(0,6)}...{p.owner.slice(-4)}</span>
+                </div>)}
+              </div>
             </div>}
           </div>}
 

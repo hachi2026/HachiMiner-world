@@ -1642,8 +1642,10 @@ export default function HachiMiner() {
       const res = await fetch('/api/raffle-list' + (addr ? ('?address='+addr.toLowerCase()) : ''))
       const data = await res.json()
       setRaffleTotalTickets(data.total || 0)
-      setRaffleParticipants(data.participants || [])
+      const parts = data.participants || []
+      setRaffleParticipants(parts)
       if (addr && data.myNumbers) setMyRaffleNumbers(data.myNumbers)
+      resolveUsernames(parts.map((p2:any) => p2.owner))
     } catch(e) { /* silencioso */ }
   }
 
@@ -1654,7 +1656,9 @@ export default function HachiMiner() {
       const res = await fetch('/api/raffle-list?address=' + addr.toLowerCase())
       const data = await res.json()
       setMyRaffleNumbers(data.myNumbers || [])
-      setRaffleParticipants(data.participants || [])
+      const parts = data.participants || []
+      setRaffleParticipants(parts)
+      resolveUsernames(parts.map((p2:any) => p2.owner))
     } catch(e:any) { log('raffle numbers err: '+(e?.message||'').slice(0,80)); setMyRaffleNumbers([]) }
     finally { setLoadingMyNumbers(false) }
   }
@@ -2779,7 +2783,7 @@ export default function HachiMiner() {
               <div style={{display:'flex',flexDirection:'column',gap:6,maxHeight:300,overflowY:'auto'}}>
                 {raffleParticipants.map(p=><div key={p.numero} style={{display:'flex',justifyContent:'space-between',fontSize:12,fontFamily:'monospace',color:'#c4b5fd',padding:'4px 8px',background:'rgba(167,139,250,.06)',borderRadius:6}}>
                   <span style={{color:'#fbbf24',fontWeight:700}}>#{p.numero}</span>
-                  <span>{p.owner.slice(0,6)}...{p.owner.slice(-4)}</span>
+                  <span>{nameFor(p.owner)}</span>
                 </div>)}
               </div>
             </div>}

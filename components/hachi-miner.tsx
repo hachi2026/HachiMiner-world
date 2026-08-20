@@ -2354,9 +2354,6 @@ export default function HachiMiner() {
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>HACHI libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.wldMinerHachiFreeNew)} HACHI</span></div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Drachma libre</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.wldMinerDrachmaFreeNew)} Drachma</span></div>
           </div>
-          <div style={card}><div style={{...cTitle,display:'flex',alignItems:'center',gap:6}}><img src="/hachi-cat-savings.png" width={20} height={20} style={{borderRadius:4,objectFit:'cover',flexShrink:0}} />Pool A — Bocado</div>
-            {[['Libre',poolsData.poolAF||'—'],['Licencias Bocado disponibles',poolsData.sushiAvail||'—']].map(([l,v])=><div key={l} style={row}><span style={{color:'#8b949e',fontSize:12}}>{l}</span><span style={{fontFamily:'monospace'}}>{v}</span></div>)}
-          </div>
           <div style={card}><div style={cTitle}>🎁 Reward</div>
             <div style={row}><span style={{color:'#8b949e',fontSize:12}}>Pool SUSHI</span><span style={{fontFamily:'monospace'}}>{fmtPrecise(poolsExtra.weeklyBonusPool)} SUSHI</span></div>
           </div>
@@ -2719,7 +2716,6 @@ export default function HachiMiner() {
               { key:'wldminer', icon:'⛏️', label:'WLD Miner', valor: (wldMiner.pendingHachi>0.01||wldMiner.pendingDrachma>0.01) ? `${wldMiner.pendingHachi.toFixed(2)} HACHI + ${wldMiner.pendingDrachma.toFixed(2)} Drachma` : null, pendiente: 'Sin nada acumulado todavía', disponibleAhora:true, tieneInversion: wldMiner.tier!==255, claimFn: claimWldMinerAction },
               { key:'lock', icon:'🔒', label:'Lock (APY)', valor: lockPendNum>0.01 ? `${lockData.pending} HACHI` : null, pendiente: lockData.nextClaimIn!=='—' ? `Disponible en ${lockData.nextClaimIn}` : 'Sin nada acumulado todavía', disponibleAhora: lockData.nextClaimIn==='—', tieneInversion: parseFloat(lockData.total)>0, claimFn: claimAPY },
               { key:'diario', icon:'🐱', label:'Claim diario', valor: piggy.canWithdraw && piggy.accrued>0 ? `${fmtPrecise(piggy.accrued)} HACHI` : null, pendiente: !piggy.canWithdraw ? `Disponible en ${Math.ceil(piggy.secondsUntilNext/3600)}h` : 'Sin nada acumulado todavía', disponibleAhora: piggy.canWithdraw, tieneInversion: true, claimFn: withdrawDaily },
-              { key:'bocado', iconImg:'/hachi-cat-savings.png', label:'Bocado disponible hoy', valor: bocadoDisponible>0 ? `${bocadoDisponible} disponible${bocadoDisponible>1?'s':''}` : null, pendiente: `Se resetea en ${bocadoResetIn}`, disponibleAhora:false, tieneInversion: wldTierActive!==255, action:()=>{setLicTab('sushi'); loadTab('lics')} },
               { key:'reinversion', icon:'💎', label:'Reinversión VIP', valor: vipData.pendingHachi>0.01 ? `${vipData.pendingHachi.toFixed(2)} HACHI acumulado` : null, pendiente: 'Sin nada acumulado todavía', disponibleAhora:true, tieneInversion: vipData.level!==255, action:()=>loadTab('lock') },
               { key:'semanal', icon:'🎁', label:'Reward', valor: weeklyBonus.pending>0.01 ? `${fmtPrecise(weeklyBonus.pending)} SUSHI` : null, pendiente: weeklyBonus.secondsUntilNext>0 ? `Disponible en ${fmtSecsCH(weeklyBonus.secondsUntilNext)}` : 'Sin nada acumulado todavía', disponibleAhora: weeklyBonus.secondsUntilNext<=0, tieneInversion: weeklyBonus.dailyRate>0, claimFn: claimWeeklyBonus },
             ]

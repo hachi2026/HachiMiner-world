@@ -2686,7 +2686,6 @@ export default function HachiMiner() {
           <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8,marginBottom:12}}>
             {[
               {icon:'📜',label:'Hachi Miner',action:()=>{setLicTab('wld'); loadTab('lics')},iconImg:'/hachi-logo.png'},
-              {icon:'🍡',label:'Bocado',action:()=>{setLicTab('sushi'); loadTab('lics')},iconImg:'/hachi-cat-savings.png'},
               {icon:'🪙',label:'Drachma Miner',action:()=>loadTab('drachmaminer'),iconImg:'https://assets.geckoterminal.com/0gp3m01cu8d61jd4n9nmhkvn5auh'},
               {icon:'⛏️',label:'WLD Miner',action:()=>loadTab('wldminer')},
               {icon:'🎁',label:'Reward',action:()=>loadTab('weeklybonus')},

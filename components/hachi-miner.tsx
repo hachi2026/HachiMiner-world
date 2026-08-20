@@ -2749,10 +2749,13 @@ export default function HachiMiner() {
             {raffleParticipants.length>0&&<div style={{...card,marginBottom:12}}>
               <div style={{fontSize:12,color:'#8b949e',marginBottom:8,textAlign:'center'}}>Todos los participantes ({raffleParticipants.length}):</div>
               <div style={{display:'flex',flexDirection:'column',gap:6,maxHeight:300,overflowY:'auto'}}>
-                {raffleParticipants.map(p=><div key={p.numero} style={{display:'flex',justifyContent:'space-between',fontSize:12,fontFamily:'monospace',color:'#c4b5fd',padding:'4px 8px',background:'rgba(167,139,250,.06)',borderRadius:6}}>
-                  <span style={{color:'#fbbf24',fontWeight:700}}>#{p.numero}</span>
-                  <span>{nameFor(p.owner)}</span>
-                </div>)}
+                {raffleParticipants.map(p=>{
+                  const esMio = addr && p.owner === addr.toLowerCase()
+                  return <div key={p.numero} style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,fontFamily:'monospace',color:esMio?'#fbbf24':'#c4b5fd',padding:'4px 8px',background:esMio?'rgba(251,191,36,.15)':'rgba(167,139,250,.06)',border:esMio?'1px solid rgba(251,191,36,.5)':'none',borderRadius:6,fontWeight:esMio?800:400}}>
+                    <span style={{color:'#fbbf24',fontWeight:700}}>#{p.numero}</span>
+                    <span>{nameFor(p.owner)}{esMio&&<span style={{marginLeft:6,fontSize:10}}>👈 vos</span>}</span>
+                  </div>
+                })}
               </div>
             </div>}
             <div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.35)',borderRadius:8,padding:14,marginBottom:12,fontSize:12,color:'#c4b5fd',lineHeight:1.7}}>

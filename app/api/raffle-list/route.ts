@@ -111,14 +111,14 @@ export async function GET(request: Request): Promise<Response> {
 
   const total = Math.max(0, entries.length - RAFFLE_BASELINE);
 
+  const participants = entries
+    .map((e, i) => ({ numero: i + 1 - RAFFLE_BASELINE, owner: e.owner }))
+    .filter((p) => p.numero > 0);
+
   if (address) {
-    const myNumbers: number[] = [];
-    entries.forEach((e, i) => {
-      const numero = i + 1 - RAFFLE_BASELINE;
-      if (e.owner === address && numero > 0) myNumbers.push(numero);
-    });
-    return NextResponse.json({ total, myNumbers });
+    const myNumbers = participants.filter((p) => p.owner === address).map((p) => p.numero);
+    return NextResponse.json({ total, myNumbers, participants });
   }
 
-  return NextResponse.json({ total });
+  return NextResponse.json({ total, participants });
 }

@@ -115,10 +115,27 @@ export async function GET(request: Request): Promise<Response> {
     .map((e, i) => ({ numero: i + 1 - RAFFLE_BASELINE, owner: e.owner }))
     .filter((p) => p.numero > 0);
 
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+
   if (address) {
     const myNumbers = participants.filter((p) => p.owner === address).map((p) => p.numero);
-    return NextResponse.json({ total, myNumbers, participants });
+    return NextResponse.json({ total, myNumbers, participants }, { headers: corsHeaders });
   }
 
-  return NextResponse.json({ total, participants });
+  return NextResponse.json({ total, participants }, { headers: corsHeaders });
+}
+
+export async function OPTIONS(): Promise<Response> {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
 }
